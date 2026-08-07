@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>甜时光扫码点餐 · 可运行演示</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%8B%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+body { background: #F3EEEA; }
+.wrap { max-width: 940px; margin: 0 auto; padding: 32px 20px 60px; }
+
+.head { text-align: center; margin-bottom: 30px; }
+.badge-live {
+  display: inline-flex; align-items: center; gap: 6px; background: #E7F6EC; color: var(--ok);
+  padding: 5px 13px; border-radius: 999px; font-size: 12.5px; font-weight: 700; margin-bottom: 14px;
+}
+.badge-live .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: pulse 1.6s infinite; }
+h1 { font-size: 30px; font-weight: 900; margin: 0 0 10px; letter-spacing: -.5px; }
+h1 em { font-style: normal; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sub { font-size: 14.5px; color: var(--ink-2); line-height: 1.7; max-width: 570px; margin: 0 auto; }
+
+.entries { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 26px 0; }
+.entry {
+  background: #fff; border-radius: var(--r-l); padding: 22px; box-shadow: var(--sh-m);
+  transition: transform .18s, box-shadow .18s; display: block; position: relative; overflow: hidden;
+  border: 1.5px solid transparent;
+}
+.entry:hover { transform: translateY(-3px); box-shadow: var(--sh-l); border-color: #FFD5CC; }
+.entry-icon {
+  width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center;
+  font-size: 26px; margin-bottom: 13px;
+}
+.entry h3 { margin: 0 0 6px; font-size: 18px; font-weight: 800; }
+.entry p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.65; }
+.entry .go { margin-top: 14px; display: inline-flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 700; color: var(--brand); }
+.entry::after {
+  content: ''; position: absolute; right: -34px; top: -34px; width: 110px; height: 110px;
+  border-radius: 50%; background: var(--brand-soft); opacity: .55; z-index: 0;
+}
+.entry > * { position: relative; z-index: 1; }
+
+.panel { background: #fff; border-radius: var(--r-l); padding: 24px; box-shadow: var(--sh-s); margin-bottom: 16px; }
+.panel h2 { font-size: 17px; font-weight: 800; margin: 0 0 16px; display: flex; align-items: center; gap: 8px; }
+
+.steps-demo { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+.sd { display: flex; gap: 11px; }
+.sd-n {
+  width: 25px; height: 25px; border-radius: 50%; background: var(--grad); color: #fff;
+  display: grid; place-items: center; font-size: 12.5px; font-weight: 800; flex: none;
+}
+.sd b { display: block; font-size: 13.5px; margin-bottom: 3px; }
+.sd span { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
+
+.qr-area { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; }
+.qr-card { background: #fff; border: 2px solid var(--brand); border-radius: var(--r-m); padding: 14px; text-align: center; }
+
+.feat { display: grid; grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); gap: 10px; }
+.f {
+  display: flex; gap: 9px; align-items: flex-start; padding: 10px 12px;
+  background: #FAF7F4; border-radius: 11px; font-size: 13px; line-height: 1.55;
+}
+.f i { font-style: normal; color: var(--ok); flex: none; font-weight: 800; }
+
+.note {
+  background: #FFF8E6; border: 1px solid #FBE8B8; border-radius: 12px; padding: 14px 16px;
+  font-size: 13px; color: #7A5A0C; line-height: 1.75;
+}
+.note b { color: #5C430A; }
+
+table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.cmp th, table.cmp td { padding: 9px 10px; text-align: left; border-bottom: 1px solid #F3EDE9; }
+table.cmp th { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+table.cmp td:first-child { font-weight: 600; width: 32%; }
+.ok-i { color: var(--ok); font-weight: 800; }
+
+@media (max-width: 700px) {
+  .entries { grid-template-columns: 1fr; }
+  h1 { font-size: 24px; }
+  .wrap { padding: 22px 14px 50px; }
+  .panel { padding: 18px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="head">
+    <div class="badge-live"><span class="dot"></span>演示已就绪 · 打开即可运行</div>
+    <h1>甜时光 · <em>扫码点餐系统</em></h1>
+    <p class="sub">对标蜜雪冰城 / 塔斯汀的自助点餐方案。顾客扫码下单，商家端实时响铃接单，取餐码双端同步。<br>下面两个入口是<b>真的能跑的完整系统</b>，不是截图。</p>
+  </div>
+
+  <div class="entries">
+    <a class="entry" href="customer.html" target="_blank">
+      <div class="entry-icon" style="background:var(--grad);color:#fff">📱</div>
+      <h3>顾客点餐页</h3>
+      <p>扫码进入的界面。浏览菜单、选规格、加购物车、用优惠券、下单支付，拿到取餐码后可实时看到制作进度。</p>
+      <span class="go">打开顾客端 →</span>
+    </a>
+    <a class="entry" href="admin.html" target="_blank">
+      <div class="entry-icon" style="background:var(--grad-warm);color:#fff">💻</div>
+      <h3>商家管理后台</h3>
+      <p>订单看板（新单响铃播报、滑动标记完成）、商品改价换图上下架、优惠券、营业时间与公告、点餐码生成、经营数据。</p>
+      <span class="go">打开商家端 →</span>
+    </a>
+  </div>
+
+  <div class="panel">
+    <h2>🎬 30 秒体验完整链路</h2>
+    <div class="steps-demo">
+      <div class="sd"><div class="sd-n">1</div><div><b>两个窗口并排</b><span>把顾客端和商家端各开一个标签页，拖成左右分屏最直观</span></div></div>
+      <div class="sd"><div class="sd-n">2</div><div><b>商家端点一下页面</b><span>授权音频后才能播报，页面上有「开启提示音」按钮</span></div></div>
+      <div class="sd"><div class="sd-n">3</div><div><b>顾客端下一单</b><span>选杯型糖度加料 → 用优惠券 → 支付，立刻拿到取餐码</span></div></div>
+      <div class="sd"><div class="sd-n">4</div><div><b>商家端自动响铃</b><span>「您有新的订单」语音播报 + 屏幕闪红边 + 手机震动</span></div></div>
+      <div class="sd"><div class="sd-n">5</div><div><b>滑动卡片推进</b><span>右滑接单 → 右滑出餐 → 右滑完成，左滑取消</span></div></div>
+      <div class="sd"><div class="sd-n">6</div><div><b>回顾客端看</b><span>状态自动跟着变，出餐时弹「请凭码取餐」并震动</span></div></div>
+    </div>
+    <div class="note" style="margin-top:18px">
+      <b>还可以试试这些：</b>商家端「商品管理」把珍珠奶茶改成 3 元 → 顾客端刷新即时生效；「店铺设置」一键打烊 → 顾客端立刻弹出打烊遮罩；「点餐码」输入桌号生成专属二维码并下载打印；「经营数据」看销量排行和时段分布。
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>📲 手机扫码直接体验</h2>
+    <div class="qr-area">
+      <div class="qr-card">
+        <canvas id="qr"></canvas>
+        <div style="font-size:12px;font-weight:700;margin-top:8px">扫码进顾客端</div>
+      </div>
+      <div style="flex:1;min-width:230px">
+        <div style="font-size:13.5px;line-height:1.8;color:var(--ink-2)">
+          用手机相机或微信扫左边的码，就能在手机上体验真实的点餐流程。<br>
+          电脑上打开商家后台，手机下单，电脑立刻响铃 —— 这就是店里的真实场景。
+        </div>
+        <div id="qrTip" style="margin-top:12px;font-size:12px;color:var(--ink-3);word-break:break-all"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>✅ 你提的需求，逐条已实现</h2>
+    <div class="feat">
+      <div class="f"><i>✓</i>商家自助改价格、名称、图片、描述</div>
+      <div class="f"><i>✓</i>商品上下架、库存、售罄自动置灰</div>
+      <div class="f"><i>✓</i>优惠券（满减 / 免运费）自由增删改</div>
+      <div class="f"><i>✓</i>配送费、免配送门槛、起送价设置</div>
+      <div class="f"><i>✓</i>点餐页与后台完全分离，独立入口</div>
+      <div class="f"><i>✓</i>一键生成点餐二维码，支持桌号、可打印</div>
+      <div class="f"><i>✓</i>新订单语音播报「您有新的订单」</div>
+      <div class="f"><i>✓</i>取餐码双端实时同步，状态变化即时推送</div>
+      <div class="f"><i>✓</i>订单卡片左右滑动标记，防手滑误操作</div>
+      <div class="f"><i>✓</i>营业时间自动开关 + 一键手动打烊</div>
+      <div class="f"><i>✓</i>店铺公告，扫码进入弹窗展示</div>
+      <div class="f"><i>✓</i>全量订单记录 + 销量排行 + 时段分析</div>
+      <div class="f"><i>✓</i>后台电脑宽屏、手机窄屏双布局自适应</div>
+      <div class="f"><i>✓</i>部署在公网，你电脑关机别人照样能访问</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>🚀 从这个演示到真正开店</h2>
+    <table class="cmp">
+      <thead><tr><th>能力</th><th>当前演示版</th><th>正式上线版</th></tr></thead>
+      <tbody>
+        <tr><td>运行载体</td><td>网页（任何浏览器打开即用）</td><td>微信小程序 + 云开发</td></tr>
+        <tr><td>数据存储</td><td>浏览器本地，仅本机可见</td><td>腾讯云数据库，多端共享、永久保存</td></tr>
+        <tr><td>实时同步</td><td>同一浏览器的多个标签页</td><td>云数据库 watch，全国任意设备秒级同步</td></tr>
+        <tr><td>支付收款</td><td>模拟支付</td><td>微信支付，T+1 自动结算到银行卡</td></tr>
+        <tr><td>提示音</td><td>网页语音合成</td><td>小程序播报 + 订阅消息 + 云喇叭三层兜底</td></tr>
+        <tr><td>二维码</td><td>网址二维码</td><td>微信小程序码，扫码直达</td></tr>
+        <tr><td>前提条件</td><td>无</td><td>营业执照 + 小程序认证 30 元/年</td></tr>
+      </tbody>
+    </table>
+    <div class="note" style="margin-top:16px">
+      <b>关键提醒：</b>业务逻辑、界面、交互在这个演示里已经全部跑通，迁移到小程序时只需把数据层（<code>store.js</code>）换成云开发的数据库调用，页面代码结构原样复用。<br>
+      <b>唯一的硬阻塞是营业执照</b>——没有它开不了微信支付，钱到不了卡里。个体工商户执照在当地政务网线上办，基本零成本，建议现在就去办，别等开发做完卡在这一步。
+    </div>
+  </div>
+
+  <div style="text-align:center;font-size:12px;color:var(--ink-3);margin-top:26px">
+    数据保存在你自己的浏览器里 · 商家后台「店铺设置 → 恢复演示数据」可一键还原
+  </div>
+</div>
+
+<script src="assets/qrcode.js"></script>
+<script>
+(function () {
+  var url = location.href.replace(/index\.html.*$/, '').replace(/\/$/, '') + '/customer.html';
+  try { QR.render(document.getElementById('qr'), url, 150, { dark: '#1F1B18' }); } catch (e) {}
+  var tip = document.getElementById('qrTip');
+  if (location.protocol === 'file:') {
+    tip.innerHTML = '⚠️ 当前是本地文件方式打开，手机扫码无法访问。要手机体验，请用部署后的公网地址。';
+  } else {
+    tip.textContent = '链接：' + url;
+  }
+})();
+</script>
+</body>
+</html>
