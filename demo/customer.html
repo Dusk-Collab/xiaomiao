@@ -176,6 +176,23 @@ body { background: var(--bg); }
 .mode-tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--ink-3); transition: all .15s; }
 .mode-tab.on { background: #fff; color: var(--brand); box-shadow: var(--sh-s); }
 
+/* ---- 购物车地址 ---- */
+.cart-addr { background: #FAF7F4; border-radius: 12px; padding: 12px; margin-bottom: 14px; }
+.addr-row { display: flex; gap: 10px; align-items: flex-start; }
+.addr-icon { font-size: 20px; flex: none; margin-top: 1px; }
+.addr-info { flex: 1; min-width: 0; }
+.addr-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.addr-text { font-size: 12px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
+.addr-map { display: inline-flex; align-items: center; gap: 4px; color: var(--brand); font-size: 12px; font-weight: 700; margin-top: 4px; cursor: pointer; }
+.addr-input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; margin-top: 6px; background: #fff; color: var(--ink); }
+.addr-input:focus { outline: none; border-color: var(--brand); }
+.addr-input::placeholder { color: #B8A99A; }
+.addr-locate { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--brand); font-weight: 700; margin-top: 6px; cursor: pointer; background: #fff; border: 1px dashed var(--brand); padding: 7px 10px; border-radius: 8px; text-align: center; justify-content: center; }
+.addr-locate:active { background: #FFF4F0; }
+.pca-row { display: flex; gap: 8px; margin-top: 6px; }
+.addr-select { flex: 1; min-width: 0; padding: 8px 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fff; color: var(--ink); -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; padding-right: 22px; }
+.addr-select:focus { outline: none; border-color: var(--brand); }
+
 /* ---- 订单成功页 ---- */
 #orderPage {
   position: fixed; inset: 0; z-index: 100; background: var(--bg); overflow-y: auto;
@@ -242,43 +259,298 @@ body { background: var(--bg); }
   background: rgba(30,22,18,.85); color: #fff; padding: 6px 14px; border-radius: 999px;
   font-size: 12px; z-index: 60; display: flex; align-items: center; gap: 6px;
 }
+
+/* ---- Tab 导航 ---- */
+.page { display: none; flex-direction: column; flex: 1; min-height: 0; }
+.page.active { display: flex; }
+.page-scroll { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+
+.tabbar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; display: flex; background: #FFFBF3;
+  border-top: 1px solid var(--line); z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 -4px 20px rgba(120, 70, 20, .08);
+}
+.tab-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 8px 0 6px; font-size: 10.5px; color: var(--ink-3); transition: color .15s;
+}
+.tab-item .tab-icon { font-size: 22px; line-height: 1; }
+.tab-item.active { color: var(--brand); font-weight: 700; }
+
+/* ---- 浮动购物车（点餐页） ---- */
+.float-cart {
+  position: fixed; bottom: 58px; left: 50%; transform: translateX(-50%);
+  width: calc(100% - 24px); max-width: 456px; padding: 11px 12px;
+  background: rgba(255, 252, 247, .98); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line); display: none; align-items: center; gap: 12px;
+  z-index: 49; border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(120, 70, 20, .08);
+}
+.float-cart.show { display: flex; }
+
+/* ---- 首页 ---- */
+/* Banner 轮播 */
+.banner-wrap { position: relative; height: 200px; overflow: hidden; margin: 0 0 16px; }
+.banner-track { display: flex; height: 100%; transition: transform .45s cubic-bezier(.25,.8,.25,1); }
+.banner-slide { min-width: 100%; height: 100%; position: relative; display: flex; align-items: flex-end; }
+.banner-slide-img {
+  position: absolute; inset: 0; background-size: cover; background-position: center;
+  filter: brightness(.55);
+}
+.banner-slide-info {
+  position: relative; z-index: 1; padding: 16px 20px; color: #fff; width: 100%;
+  background: linear-gradient(transparent, rgba(0,0,0,.55));
+}
+.banner-slide-tag {
+  display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px;
+  font-weight: 700; margin-bottom: 6px; letter-spacing: .5px;
+}
+.banner-slide-tag.new { background: #FF6B35; }
+.banner-slide-tag.hot { background: #E54A2B; }
+.banner-slide-tag.rec { background: #FFB800; color: #3A2A1A; }
+.banner-slide-name { font-size: 18px; font-weight: 800; letter-spacing: .3px; }
+.banner-slide-price { font-size: 22px; font-weight: 900; margin-top: 4px; }
+.banner-slide-price small { font-size: 12px; font-weight: 600; }
+.banner-slide-desc { font-size: 12px; opacity: .85; margin-top: 3px; }
+.banner-dots {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 7px; z-index: 2;
+}
+.banner-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.45);
+  transition: all .3s;
+}
+.banner-dot.active { background: #fff; width: 20px; border-radius: 4px; }
+
+/* 自取 / 外卖 双卡片 */
+.mode-cards { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.mode-card {
+  background: #fff; border-radius: var(--r-l); padding: 18px 14px; text-align: center;
+  box-shadow: var(--sh-s); transition: transform .15s, box-shadow .15s;
+  position: relative; overflow: hidden;
+}
+.mode-card:active { transform: scale(.96); }
+.mode-card::before {
+  content: ''; position: absolute; top: -20px; right: -20px; width: 70px; height: 70px;
+  border-radius: 50%; opacity: .12;
+}
+.mode-card.pickup::before { background: #E54A2B; }
+.mode-card.delivery::before { background: #4A90D9; }
+.mode-card-icon { font-size: 34px; margin-bottom: 8px; line-height: 1; }
+.mode-card-title { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 4px; }
+.mode-card-desc { font-size: 12px; color: var(--ink-3); }
+.mode-card.pickup { border-top: 3px solid #E54A2B; }
+.mode-card.delivery { border-top: 3px solid #4A90D9; }
+
+/* 分区标题 */
+.section-title {
+  padding: 0 18px 10px; font-size: 15px; font-weight: 800; color: var(--ink);
+  display: flex; align-items: center; gap: 7px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--line); margin-top: 1px;
+}
+
+/* 热销推荐网格 */
+.hot-grid { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.hot-item {
+  background: #fff; border-radius: var(--r-m); padding: 12px; box-shadow: var(--sh-s);
+  display: flex; align-items: center; gap: 10px;
+}
+.hot-item-pic {
+  width: 52px; height: 52px; border-radius: 12px; flex: none;
+  display: grid; place-items: center; font-size: 24px;
+  background-size: cover; background-position: center;
+}
+.hot-item-info { flex: 1; min-width: 0; }
+.hot-item-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.hot-item-sold { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+.hot-item-price { font-size: 15px; font-weight: 800; color: var(--brand); margin-top: 4px; }
+.hot-item-price small { font-size: 10px; font-weight: 700; }
+
+/* 店铺信息卡片 */
+.store-card {
+  margin: 0 16px 20px; background: #fff; border-radius: var(--r-l); padding: 16px 18px;
+  box-shadow: var(--sh-s); display: flex; align-items: center; gap: 12px;
+}
+.store-card-logo {
+  width: 50px; height: 50px; border-radius: 14px; flex: none;
+  background: var(--grad); display: grid; place-items: center; font-size: 22px;
+  background-size: cover; background-position: center;
+}
+.store-card-info { flex: 1; min-width: 0; }
+.store-card-name { font-size: 14px; font-weight: 800; }
+.store-card-hours { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+.store-card-phone { font-size: 24px; color: var(--brand-2); text-decoration: none; }
+
+/* 订单页筛选 */
+.order-filter { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.order-filter-tabs { display: flex; gap: 6px; overflow-x: auto; }
+.order-filter-tab {
+  padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  white-space: nowrap; background: #F5F0EC; color: var(--ink-2); transition: all .15s;
+}
+.order-filter-tab.active { background: var(--grad); color: #fff; box-shadow: 0 3px 10px rgba(232,53,46,.25); }
+.order-filter-tab .n { opacity: .75; margin-left: 3px; font-weight: 500; }
+.order-search { position: relative; }
+.order-search input {
+  width: 100%; padding: 10px 14px 10px 38px; border-radius: 12px; border: 1px solid var(--line);
+  background: #fff; font-size: 13.5px; outline: none; font-family: inherit;
+}
+.order-search input:focus { border-color: var(--brand-2); box-shadow: 0 0 0 3px rgba(232,132,28,.08); }
+.order-search .search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 16px; color: var(--ink-3); pointer-events: none;
+}
+
+/* ---- 我的 ---- */
+.me-header { text-align: center; padding: 24px 16px 20px; }
+.me-avatar {
+  width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 10px;
+  background: var(--grad); color: #fff; display: grid; place-items: center;
+  font-size: 26px; font-weight: 800;
+}
+.me-name { font-size: 17px; font-weight: 800; }
+.me-phone { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.me-list { margin: 0 16px; }
+.me-row {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #fff;
+  border-radius: var(--r-m); margin-bottom: 8px; box-shadow: var(--sh-s); font-size: 14px; font-weight: 600;
+}
+.me-row-icon { font-size: 20px; }
+.me-row .arrow { margin-left: auto; color: var(--ink-3); font-size: 16px; }
+.me-logout { color: #C0392B !important; }
+
+/* ---- 订单列表 ---- */
+.order-card {
+  background: #fff; border-radius: var(--r-m); padding: 14px 16px; margin: 0 16px 10px;
+  box-shadow: var(--sh-s);
+}
+.order-card-top { display: flex; align-items: center; gap: 10px; }
+.order-card-code { font-size: 20px; font-weight: 900; color: var(--brand); letter-spacing: 1px; }
+.order-card-status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.ocs-pending { background: #FEF3E2; color: #C2740A; }
+.ocs-making  { background: #E8F0FE; color: var(--info); }
+.ocs-ready   { background: #E7F6EC; color: var(--ok); }
+.ocs-done    { background: #F1EEEB; color: var(--ink-3); }
+.ocs-canceled{ background: #FEE; color: #C0392B; }
+.order-card-items { font-size: 12px; color: var(--ink-2); margin-top: 8px; line-height: 1.6; }
+.order-card-foot { display: flex; align-items: center; margin-top: 10px; font-size: 11px; color: var(--ink-3); }
+.order-card-total { margin-left: auto; font-weight: 700; color: var(--ink); }
+
+.empty-hint { text-align: center; padding: 40px 20px; }
+.empty-hint .icon { font-size: 48px; opacity: .35; margin-bottom: 10px; }
+.empty-hint .txt { font-size: 13px; color: var(--ink-3); }
+.empty-hint .action { margin-top: 14px; display: inline-block; padding: 9px 24px; background: var(--grad); color: #fff; border-radius: 999px; font-size: 13px; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <div id="app">
-  <div class="hero">
-    <div class="hero-top">
-      <div class="hero-logo" id="shopLogo"><span id="shopLogoInner">🧋</span></div>
-      <div style="min-width:0">
-        <div class="hero-name ell" id="shopName">加载中…</div>
-        <div class="hero-sub ell" id="shopSub"></div>
+
+  <!-- ====== 首页 ====== -->
+  <div class="page active" id="page-home">
+    <div class="page-scroll">
+      <!-- Banner 轮播 -->
+      <div class="banner-wrap" id="bannerWrap">
+        <div class="banner-track" id="bannerTrack"></div>
+        <div class="banner-dots" id="bannerDots"></div>
       </div>
-      <div class="hero-badge" id="openBadge">营业中</div>
-      <div class="sync-badge" id="syncBadge">☁ 连接中…</div>
-    </div>
-    <div class="notice-bar" id="noticeBar" style="display:none">
-      <span style="flex:none">📢</span><span id="noticeText"></span>
+
+      <!-- 自取 / 外卖 -->
+      <div class="mode-cards">
+        <div class="mode-card pickup" onclick="quickPickup()">
+          <div class="mode-card-icon">🏪</div>
+          <div class="mode-card-title">到店自取</div>
+          <div class="mode-card-desc">到店即取 · 免排队</div>
+        </div>
+        <div class="mode-card delivery" onclick="quickDelivery()">
+          <div class="mode-card-icon">🛵</div>
+          <div class="mode-card-title">外卖配送</div>
+          <div class="mode-card-desc">送货上门 · 便捷省心</div>
+        </div>
+      </div>
+
+      <!-- 热销推荐 -->
+      <div class="section-title">🔥 热销推荐</div>
+      <div class="hot-grid" id="hotGrid"></div>
+
+      <!-- 店铺信息 -->
+      <div class="store-card">
+        <div class="store-card-logo" id="homeLogo"><span id="homeLogoInner">🧋</span></div>
+        <div class="store-card-info">
+          <div class="store-card-name" id="homeName">加载中…</div>
+          <div class="store-card-hours" id="homeHours">⏰ 加载中…</div>
+        </div>
+        <a class="store-card-phone" id="homePhone" href="tel:">📞</a>
+      </div>
     </div>
   </div>
 
-  <div class="main">
-    <div class="cats" id="cats"></div>
-    <div class="goods" id="goods"></div>
+  <!-- ====== 点餐 ====== -->
+  <div class="page" id="page-order">
+    <div class="hero">
+      <div class="hero-top">
+        <div class="hero-logo" id="shopLogo"><span id="shopLogoInner">🧋</span></div>
+        <div style="min-width:0">
+          <div class="hero-name ell" id="shopName">加载中…</div>
+          <div class="hero-sub ell" id="shopSub"></div>
+        </div>
+        <div class="hero-badge" id="openBadge">营业中</div>
+        <div class="sync-badge" id="syncBadge">☁ 连接中…</div>
+      </div>
+      <div class="notice-bar" id="noticeBar" style="display:none">
+        <span style="flex:none">📢</span><span id="noticeText"></span>
+      </div>
+    </div>
+    <div class="main">
+      <div class="cats" id="cats"></div>
+      <div class="goods" id="goods"></div>
+    </div>
+  </div>
+
+  <!-- ====== 订单 ====== -->
+  <div class="page" id="page-orders">
+    <div class="page-scroll">
+      <div class="order-filter">
+        <div class="order-filter-tabs" id="orderFilterTabs"></div>
+        <div class="order-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="orderSearchInput" placeholder="搜索订单编号（取餐码）…" oninput="renderOrdersPage()">
+        </div>
+      </div>
+      <div id="ordersContent"></div>
+    </div>
+  </div>
+
+  <!-- ====== 我的 ====== -->
+  <div class="page" id="page-me">
+    <div class="page-scroll">
+      <div class="me-header" onclick="if(!me)showLogin()">
+        <div class="me-avatar" id="meAvatar">🍴</div>
+        <div class="me-name" id="meName">点击登录</div>
+        <div class="me-phone" id="mePhone"></div>
+      </div>
+      <div class="me-list">
+        <div class="me-row" onclick="switchTab('orders')"><span class="me-row-icon">📦</span>我的订单<span class="arrow">›</span></div>
+        <div class="me-row" onclick="showLogin()"><span class="me-row-icon">🔑</span>切换账号<span class="arrow">›</span></div>
+        <div class="me-row me-logout" onclick="logout()" id="meLogout" style="display:none"><span class="me-row-icon">↩</span>退出登录<span class="arrow">›</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="cartbar">
+<!-- 浮动购物车（点餐页） -->
+<div class="float-cart" id="floatCart">
   <div class="cart-icon empty" id="cartIcon">
     <svg viewBox="0 0 32 32" aria-hidden="true">
-      <!-- 车筐（梯形）+ 把手 -->
       <path d="M4 9 L6 21 L23 21 L26 10 Z" />
       <path d="M26 10 L30 10" />
-      <!-- 筐竖条纹 -->
       <line x1="11" y1="11.5" x2="11.5" y2="21" />
       <line x1="16" y1="10.8" x2="16" y2="21" />
       <line x1="21" y1="10.8" x2="20.5" y2="21" />
-      <!-- 两个轮子 -->
       <circle cx="11" cy="26" r="2.6" />
       <circle cx="22" cy="26" r="2.6" />
     </svg>
@@ -289,6 +561,22 @@ body { background: var(--bg); }
     <div class="cart-tip" id="cartTip">未选购商品</div>
   </div>
   <button class="cart-go dis" id="cartGo">去结算</button>
+</div>
+
+<!-- 底部 Tab 导航 -->
+<div class="tabbar">
+  <div class="tab-item active" data-tab="home" onclick="switchTab('home')">
+    <span class="tab-icon">🏠</span>首页
+  </div>
+  <div class="tab-item" data-tab="order" onclick="switchTab('order')">
+    <span class="tab-icon">📋</span>点餐
+  </div>
+  <div class="tab-item" data-tab="orders" onclick="switchTab('orders')">
+    <span class="tab-icon">📦</span>订单
+  </div>
+  <div class="tab-item" data-tab="me" onclick="switchTab('me')">
+    <span class="tab-icon">👤</span>我的
+  </div>
 </div>
 
 <!-- 规格弹窗 -->
@@ -335,15 +623,6 @@ body { background: var(--bg); }
   </div>
 </div>
 
-<!-- 顾客悬浮菜单（含退出登录） -->
-<div id="userFab" style="position:fixed;bottom:84px;right:18px;z-index:55;display:none">
-  <div id="userMenu" style="display:none;position:absolute;bottom:54px;right:0;background:#FFFBF3;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:var(--sh-m);min-width:160px">
-    <div style="padding:10px 12px;font-size:13px;font-weight:700;border-bottom:1px solid var(--line);margin-bottom:4px" id="userMenuName">顾客</div>
-    <div onclick="orderPage()" style="padding:9px 12px;font-size:13px;border-radius:8px;cursor:pointer">📦 我的订单</div>
-    <div onclick="logout()" style="padding:9px 12px;font-size:13px;border-radius:8px;cursor:pointer;color:#C0392B">↩ 退出登录</div>
-  </div>
-  <button onclick="toggleUserMenu()" style="width:48px;height:48px;border-radius:50%;background:var(--grad);color:#fff;border:3px solid #FFFBF3;box-shadow:0 5px 16px rgba(232,132,28,.4);font-size:18px;font-weight:800" id="userAvatar">🍴</button>
-</div>
 
 <!-- 订单详情页 -->
 <div id="orderPage"></div>
@@ -373,16 +652,213 @@ var couponId = null;
 var myOrderId = localStorage.getItem('om_my_order') || null;
 var table = new URLSearchParams(location.search).get('t') || '';
 var me = JSON.parse(localStorage.getItem('om_me') || 'null');   // {name, phone, ts}
+var curTab = 'home';
+var orderFilter = 'all';       // all | active | done | canceled
+var bannerIdx = 0;
+var bannerTimer = null;
+var deliveryAddr = JSON.parse(localStorage.getItem('om_addr') || 'null') || { name: '', phone: '', pca: '', detail: '', p: '', c: '', d: '', lat: 0, lng: 0 }; // 外送地址缓存
 
-/* ================= 工具 ================= */
+/* 地址选择器相关 */
+var areaData = {};
+var areaDataLoaded = false;
+function loadAreaData() {
+  if (areaDataLoaded) return;
+  // 清除旧版缓存（防止之前缓存了错误格式）
+  var cached = localStorage.getItem('area_data_v3');
+  if (!cached) { try { localStorage.removeItem('area_data_v2'); } catch(e){} }
+  if (cached) { try { areaData = JSON.parse(cached); areaDataLoaded = true; return; } catch(e) {} }
+  // 加载 pca.json（省→市→区 对象格式，不是数组）
+  var url1 = 'https://raw.githubusercontent.com/modood/Administrative-divisions-of-China/master/dist/pca.json';
+  var url2 = 'https://cdn.jsdelivr.net/gh/modood/Administrative-divisions-of-China@master/dist/pca.json';
+  fetch(url1)
+    .then(function(r){ return r.json(); })
+    .then(function(d){ normalizeAreaData(d); })
+    .catch(function(){ fetch(url2)
+      .then(function(r){ return r.json(); })
+      .then(function(d){ normalizeAreaData(d); })
+      .catch(function(){ toast('地址数据加载失败，请检查网络'); });
+    });
+}
+function normalizeAreaData(raw) {
+  // pca.json 格式: { "北京市": { "市辖区": ["东城区",...] }, "河北省": { "石家庄市": [...] } }
+  // 将直辖市 "市辖区" 替换为省份名本身，这样市下拉显示 "北京市" 而非 "市辖区"
+  var out = {};
+  for (var p in raw) {
+    if (!raw.hasOwnProperty(p)) continue;
+    var cities = raw[p];
+    if (typeof cities !== 'object') continue;
+    var ckeys = Object.keys(cities);
+    if (ckeys.length === 1 && ckeys[0] === '市辖区') {
+      out[p] = {};
+      out[p][p] = cities['市辖区'];
+    } else {
+      out[p] = cities;
+    }
+  }
+  areaData = out; areaDataLoaded = true;
+  try { localStorage.setItem('area_data_v3', JSON.stringify(out)); } catch(e){}
+}
+loadAreaData(); // 页面加载时预加载
+
+function renderPcaSelects() {
+  var psel = $('pSelect'), csel = $('cSelect'), dsel = $('dSelect');
+  if (!psel || !areaData) {
+    if (!areaDataLoaded) setTimeout(renderPcaSelects, 400);
+    return;
+  }
+  var provs = Object.keys(areaData).sort();
+  psel.innerHTML = '<option value="">省</option>' + provs.map(function(p){ return '<option value="'+p+'">'+p+'</option>'; }).join('');
+  if (deliveryAddr.p) psel.value = deliveryAddr.p;
+  onProvinceChange(true);
+}
+function onProvinceChange(skipSave) {
+  var psel = $('pSelect'), csel = $('cSelect'), dsel = $('dSelect');
+  if (!psel || !csel) return;
+  var p = psel.value;
+  csel.innerHTML = '<option value="">市</option>';
+  dsel.innerHTML = '<option value="">区/县</option>';
+  if (!p || !areaData[p]) return;
+  var cities = areaData[p];
+  if (Array.isArray(cities)) {
+    csel.innerHTML = '<option value="">市</option><option value="'+p+'">'+p+'</option>';
+    dsel.innerHTML = '<option value="">区/县</option>' + cities.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  } else {
+    var ckeys = Object.keys(cities).sort();
+    csel.innerHTML = '<option value="">市</option>' + ckeys.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('');
+  }
+  if (deliveryAddr.c && !skipSave) csel.value = deliveryAddr.c;
+  onCityChange(skipSave);
+  if (!skipSave) saveAddr();
+}
+function onCityChange(skipSave) {
+  var psel = $('pSelect'), csel = $('cSelect'), dsel = $('dSelect');
+  if (!csel || !dsel) return;
+  var p = psel.value, c = csel.value;
+  dsel.innerHTML = '<option value="">区/县</option>';
+  if (!p || !c || !areaData[p]) return;
+  var cities = areaData[p];
+  if (Array.isArray(cities)) {
+    dsel.innerHTML = '<option value="">区/县</option>' + cities.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  } else if (cities[c] && Array.isArray(cities[c])) {
+    dsel.innerHTML = '<option value="">区/县</option>' + cities[c].map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+  }
+  if (deliveryAddr.d && !skipSave) dsel.value = deliveryAddr.d;
+  if (!skipSave) saveAddr();
+}
+function onDistrictChange() { saveAddr(); }
+
+function startGpsLocate() {
+  if (!navigator.geolocation) { toast('您的浏览器不支持 GPS 定位'); tryIpLocate(); return; }
+  toast('正在定位…', 20000); // 延长提示时间
+  var btn = document.querySelector('.addr-locate');
+  if (btn) { btn.textContent = '定位中…'; btn.style.opacity = '0.7'; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    if (btn) { btn.textContent = '🎯 自动定位当前位置'; btn.style.opacity = ''; }
+    var lat = pos.coords.latitude, lng = pos.coords.longitude;
+    deliveryAddr.lat = lat; deliveryAddr.lng = lng;
+    // 优先用高德逆地理编码
+    var gk = localStorage.getItem('amap_key') || '';
+    if (gk) {
+      fetch('https://restapi.amap.com/v3/geocode/regeo?key='+gk+'&location='+lng+','+lat+'&extensions=base')
+        .then(function(r){ return r.json(); })
+        .then(function(data){ if (data.status==='1' && data.regeocode) fillGeo(data.regeocode.addressComponent, data.regeocode, lat, lng); else tryNominatim(lat,lng); })
+        .catch(function(){ tryNominatim(lat,lng); });
+    } else { tryNominatim(lat,lng); }
+  }, function(err){
+    if (btn) { btn.textContent = '🎯 自动定位当前位置'; btn.style.opacity = ''; }
+    var msg = {1:'请允许浏览器获取定位权限',2:'定位服务不可用',3:'定位超时'}[err.code] || '定位失败';
+    toast(msg);
+    // GPS 失败后尝试 IP 定位
+    tryIpLocate();
+  }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+}
+function tryIpLocate() {
+  // 使用 IP 定位作为降级方案（无需 GPS 权限）
+  toast('尝试用 IP 定位…', 8000);
+  fetch('https://whois.pconline.com.cn/ipJson.jsp?json=true')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if (data && data.pro) {
+        // data.pro = 省份, data.city = 城市, data.addr = 完整地址
+        fillSelects(data.pro, data.city || '', '', data.addr || '', 0, 0);
+        toast('已根据 IP 定位到 ' + data.pro + ' ' + (data.city||''));
+      } else { toast('IP 定位失败，请手动选择省市区'); }
+    })
+    .catch(function(){ toast('IP 定位失败，请手动选择省市区'); });
+}
+function tryNominatim(lat,lng) {
+  fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1&accept-language=zh-CN')
+    .then(function(r){ return r.json(); })
+    .then(function(data){ fillNominatim(data, lat, lng); })
+    .catch(function(){ toast('定位成功，但地址解析失败，请手动选择'); });
+}
+function fillNominatim(data, lat, lng) {
+  var comp = data && data.address ? data.address : {};
+  var p = comp.province || comp.state || '', c = comp.city || '', d = comp.suburb || comp.district || comp.county || '';
+  var road = comp.road || comp.pedestrian || comp.cycleway || '', number = comp.house_number || '';
+  var detail = (road + ' ' + number).trim() || (comp.town || comp.village || '');
+  fillSelects(p, c, d, detail, lat, lng);
+}
+function fillGeo(comp, regeo, lat, lng) {
+  var p = comp.province || '', c = comp.city || comp.district || '', d = comp.district || comp.township || '';
+  var detail = (comp.street || '') + (comp.streetNumber || '');
+  if (!detail && regeo && regeo.formatted_address) {
+    detail = regeo.formatted_address.replace(p,'').replace(c,'').replace(d,'').trim();
+  }
+  fillSelects(p, c, d, detail, lat, lng);
+}
+function fillSelects(p, c, d, detail, lat, lng) {
+  // 模糊匹配并设置 select
+  if (!areaDataLoaded || !areaData) { toast('地址数据尚未加载，请稍后重试'); return; }
+  var pMatch = findMatch(Object.keys(areaData), p);
+  if (pMatch) {
+    $('pSelect').value = pMatch; onProvinceChange(true);
+    var cities = areaData[pMatch];
+    // pca.json 格式: cities 总是对象 { 市名: [区县] }
+    var cMatch = findMatch(Object.keys(cities), c);
+    if (!cMatch && c.indexOf(pMatch) === 0) { cMatch = findMatch(Object.keys(cities), pMatch); } // 直辖市 city 和 province 相同
+    if (cMatch) {
+      $('cSelect').value = cMatch; onCityChange(true);
+      var districts = cities[cMatch] || [];
+      var dMatch = findMatch(districts, d);
+      if (dMatch) { $('dSelect').value = dMatch; }
+    }
+  }
+  if (detail) $('detailInput').value = detail;
+  deliveryAddr.lat = lat; deliveryAddr.lng = lng;
+  saveAddr(); toast('已定位并填写地址');
+  drawCart(); // 刷新购物车显示
+}
+function findMatch(arr, val) {
+  if (!val || !arr || !arr.length) return '';
+  var v = val.replace(/省$|市$|自治区$|自治州$|地区$|盟$/, '');
+  for (var i=0;i<arr.length;i++) if (arr[i] === val) return arr[i];
+  for (var i=0;i<arr.length;i++) if (arr[i].replace(/省$|市$|自治区$|自治州$|地区$|盟$/, '') === v) return arr[i];
+  return '';
+}
+function openMapAddr() {
+  var full = (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + (deliveryAddr.detail || '');
+  if (!full) return;
+  var q = encodeURIComponent(full);
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) { location.href = 'http://maps.apple.com/?q=' + q; }
+  else { location.href = 'https://uri.amap.com/search?keyword=' + q; }
+}
 function $(id) { return document.getElementById(id); }
 function money(n) { return Store.money(n); }
-function toast(msg) {
+function toast(msg, duration) {
   var t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, duration || 1600);
 }
 function openMask(id) { $(id).classList.add('show'); }
 function closeMask(id) { $(id).classList.remove('show'); }
+function openMap(address) {
+  var q = encodeURIComponent(address);
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.open('http://maps.apple.com/?q=' + q, '_blank');
+  } else {
+    window.open('https://uri.amap.com/search?keyword=' + q, '_blank');
+  }
+}
 document.querySelectorAll('.mask').forEach(function (m) {
   m.addEventListener('click', function (e) { if (e.target === m) m.classList.remove('show'); });
 });
@@ -397,44 +873,51 @@ function doLogin() {
   var n = ($('loginName').value || '').trim();
   var p = ($('loginPhone').value || '').trim();
   if (!n) { toast('请填写昵称'); return; }
-  me = { name: n, phone: p, wechat: false, ts: Date.now() };
+  var existing = JSON.parse(localStorage.getItem('om_me') || 'null');
+  me = {
+    name: n, phone: p, wechat: false, ts: Date.now(),
+    cid: (existing && existing.cid) ? existing.cid : ('c' + Date.now() + Math.floor(Math.random() * 9000 + 1000))
+  };
   localStorage.setItem('om_me', JSON.stringify(me));
   hideLogin(); onLoggedIn();
 }
 function doWechatLogin() {
-  /* 演示版"微信一键登录"——在真生产应换 wx.login + 业务侧 session_key 校验 */
   var nick = '微信用户 ' + Math.floor(Math.random() * 9000 + 1000);
-  me = { name: nick, phone: '', wechat: true, ts: Date.now() };
+  var existing = JSON.parse(localStorage.getItem('om_me') || 'null');
+  me = {
+    name: nick, phone: '', wechat: true, ts: Date.now(),
+    cid: (existing && existing.cid) ? existing.cid : ('c' + Date.now() + Math.floor(Math.random() * 9000 + 1000))
+  };
   localStorage.setItem('om_me', JSON.stringify(me));
   hideLogin(); onLoggedIn();
 }
 function onLoggedIn() {
-  /* 已登录状态：显示悬浮菜单，关闭登录层 */
-  $('userFab').style.display = 'block';
-  $('userMenuName').textContent = (me.wechat ? '🟢 ' : '👋 ') + me.name;
-  /* 把微信昵称里的 "微信用户 " 那条用头像首字母显示 */
-  var initial = me.name.slice(-2, -1) || me.name.slice(0, 1);
-  $('userAvatar').textContent = me.wechat ? 'W' : initial;
+  renderMePage();
   toast(me.wechat ? '已用微信登录' : ('你好，' + me.name));
 }
-function toggleUserMenu() { $('userMenu').style.display = $('userMenu').style.display === 'block' ? 'none' : 'block'; }
 function logout() {
   if (!confirm('退出登录？退出后无法查看历史订单。')) return;
   localStorage.removeItem('om_me'); me = null;
-  $('userMenu').style.display = 'none'; $('userFab').style.display = 'none';
-  showLogin();
+  renderMePage();
   toast('已退出登录');
 }
-document.addEventListener('click', function (e) {
-  var fab = $('userFab'); if (!fab) return;
-  if (!fab.contains(e.target)) $('userMenu').style.display = 'none';
-});
 
-function orderPage() {
-  if (myOrderId && Store.getOrder(myOrderId)) { renderOrderPage(); }
-  else { toast('当前没有进行中的订单'); }
+/* ================= Tab 切换 ================= */
+function switchTab(tab) {
+  curTab = tab;
+  document.querySelectorAll('.page').forEach(function (p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab-item').forEach(function (t) { t.classList.remove('active'); });
+  var page = $('page-' + tab); if (page) page.classList.add('active');
+  var ti = document.querySelector('.tab-item[data-tab="' + tab + '"]'); if (ti) ti.classList.add('active');
+  if (tab === 'order') { $('floatCart').classList.add('show'); renderCart(); }
+  else { $('floatCart').classList.remove('show'); }
+  if (tab === 'orders') renderOrdersPage();
+  if (tab === 'me') renderMePage();
+  if (tab === 'home') renderHomePage();
 }
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+function quickPickup() { mode = 'pickup'; switchTab('order'); }
+function quickDelivery() { mode = 'delivery'; switchTab('order'); }
 
 /* ================= 渲染 ================= */
 function boot() {
@@ -443,17 +926,141 @@ function boot() {
   renderCats();
   renderGoods();
   renderCart();
-  if (myOrderId && Store.getOrder(myOrderId)) renderOrderPage();
+  renderHomePage();
+  if (myOrderId && Store.getOrder(myOrderId)) { }
   if (D.shop.noticeOn && D.shop.notice && !sessionStorage.getItem('om_notice_seen')) {
     setTimeout(function () { $('noticePop').textContent = D.shop.notice; openMask('noticeMask'); sessionStorage.setItem('om_notice_seen', '1'); }, 400);
   }
   Store.initSync();
   Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 
-  /* 顾客登录：未登录弹登录层，已登录显示悬浮菜单 */
-  if (!me) { setTimeout(showLogin, 100); }
+  /* 登录检查 */
+  if (!me) { }
   else { onLoggedIn(); }
+
+  /* 默认停在首页 */
+  switchTab('home');
 }
+
+function renderHomePage() {
+  /* 店铺信息卡片 */
+  var logo = $('homeLogo'), inner = $('homeLogoInner');
+  if (D.shop.logoImg) {
+    logo.style.backgroundImage = 'url(' + D.shop.logoImg + ')';
+    logo.style.backgroundSize = 'cover';
+    logo.style.backgroundPosition = 'center';
+    inner.textContent = '';
+  } else {
+    logo.style.backgroundImage = '';
+    logo.style.background = 'var(--grad)';
+    inner.textContent = D.shop.logo || '🥐';
+  }
+  $('homeName').textContent = D.shop.name;
+  var open = Store.isOpenNow(D);
+  var hh = $('homeHours');
+  hh.innerHTML = (open ? '<span style="color:var(--ok);font-size:14px">🟢</span> 营业中' : '<span style="color:#C0392B;font-size:14px">🔴</span> 已打烊')
+    + ' · ' + D.shop.hours.start + ' - ' + D.shop.hours.end;
+  var ph = $('homePhone');
+  if (D.shop.phone) { ph.href = 'tel:' + D.shop.phone; ph.title = esc(D.shop.phone); ph.style.display = ''; }
+  else { ph.style.display = 'none'; }
+
+  /* Banner 轮播 */
+  renderBanner();
+
+  /* 热销推荐 */
+  renderHotItems();
+}
+
+/* Banner */
+function renderBanner() {
+  // 优先显示商家标记为 banner 的商品，没有则取热销商品
+  var bannerProducts = D.products.filter(function (p) { return p.on && p.stock > 0 && p.banner; });
+  if (bannerProducts.length === 0) {
+    bannerProducts = D.products.filter(function (p) { return p.on && p.stock > 0 && p.hot; });
+  }
+  if (bannerProducts.length === 0) {
+    $('bannerWrap').style.display = 'none'; return;
+  }
+  $('bannerWrap').style.display = '';
+
+  var slides = bannerProducts.slice(0, Math.min(6, bannerProducts.length));
+  var DEFAULT_TAGS = ['新品推荐', '人气热销', '店长推荐', '限时特惠', '爆款回归', '今日推荐'];
+
+  var trackHTML = slides.map(function (p, i) {
+    var tagLabel = p.bannerTag || DEFAULT_TAGS[i % DEFAULT_TAGS.length];
+    // 描述：只显示商家真正填写的，过滤掉占位文字
+    var desc = p.desc && p.desc !== '点击编辑描述' ? p.desc : '';
+    return '<div class="banner-slide" onclick="switchTab(\'order\');scrollToProduct(\'' + p.id + '\')" style="cursor:pointer">'
+      + (p.img ? '<div class="banner-slide-img" style="background-image:url(\'' + p.img + '\')"></div>' : '')
+      + '<div class="banner-slide-info" style="' + (p.img ? '' : 'background:linear-gradient(135deg,' + p.color + ',' + p.color.replace('FF','E8') + ');color:#3A2A1A') + '">'
+      + '<div class="banner-slide-tag new">' + esc(tagLabel) + '</div>'
+      + '<div class="banner-slide-name">' + esc(p.name) + '</div>'
+      + (desc ? '<div class="banner-slide-desc">' + esc(desc) + '</div>' : '')
+      + '<div class="banner-slide-price"><small>¥</small>' + p.price + '</div>'
+      + '</div></div>';
+  }).join('');
+
+  $('bannerTrack').innerHTML = trackHTML;
+  $('bannerDots').innerHTML = slides.map(function (_, i) {
+    return '<div class="banner-dot' + (i === bannerIdx ? ' active' : '') + '" onclick="bannerTo(' + i + ')"></div>';
+  }).join('');
+
+  // 自适应修正索引
+  if (bannerIdx >= slides.length) bannerIdx = 0;
+  $('bannerTrack').style.transform = 'translateX(-' + (bannerIdx * 100) + '%)';
+
+  // 自动轮播
+  clearInterval(bannerTimer);
+  if (slides.length > 1) {
+    bannerTimer = setInterval(function () {
+      bannerIdx = (bannerIdx + 1) % slides.length;
+      if (curTab === 'home') {
+        $('bannerTrack').style.transform = 'translateX(-' + (bannerIdx * 100) + '%)';
+        var dots = $('bannerDots').children;
+        for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('active', i === bannerIdx);
+      }
+    }, 3500);
+  }
+}
+function bannerTo(i) {
+  bannerIdx = i;
+  $('bannerTrack').style.transform = 'translateX(-' + (i * 100) + '%)';
+  var dots = $('bannerDots').children;
+  for (var j = 0; j < dots.length; j++) dots[j].classList.toggle('active', j === i);
+}
+
+/* 热销推荐 */
+function renderHotItems() {
+  // 按销量排序取前 4 个上架且有库存的商品
+  var hot = D.products.filter(function (p) { return p.on && p.stock > 0; });
+  hot.sort(function (a, b) { return b.sold - a.sold; });
+  var items = hot.slice(0, 4);
+  var html = items.map(function (p) {
+    return '<div class="hot-item" onclick="switchTab(\'order\');scrollToProduct(\'' + p.id + '\')">'
+      + '<div class="hot-item-pic' + (p.img ? ' has-img' : '') + '" style="'
+      + (p.img ? 'background-image:url(\'' + p.img + '\')' : 'background:' + p.color) + '">'
+      + (p.img ? '' : p.emoji) + '</div>'
+      + '<div class="hot-item-info">'
+      + '<div class="hot-item-name ell">' + esc(p.name) + '</div>'
+      + '<div class="hot-item-sold">月售 ' + p.sold + '</div>'
+      + '<div class="hot-item-price"><small>¥</small>' + p.price + '</div>'
+      + '</div></div>';
+  }).join('');
+  $('hotGrid').innerHTML = html || '<div style="grid-column:1/-1;text-align:center;color:var(--ink-3);font-size:13px;padding:20px">暂无商品</div>';
+}
+
+function scrollToProduct(pid) {
+  setTimeout(function () {
+    // 找到商品所在分类并切换到该分类
+    var p = D.products.find(function (x) { return x.id === pid; });
+    if (p) {
+      var ci = D.categories.indexOf(p.cat);
+      if (ci >= 0) { curCat = ci; renderCats(); renderGoods(); }
+    }
+  }, 300);
+}
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
 function renderSyncBadge(s) {
   var el = $('syncBadge'); if (!el) return;
@@ -522,7 +1129,7 @@ function renderGoods() {
       + (off ? '<div class="soldout">已售罄</div>' : '') + '</div>'
       + '<div class="item-info">'
       + '<div class="item-name">' + esc(p.name) + (p.hot ? '<span class="tag tag-hot">热销</span>' : '') + '</div>'
-      + '<div class="item-desc ell">' + esc(p.desc) + '</div>'
+      + (p.desc && p.desc !== '点击编辑描述' ? '<div class="item-desc ell">' + esc(p.desc) + '</div>' : '')
       + '<div class="item-sold">月售 ' + p.sold + (p.stock < 100 ? ' · 剩 ' + p.stock + ' 份' : '') + '</div>'
       + '<div class="item-bottom">'
       + (p.old ? '<span class="price-old">¥' + p.old + '</span>' : '')
@@ -556,7 +1163,7 @@ function drawSpec() {
   var html = '<div class="spec-head">'
     + '<div class="spec-pic" style="background:' + p.color + '">' + p.emoji + '</div>'
     + '<div><div style="font-size:16px;font-weight:800">' + esc(p.name) + '</div>'
-    + '<div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">' + esc(p.desc) + '</div>'
+    + (p.desc && p.desc !== '点击编辑描述' ? '<div style="font-size:11.5px;color:var(--ink-3);margin-top:3px">' + esc(p.desc) + '</div>' : '')
     + '<div class="price" style="margin-top:6px"><small>¥</small>' + unit.toFixed(2) + '</div></div></div>';
 
   ['cup', 'temp', 'sugar'].forEach(function (k) {
@@ -626,16 +1233,17 @@ function goodsTotal() { return cart.reduce(function (s, c) { return s + c.price 
 function calcBill() {
   var g = goodsTotal();
   var ship = (mode === 'delivery' && g > 0) ? D.settings.deliveryFee : 0;
+  var pack = (mode === 'delivery' && g > 0) ? (D.settings.packingFee || 0) : 0;
   var cp = D.coupons.find(function (c) { return c.id === couponId && c.on; });
   var cut = 0, cname = '';
   if (cp && g >= cp.threshold) {
     cname = cp.name;
     if (cp.type === 'cash') cut = Math.min(cp.value, g);
-    else if (cp.type === 'ship') { cut = ship; }
+    else if (cp.type === 'ship') { cut = ship + pack; }
   }
-  if (mode === 'delivery' && g >= D.settings.freeDeliveryAt) { ship = 0; if (cp && cp.type === 'ship') cut = 0; }
-  var total = Math.max(0, g + ship - cut);
-  return { goods: g, ship: ship, cut: cut, cname: cname, total: total };
+  if (mode === 'delivery' && g >= D.settings.freeDeliveryAt) { ship = 0; if (cp && cp.type === 'ship') cut = pack; }
+  var total = Math.max(0, g + ship + pack - cut);
+  return { goods: g, ship: ship, pack: pack, cut: cut, cname: cname, total: total };
 }
 
 function renderCart() {
@@ -654,6 +1262,9 @@ function renderCart() {
   var go = $('cartGo');
   go.className = 'cart-go' + (ok ? '' : ' dis');
   go.textContent = ok ? '去结算' : (n ? '差 ' + money(min - b.goods) : '去结算');
+  /* 浮动购物车只在点餐页显示 */
+  if (curTab === 'order') { $('floatCart').classList.add('show'); }
+  else { $('floatCart').classList.remove('show'); }
   if ($('cartMask').classList.contains('show')) drawCart();
 }
 
@@ -671,6 +1282,35 @@ function drawCart() {
   html += '<div class="mode-tabs">'
     + '<div class="mode-tab' + (mode === 'pickup' ? ' on' : '') + '" onclick="setMode(\'pickup\')">🏪 到店自取</div>'
     + '<div class="mode-tab' + (mode === 'delivery' ? ' on' : '') + '" onclick="setMode(\'delivery\')">🛵 外送到家</div></div>';
+
+  /* 地址区域 */
+  if (mode === 'pickup') {
+    var shopAddr = D.shop.address || '商家地址';
+    html += '<div class="cart-addr">'
+      + '<div class="addr-row">'
+      + '<div class="addr-icon">🏪</div>'
+      + '<div class="addr-info">'
+      + '<div class="addr-title">到店自取</div>'
+      + '<div class="addr-text">' + esc(shopAddr) + '</div>'
+      + '<div class="addr-map" onclick="openMap(\'' + esc(shopAddr).replace(/'/g, "\\'") + '\')">📍 查看地图导航</div>'
+      + '</div></div></div>';
+  } else {
+    html += '<div class="cart-addr">'
+      + '<div class="addr-row">'
+      + '<div class="addr-icon">🛵</div>'
+      + '<div class="addr-info">'
+      + '<div class="addr-title">配送地址</div>'
+      + '<input class="addr-input" id="addrName" placeholder="收件人姓名" value="' + esc(deliveryAddr.name || '') + '" oninput="saveAddr()">'
+      + '<input class="addr-input" id="addrPhone" placeholder="联系电话" value="' + esc(deliveryAddr.phone || '') + '" oninput="saveAddr()">'
+      + '<div class="pca-row">'
+      + '<select class="addr-select" id="pSelect" onchange="onProvinceChange()"><option value="">省</option></select>'
+      + '<select class="addr-select" id="cSelect" onchange="onCityChange()"><option value="">市</option></select>'
+      + '<select class="addr-select" id="dSelect" onchange="onDistrictChange()"><option value="">区/县</option></select></div>'
+      + '<input class="addr-input" id="detailInput" placeholder="详细地址（街道/门牌号/小区/楼层）" value="' + esc(deliveryAddr.detail || '') + '" oninput="saveAddr()">'
+      + '<div class="addr-locate" onclick="startGpsLocate()"><span>🎯</span> 自动定位当前位置</div>'
+      + (deliveryAddr.detail ? '<div class="addr-map" onclick="openMapAddr()">📍 在地图中查看地址</div>' : '')
+      + '</div></div></div>';
+  }
 
   cart.forEach(function (c, i) {
     html += '<div class="cart-line">'
@@ -697,6 +1337,7 @@ function drawCart() {
   html += '<div style="padding-top:11px">'
     + '<div class="sum-row"><span>商品小计</span><span class="mono">' + money(b.goods) + '</span></div>'
     + (mode === 'delivery' ? '<div class="sum-row"><span>配送费' + (b.ship === 0 ? '（已满 ¥' + D.settings.freeDeliveryAt + ' 免配送）' : '') + '</span><span class="mono">' + money(b.ship) + '</span></div>' : '')
+    + (mode === 'delivery' && b.pack > 0 ? '<div class="sum-row"><span>打包费</span><span class="mono">' + money(b.pack) + '</span></div>' : '')
     + (b.cut ? '<div class="sum-row"><span>优惠券 · ' + esc(b.cname) + '</span><span class="mono cut">-' + money(b.cut) + '</span></div>' : '')
     + '<div class="sum-row total"><span>合计</span><span class="mono">' + money(b.total) + '</span></div></div>';
 
@@ -706,9 +1347,50 @@ function drawCart() {
     + '<div style="text-align:center;font-size:11px;color:var(--ink-3);margin-top:9px">演示环境，点击即模拟支付成功</div>';
 
   $('cartSheet').innerHTML = html;
+  setTimeout(renderPcaSelects, 0);
 }
 
 function setMode(m) { mode = m; renderCart(); drawCart(); }
+function saveAddr() {
+  var p = ($('pSelect') && $('pSelect').value) || deliveryAddr.p || '';
+  var c = ($('cSelect') && $('cSelect').value) || deliveryAddr.c || '';
+  var d = ($('dSelect') && $('dSelect').value) || deliveryAddr.d || '';
+  var detail = ($('detailInput') && $('detailInput').value) || deliveryAddr.detail || '';
+  var pca = (p && c && d) ? (p + ' ' + c + ' ' + d) : (deliveryAddr.pca || '');
+  deliveryAddr = {
+    name: ($('addrName') && $('addrName').value) || '',
+    phone: ($('addrPhone') && $('addrPhone').value) || '',
+    pca: pca,
+    detail: detail,
+    p: p, c: c, d: d,
+    lat: deliveryAddr.lat || 0,
+    lng: deliveryAddr.lng || 0
+  };
+  localStorage.setItem('om_addr', JSON.stringify(deliveryAddr));
+}
+function openAddressPicker() {
+  // 已集成到当前页面，直接启动定位
+  startGpsLocate();
+}
+function restoreCartState() {
+  var saved = sessionStorage.getItem('om_cart');
+  if (saved) {
+    try { cart = JSON.parse(saved); } catch(e) {}
+    var m = sessionStorage.getItem('om_mode'); if (m) mode = m;
+    var cid = sessionStorage.getItem('om_couponId'); if (cid) couponId = cid;
+    var rem = sessionStorage.getItem('om_remark'); if (rem) window._remark = rem;
+    sessionStorage.removeItem('om_cart');
+    sessionStorage.removeItem('om_mode');
+    sessionStorage.removeItem('om_couponId');
+    sessionStorage.removeItem('om_remark');
+  }
+}
+// 页面初始化时恢复状态
+setTimeout(restoreCartState, 100);
+function openMapAddr() {
+  var full = (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + (deliveryAddr.detail || '');
+  openMap(full);
+}
 function lineStep(i, d) {
   cart[i].qty += d;
   if (cart[i].qty <= 0) cart.splice(i, 1);
@@ -748,11 +1430,17 @@ function submitOrder() {
   if (btn) { btn.disabled = true; btn.textContent = '支付中…'; }
 
   setTimeout(function () {
+    var addr = mode === 'pickup'
+      ? (D.shop.address || '到店自取')
+      : (deliveryAddr.detail ? (deliveryAddr.name + ' ' + deliveryAddr.phone + ' ' + (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + deliveryAddr.detail) : '外送到家');
     var order = Store.createOrder({
       items: cart.map(function (c) { return { name: c.name, spec: c.spec, price: c.price, qty: c.qty, emoji: c.emoji, color: c.color, img: c.img }; }),
       goodsTotal: b.goods, deliveryFee: b.ship, discount: b.cut, couponName: b.cname,
       total: b.total, mode: mode, remark: window._remark || '', table: table,
-      customer: me ? { name: me.name, phone: me.phone || '', wechat: !!me.wechat } : null
+      customerId: me ? me.cid : '',
+      customerName: me ? me.name : '',
+      address: addr,
+      phone: mode === 'delivery' ? deliveryAddr.phone : (me ? me.phone : '')
     });
     myOrderId = order.id;
     localStorage.setItem('om_my_order', order.id);
@@ -764,10 +1452,121 @@ function submitOrder() {
   }, 700);
 }
 
+/* ================= 我的页面 ================= */
+function renderMePage() {
+  if (me) {
+    var initial = me.name.slice(-2, -1) || me.name.slice(0, 1);
+    $('meAvatar').textContent = me.wechat ? 'W' : initial;
+    $('meName').textContent = me.name;
+    $('mePhone').textContent = me.phone || '';
+    $('meLogout').style.display = 'flex';
+  } else {
+    $('meAvatar').textContent = '🍴';
+    $('meName').textContent = '点击登录';
+    $('mePhone').textContent = '';
+    $('meLogout').style.display = 'none';
+  }
+}
+
+/* ================= 订单列表页面 ================= */
+function renderOrdersPage() {
+  // 只显示当前顾客自己的订单
+  var myCid = me ? me.cid : '';
+  var allOrders = D.orders.filter(function (o) {
+    return o.customerId && o.customerId === myCid;
+  }).sort(function (a, b) { return b.createdAt - a.createdAt; });
+
+  // 统计各状态数量
+  var counts = { all: allOrders.length, active: 0, done: 0, canceled: 0 };
+  allOrders.forEach(function (o) {
+    if (o.status === 'pending' || o.status === 'making' || o.status === 'ready') counts.active++;
+    else if (o.status === 'done') counts.done++;
+    else if (o.status === 'canceled') counts.canceled++;
+  });
+
+  // 渲染筛选 tabs
+  var FTABS = [
+    { k: 'all',    t: '全部' },
+    { k: 'active', t: '进行中' },
+    { k: 'done',   t: '已完成' },
+    { k: 'canceled', t: '已取消' }
+  ];
+  $('orderFilterTabs').innerHTML = FTABS.map(function (ft) {
+    return '<div class="order-filter-tab' + (orderFilter === ft.k ? ' active' : '') + '" onclick="setOrderFilter(\'' + ft.k + '\')">'
+      + ft.t + '<span class="n">' + counts[ft.k] + '</span></div>';
+  }).join('');
+
+  // 搜索过滤
+  var searchTerm = ($('orderSearchInput').value || '').trim().toLowerCase();
+
+  // 按状态筛选
+  var filtered = allOrders;
+  if (orderFilter === 'active') {
+    filtered = allOrders.filter(function (o) { return o.status === 'pending' || o.status === 'making' || o.status === 'ready'; });
+  } else if (orderFilter === 'done') {
+    filtered = allOrders.filter(function (o) { return o.status === 'done'; });
+  } else if (orderFilter === 'canceled') {
+    filtered = allOrders.filter(function (o) { return o.status === 'canceled'; });
+  }
+
+  // 按编号搜索
+  if (searchTerm) {
+    filtered = filtered.filter(function (o) {
+      return o.code.toLowerCase().indexOf(searchTerm) >= 0
+        || o.id.toLowerCase().indexOf(searchTerm) >= 0;
+    });
+  }
+
+  var html = '';
+  if (!filtered.length) {
+    if (searchTerm) {
+      html = '<div class="empty-hint"><div class="icon">🔍</div><div class="txt">没有找到匹配「' + esc(searchTerm) + '」的订单</div></div>';
+    } else {
+      var emptyMsg = { all: '还没有订单', active: '没有进行中的订单', done: '没有已完成的订单', canceled: '没有已取消的订单' };
+      html = '<div class="empty-hint"><div class="icon">📦</div><div class="txt">' + (emptyMsg[orderFilter] || '暂无订单') + '</div><div class="action" onclick="switchTab(\'order\')">去点餐</div></div>';
+    }
+  }
+
+  filtered.forEach(function (o) {
+    var SC = { pending: 'ocs-pending', making: 'ocs-making', ready: 'ocs-ready', done: 'ocs-done', canceled: 'ocs-canceled' };
+    var ST = Store.STATUS_TEXT;
+    var items = o.items.slice(0, 3).map(function (it) { return it.name + (it.spec ? '(' + it.spec + ')' : ''); }).join('、');
+    if (o.items.length > 3) items += ' 等' + o.items.length + '件';
+    html += '<div class="order-card" onclick="viewOrder(\'' + o.id + '\')">'
+      + '<div class="order-card-top">'
+      + '<div class="order-card-code">' + o.code + '</div>'
+      + '<div class="order-card-status ' + (SC[o.status] || '') + '">' + ST[o.status] + '</div>'
+      + '<div style="margin-left:auto;font-size:12px;color:var(--ink-3)">' + new Date(o.createdAt).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) + '</div>'
+      + '</div>'
+      + '<div class="order-card-items ell">' + esc(items) + '</div>'
+      + '<div class="order-card-foot"><span>' + (o.mode === 'delivery' ? '🛵 外送' : '🏪 自取') + '</span>'
+      + (o.address && o.address !== '到店自取' && o.address !== '外送到家' ? '<span style="font-size:11px;color:var(--ink-3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(o.address.substring(0, 20)) + '</span>' : '')
+      + '<span class="order-card-total">' + money(o.total) + '</span></div></div>';
+  });
+  $('ordersContent').innerHTML = html;
+}
+function setOrderFilter(f) { orderFilter = f; $('orderSearchInput').value = ''; renderOrdersPage(); }
+
+function viewOrder(id) {
+  var o = Store.getOrder(id);
+  if (!o) { toast('订单不存在'); return; }
+  if (me && o.customerId && o.customerId !== me.cid) { toast('无法查看该订单'); return; }
+  myOrderId = id;
+  localStorage.setItem('om_my_order', id);
+  renderOrderPage();
+}
+
 /* ================= 订单页 ================= */
 function renderOrderPage() {
   var o = Store.getOrder(myOrderId);
   if (!o) { $('orderPage').classList.remove('show'); return; }
+  // 安全检查：确认订单属于当前顾客
+  if (me && o.customerId && o.customerId !== me.cid) {
+    $('orderPage').classList.remove('show');
+    switchTab('orders');
+    toast('无法查看该订单');
+    return;
+  }
   var SP = { pending: 'sp-pending', making: 'sp-making', ready: 'sp-ready', done: 'sp-done', canceled: 'sp-done' };
   var TIP = {
     pending: '已通知商家，等待接单…',
@@ -800,6 +1599,14 @@ function renderOrderPage() {
         + (si > s[1] ? '✓' : (s[1] + 1)) + '</div><div class="step-txt">' + s[0] + '</div></div>';
     }).join('') + '</div>';
   }
+
+  /* 地址卡片 */
+  var addrText = o.address || (o.mode === 'pickup' ? '到店自取' : '外送到家');
+  html += '<div class="op-card" style="cursor:pointer" onclick="openMap(\'' + esc(addrText).replace(/'/g, "\\'") + '\')">'
+    + '<h4>' + (o.mode === 'pickup' ? '🏪 商家地址' : '🛵 配送地址') + '</h4>'
+    + '<div style="font-size:13.5px;color:var(--ink);line-height:1.6">' + esc(addrText) + '</div>'
+    + '<div style="font-size:12px;color:var(--brand);margin-top:6px;font-weight:700">📍 点击导航到地图</div>'
+    + '</div>';
 
   html += '<div class="op-card"><h4>🧾 商品清单</h4>';
   o.items.forEach(function (it) {
@@ -837,7 +1644,7 @@ function kv(k, v) {
   return '<div style="display:flex;padding:5px 0;font-size:13px"><span style="color:var(--ink-3)">' + k + '</span>'
     + '<span style="margin-left:auto;text-align:right;max-width:62%">' + esc(v) + '</span></div>';
 }
-function backToMenu() { $('orderPage').classList.remove('show'); }
+function backToMenu() { $('orderPage').classList.remove('show'); switchTab('orders'); }
 
 /* ================= 实时同步 ================= */
 var lastStatus = null;
@@ -847,6 +1654,9 @@ Store.onChange(function (data) {
   renderCats();
   renderGoods();
   renderCart();
+  if (curTab === 'home') renderHomePage();
+  if (curTab === 'orders') renderOrdersPage();
+  if (curTab === 'me') renderMePage();
   if (myOrderId) {
     var o = Store.getOrder(myOrderId);
     if (o) {
@@ -856,11 +1666,12 @@ Store.onChange(function (data) {
       }
       lastStatus = o.status;
       if ($('orderPage').classList.contains('show')) renderOrderPage();
+      if (curTab === 'orders') renderOrdersPage();
     }
   }
 });
 
-setInterval(function () { renderShop(); }, 30000);   // 定时刷新营业状态
+setInterval(function () { renderShop(); if (curTab === 'home') renderHomePage(); }, 30000);
 
 boot();
 if (myOrderId) { var o0 = Store.getOrder(myOrderId); if (o0) lastStatus = o0.status; }

@@ -33,6 +33,7 @@
       },
       settings: {
         deliveryFee: 3,
+        packingFee: 1,
         freeDeliveryAt: 25,
         minOrder: 10,
         soundOn: true,
@@ -41,18 +42,18 @@
       },
       categories: ['招牌套餐', '中式早餐', '西式面包', '豆浆饮品', '小吃配菜'],
       products: [
-        { id: 'p1',  name: '豆浆油条套餐',   price: 6,  old: 8,  cat: '招牌套餐', emoji: '🥢', color: '#FFF1DD', desc: '现磨豆浆 + 现炸油条',     on: true,  stock: 999, hot: true,  sold: 1288 },
-        { id: 'p2',  name: '皮蛋瘦肉粥',     price: 8,  old: 10, cat: '中式早餐', emoji: '🍲', color: '#FFE9D6', desc: '现熬 30 分钟，米粒开花', on: true,  stock: 999, hot: true,  sold: 962 },
-        { id: 'p3',  name: '小笼包 6 个',    price: 7,  old: 0,  cat: '中式早餐', emoji: '🥟', color: '#F0E2D0', desc: '皮薄馅足，趁热吃',       on: true,  stock: 999, hot: false, sold: 2104 },
-        { id: 'p4',  name: '茶叶蛋',         price: 2,  old: 0,  cat: '小吃配菜', emoji: '🥚', color: '#F8E2C5', desc: '卤香入味，每天现卤',     on: true,  stock: 60,  hot: false, sold: 733 },
-        { id: 'p5',  name: '现磨豆浆',       price: 4,  old: 0,  cat: '豆浆饮品', emoji: '🥛', color: '#FFF6E5', desc: '黄豆现磨，无添加糖',     on: true,  stock: 40,  hot: false, sold: 512 },
-        { id: 'p6',  name: '甜豆浆',         price: 4,  old: 0,  cat: '豆浆饮品', emoji: '☕', color: '#FFEDD0', desc: '现磨豆浆 + 白砂糖',       on: true,  stock: 999, hot: true,  sold: 3011 },
-        { id: 'p7',  name: '葱油饼',         price: 5,  old: 7,  cat: '中式早餐', emoji: '🥞', color: '#FFEABF', desc: '现煎两面金黄，外酥里软', on: true,  stock: 30,  hot: false, sold: 288 },
-        { id: 'p8',  name: '肉夹馍',         price: 8,  old: 0,  cat: '中式早餐', emoji: '🌮', color: '#F4DEC2', desc: '腊汁肉 + 现烤白吉馍',     on: true,  stock: 999, hot: false, sold: 401 },
-        { id: 'p9',  name: '火腿三明治',     price: 9,  old: 0,  cat: '西式面包', emoji: '🥪', color: '#FFE4C6', desc: '现烤吐司 + 火腿 + 生菜', on: true,  stock: 80,  hot: false, sold: 655 },
-        { id: 'p10', name: '金枪鱼三明治',   price: 11, old: 0,  cat: '西式面包', emoji: '🥙', color: '#FFE0D6', desc: '沙拉酱 + 玉米粒',         on: true,  stock: 25,  hot: false, sold: 344 },
-        { id: 'p11', name: '可颂牛角包',     price: 6,  old: 0,  cat: '西式面包', emoji: '🥐', color: '#FFEFCB', desc: '黄油可颂，烤箱加热',     on: true,  stock: 999, hot: false, sold: 897 },
-        { id: 'p12', name: '酸辣萝卜条',     price: 3,  old: 0,  cat: '小吃配菜', emoji: '🥒', color: '#FFF7E0', desc: '解腻开胃，每日现拌',     on: false, stock: 0,   hot: false, sold: 199 }
+        { id: 'p1',  name: '豆浆油条套餐',   price: 6,  old: 8,  cat: '招牌套餐', emoji: '🥢', color: '#FFF1DD', desc: '现磨豆浆 + 现炸油条',     on: true,  stock: 999, hot: true,  sold: 1288, banner: true,  bannerTag: '店长推荐' },
+        { id: 'p2',  name: '皮蛋瘦肉粥',     price: 8,  old: 10, cat: '中式早餐', emoji: '🍲', color: '#FFE9D6', desc: '现熬 30 分钟，米粒开花', on: true,  stock: 999, hot: true,  sold: 962,  banner: true,  bannerTag: '人气热销' },
+        { id: 'p3',  name: '小笼包 6 个',    price: 7,  old: 0,  cat: '中式早餐', emoji: '🥟', color: '#F0E2D0', desc: '皮薄馅足，趁热吃',       on: true,  stock: 999, hot: false, sold: 2104, banner: true,  bannerTag: '新品推荐' },
+        { id: 'p4',  name: '茶叶蛋',         price: 2,  old: 0,  cat: '小吃配菜', emoji: '🥚', color: '#F8E2C5', desc: '卤香入味，每天现卤',     on: true,  stock: 60,  hot: false, sold: 733,  banner: false, bannerTag: '' },
+        { id: 'p5',  name: '现磨豆浆',       price: 4,  old: 0,  cat: '豆浆饮品', emoji: '🥛', color: '#FFF6E5', desc: '黄豆现磨，无添加糖',     on: true,  stock: 40,  hot: false, sold: 512,  banner: false, bannerTag: '' },
+        { id: 'p6',  name: '甜豆浆',         price: 4,  old: 0,  cat: '豆浆饮品', emoji: '☕', color: '#FFEDD0', desc: '现磨豆浆 + 白砂糖',       on: true,  stock: 999, hot: true,  sold: 3011, banner: true,  bannerTag: '限时特惠' },
+        { id: 'p7',  name: '葱油饼',         price: 5,  old: 7,  cat: '中式早餐', emoji: '🥞', color: '#FFEABF', desc: '现煎两面金黄，外酥里软', on: true,  stock: 30,  hot: false, sold: 288,  banner: false, bannerTag: '' },
+        { id: 'p8',  name: '肉夹馍',         price: 8,  old: 0,  cat: '中式早餐', emoji: '🌮', color: '#F4DEC2', desc: '腊汁肉 + 现烤白吉馍',     on: true,  stock: 999, hot: false, sold: 401,  banner: false, bannerTag: '' },
+        { id: 'p9',  name: '火腿三明治',     price: 9,  old: 0,  cat: '西式面包', emoji: '🥪', color: '#FFE4C6', desc: '现烤吐司 + 火腿 + 生菜', on: true,  stock: 80,  hot: false, sold: 655,  banner: false, bannerTag: '' },
+        { id: 'p10', name: '金枪鱼三明治',   price: 11, old: 0,  cat: '西式面包', emoji: '🥙', color: '#FFE0D6', desc: '沙拉酱 + 玉米粒',         on: true,  stock: 25,  hot: false, sold: 344,  banner: false, bannerTag: '' },
+        { id: 'p11', name: '可颂牛角包',     price: 6,  old: 0,  cat: '西式面包', emoji: '🥐', color: '#FFEFCB', desc: '黄油可颂，烤箱加热',     on: true,  stock: 999, hot: false, sold: 897,  banner: false, bannerTag: '' },
+        { id: 'p12', name: '酸辣萝卜条',     price: 3,  old: 0,  cat: '小吃配菜', emoji: '🥒', color: '#FFF7E0', desc: '解腻开胃，每日现拌',     on: false, stock: 0,   hot: false, sold: 199,  banner: false, bannerTag: '' }
       ],
       specs: {
         cup:   { label: '杯型', required: true,  options: [{ n: '中杯', p: 0 }, { n: '大杯', p: 2 }] },
@@ -186,6 +187,8 @@
       var order = {
         id: 'o' + Date.now() + Math.floor(Math.random() * 900 + 100),
         code: code,
+        customerId: payload.customerId || '',
+        customerName: payload.customerName || '',
         items: payload.items,
         goodsTotal: payload.goodsTotal,
         deliveryFee: payload.deliveryFee,
@@ -195,6 +198,7 @@
         mode: payload.mode,            // pickup | delivery
         remark: payload.remark || '',
         phone: payload.phone || '',
+        address: payload.address || '',
         table: payload.table || '',
         status: 'pending',             // pending -> making -> ready -> done
         createdAt: Date.now(),
@@ -202,7 +206,6 @@
         isNew: true
       };
       d.orders.unshift(order);
-      if (d.orders.length > 200) d.orders.length = 200;
       return order;
     });
   }
