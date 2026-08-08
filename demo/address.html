@@ -747,8 +747,8 @@ function doRealSearch(q){
     }
   }
 
-  // 计数：OSM总是跑 + 高德(如果有key)×2 + 本地兜底
-  totalEngines = 1 + (amapKey ? 2 : 0) + 1;
+  // 计数：Photon + Nominatim×2 + 高德(如果有key)×2 + 本地兜底
+  totalEngines = 3 + (amapKey ? 2 : 0) + 1;
 
   // ---- 引擎1：高德 inputtips（POI 联想，国内最准）—— 用 JSONP 绕过 CORS ----
   if(amapKey){
@@ -799,9 +799,46 @@ function doRealSearch(q){
     engineDone += 2; // 没有高德key，这两个引擎直接跳过
   }
 
-  // ---- 引擎2：OpenStreetMap Nominatim（免费、无需 key、全球可用）----
+  // ---- 引擎2：Photon（Komoot 出品，OSM 数据，搜索质量远超 Nominatim，支持 CORS，免费无 key）----
   (function(){
-    var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=20&accept-language=zh-CN,zh&countrycodes=cn&extratags=1';
+    var url='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=20&lang=zh';
+    fetch(url, {mode:'cors'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(data){
+      if(data&&data.features){
+        for(var i=0;i<data.features.length;i++){
+          var f=data.features[i];
+          var coords=f.geometry.coordinates;
+          var p=f.properties;
+          var name=p.name||(q);
+          var city=p.city||p.town||p.state||p.county||'';
+          var country=p.country||'';
+          var street=p.street||p.road||'';
+          var fullAddr=[name, street, city, p.state, country].filter(Boolean).join(', ');
+          var icon='📍';
+          if(p.osm_key && p.osm_key==='building'){ icon='🏢'; }
+          else if(p.osm_value==='house'||p.osm_value==='apartments'){ icon='🏠'; }
+          else if(p.osm_key==='highway'){ icon='🛣️'; }
+          else if(p.osm_key==='place'||p.osm_value==='village'){ icon='🏘️'; }
+          var html='<div class="suggest-item" onclick="pickOsm('+coords[0]+','+coords[1]+',\''+jq(name)+'\',\''+jq(fullAddr.substring(0,80))+'\',\''+jq(city||p.state||'')+'\')"'
+            +'><div class="suggest-icon">'+icon+'</div><div class="suggest-body">'
+            + '<div class="suggest-name">'+highlight(esc(name), q)+'</div>'
+            + '<div class="suggest-addr">'+esc([city, street, p.state].filter(Boolean).join(' ') || fullAddr.substring(0,50))+'</div></div></div>';
+          var w=65;
+          if(p.osm_key==='building'||p.osm_value==='apartments') w=95;
+          else if(p.osm_value==='village'||p.osm_value==='town') w=75;
+          else if(p.osm_value==='city') w=55;
+          addItem(html, name, coords[0], coords[1], w);
+        }
+      }
+      tickDone();
+    }).catch(function(){ tickDone(); });
+  })();
+
+  // ---- 引擎3：OpenStreetMap Nominatim（免费、无需 key、全球可用）----
+  (function(){
+    var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=15&accept-language=zh-CN,zh,en&extratags=1&featuretype=settlement,hamlet,neighbourhood,village,farm,residential,suburb,city,town';
     fetch(url, {mode:'cors'}).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
@@ -819,7 +856,7 @@ function doRealSearch(q){
           else if(type==='suburb'||type==='neighbourhood'){ icon='🏡'; }
           var addrParts=[];
           if(m.address){
-            if(m.address.state && addrParts.indexOf(m.address.state)<0) addrParts.push(m.address.state);
+            if(m.address.state) addrParts.push(m.address.state);
             if(m.address.city || m.address.town || m.address.county) addrParts.push(m.address.city||m.address.town||m.address.county);
             if(m.address.suburb) addrParts.push(m.address.suburb);
             if(m.address.road) addrParts.push(m.address.road);
@@ -829,10 +866,34 @@ function doRealSearch(q){
             + '<div class="suggest-name">'+highlight(esc(shortName), q)+'</div>'
             + '<div class="suggest-addr">'+esc(addrParts.join(' ') || displayName.substring(0,50))+'</div></div></div>';
           var w=50;
-          if(type==='apartments'||cls==='building') w=90;
-          else if(type==='village'||type==='town') w=70;
-          else if(type==='city'||type==='county') w=55;
+          if(type==='apartments'||cls==='building') w=88;
+          else if(type==='village'||type==='town') w=68;
+          else if(type==='city'||type==='county') w=52;
           addItem(html, shortName, parseFloat(m.lon), parseFloat(m.lat), w);
+        }
+      }
+      tickDone();
+    }).catch(function(){ tickDone(); });
+  })();
+
+  // ---- 引擎3b：Nominatim 第二轮（放宽限制搜国际 + 模糊匹配）----
+  (function(){
+    var url2='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=10&accept-language=en,zh&dedupe=1&polygon_geojson=0';
+    fetch(url2, {mode:'cors'}).then(function(r){
+      if(!r.ok) return null; // 静默失败
+      return r.json();
+    }).then(function(data){
+      if(data&&data.length){
+        for(var j=0;j<data.length;j++){
+          var m=data[j];
+          var sn=m.name||(m.display_name.split(',')[0]||q);
+          var dn=(m.display_name||'').replace(/,/g,' ').substring(0,70);
+          var st=m.address&&m.address.state?m.address.state:'';
+          var html='<div class="suggest-item" onclick="pickOsm('+m.lon+','+m.lat+',\''+jq(sn)+'\',\''+jq(dn)+'\',\''+jq(st)+'\')"'
+            +'><div class="suggest-icon">🌍</div><div class="suggest-body">'
+            + '<div class="suggest-name">'+highlight(esc(sn), q)+'</div>'
+            + '<div class="suggest-addr">'+esc(dn)+'</div></div></div>';
+          addItem(html, sn, parseFloat(m.lon), parseFloat(m.lat), 45);
         }
       }
       tickDone();
@@ -857,8 +918,8 @@ function doRealSearch(q){
     tickDone();
   }, 1500);
 
-  // ---- 超时兜底：3秒后不管引擎是否都返回，先渲染已有结果 ----
-  setTimeout(function(){ renderFinal(); }, 3500);
+  // ---- 超时兜底：5秒后不管引擎是否都返回，先渲染已有结果 ----
+  setTimeout(function(){ renderFinal(); }, 5000);
 }
 
 /* 点击高德地理编码结果（村庄/乡镇级） */
