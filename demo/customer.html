@@ -193,6 +193,39 @@ body { background: var(--bg); }
 .addr-select { flex: 1; min-width: 0; padding: 8px 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fff; color: var(--ink); -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; padding-right: 22px; }
 .addr-select:focus { outline: none; border-color: var(--brand); }
 
+/* ---- 地址搜索（本地区划，离线秒填） ---- */
+.addr-search-wrap { position: relative; margin-top: 6px; }
+.addr-search { width: 100%; padding: 9px 10px 9px 30px; border: 1.5px solid var(--brand); border-radius: 9px; font-size: 13px; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23E8552B' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.7' y2='16.7'%3E%3C/line%3E%3C/svg%3E") no-repeat 9px center; color: var(--ink); }
+.addr-search:focus { outline: none; box-shadow: 0 0 0 3px rgba(232,85,43,.13); }
+.addr-search::placeholder { color: #C0B0A2; }
+.addr-sugg { position: absolute; left: 0; right: 0; top: calc(100% + 4px); background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgba(60,40,20,.16); max-height: 208px; overflow-y: auto; z-index: 30; display: none; }
+.addr-sugg.show { display: block; }
+.addr-sugg-item { padding: 9px 11px; font-size: 13px; color: var(--ink); cursor: pointer; border-bottom: 1px solid #F4EEE8; line-height: 1.4; }
+.addr-sugg-item:last-child { border-bottom: none; }
+.addr-sugg-item:active, .addr-sugg-item:hover { background: #FFF4F0; }
+.addr-sugg-item b { color: var(--brand); font-weight: 800; }
+.addr-sugg-empty { padding: 12px; font-size: 12px; color: var(--ink-3); text-align: center; }
+.addr-hint { font-size: 11px; color: var(--ink-3); margin-top: 5px; line-height: 1.5; }
+.addr-gps-ok { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #1B9A59; font-weight: 700; background: #E9F8F0; border-radius: 5px; padding: 2px 6px; margin-top: 5px; }
+
+/* ---- 常用地址卡片 ---- */
+.addr-book { display: flex; gap: 7px; overflow-x: auto; margin-top: 7px; padding-bottom: 3px; -webkit-overflow-scrolling: touch; }
+.addr-book::-webkit-scrollbar { display: none; }
+.addr-book-card { flex: none; max-width: 205px; background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; cursor: pointer; position: relative; }
+.addr-book-card:active { border-color: var(--brand); background: #FFF7F4; }
+.addr-book-name { font-size: 12px; font-weight: 700; color: var(--ink); }
+.addr-book-text { font-size: 11px; color: var(--ink-2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.addr-book-del { position: absolute; top: -5px; right: -5px; width: 17px; height: 17px; border-radius: 50%; background: #C9BDB2; color: #fff; font-size: 11px; line-height: 17px; text-align: center; }
+
+/* ---- 地图 App 选择面板 ---- */
+.mapapp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+.mapapp-item { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px; border-radius: 12px; background: #FAF7F4; cursor: pointer; }
+.mapapp-item:active { background: #FFF0EA; }
+.mapapp-ico { width: 42px; height: 42px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 21px; color: #fff; font-weight: 800; }
+.mapapp-name { font-size: 11px; color: var(--ink-2); font-weight: 600; }
+.mapapp-tip { font-size: 11px; color: var(--ink-3); text-align: center; margin-top: 12px; line-height: 1.6; }
+.mapapp-addr { background: #FAF7F4; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.55; margin-top: 4px; }
+
 /* ---- 订单成功页 ---- */
 #orderPage {
   position: fixed; inset: 0; z-index: 100; background: var(--bg); overflow-y: auto;
@@ -594,6 +627,11 @@ body { background: var(--bg); }
   <div class="sheet" id="couponSheet"></div>
 </div>
 
+<!-- 选择地图 App 弹窗 -->
+<div class="mask" id="mapMask">
+  <div class="sheet" id="mapSheet"></div>
+</div>
+
 <!-- 公告弹窗 -->
 <div class="mask center" id="noticeMask">
   <div class="sheet" style="text-align:center;padding:26px 22px">
@@ -747,44 +785,274 @@ function onCityChange(skipSave) {
 }
 function onDistrictChange() { saveAddr(); }
 
+/* ========== 地址关键词搜索（本地区划数据，离线、0 延迟、无需任何 API key） ========== */
+var pcaIndex = null;   // [{p,c,d,key}] 约 3000 条，首次搜索时惰性构建
+function buildPcaIndex() {
+  if (pcaIndex) return pcaIndex;
+  if (!areaDataLoaded || !areaData) return null;
+  var idx = [];
+  var strip = function(s){ return s.replace(/(省|市|自治区|自治州|地区|盟|区|县|旗|自治县|新区)$/g, ''); };
+  for (var p in areaData) {
+    if (!areaData.hasOwnProperty(p)) continue;
+    var cities = areaData[p];
+    var ckeys = Array.isArray(cities) ? [p] : Object.keys(cities);
+    for (var i = 0; i < ckeys.length; i++) {
+      var c = ckeys[i];
+      var districts = Array.isArray(cities) ? cities : (cities[c] || []);
+      for (var j = 0; j < districts.length; j++) {
+        var d = districts[j];
+        // key 同时收录全称与去后缀简称，让"朝阳""天河""浦东"都能命中
+        idx.push({ p: p, c: c, d: d, key: (p + c + d + strip(p) + strip(c) + strip(d)).toLowerCase() });
+      }
+    }
+  }
+  pcaIndex = idx;
+  return idx;
+}
+function searchPca(q) {
+  var idx = buildPcaIndex();
+  if (!idx) return null;                       // 数据还没加载好
+  q = (q || '').trim().toLowerCase();
+  if (!q) return [];
+  var words = q.split(/[\s,，]+/).filter(Boolean);
+  var exact = [], fuzzy = [];
+  for (var i = 0; i < idx.length; i++) {
+    var it = idx[i], hitAll = true;
+    for (var w = 0; w < words.length; w++) { if (it.key.indexOf(words[w]) < 0) { hitAll = false; break; } }
+    if (!hitAll) continue;
+    // 命中"区/县"名的排前面，命中省市名的排后面 —— 用户搜的通常是区县
+    if (it.d.toLowerCase().indexOf(words[words.length - 1]) === 0) exact.push(it); else fuzzy.push(it);
+    if (exact.length + fuzzy.length > 400) break;
+  }
+  return exact.concat(fuzzy).slice(0, 20);
+}
+function onAddrSearch(q) {
+  var box = $('addrSugg');
+  if (!box) return;
+  if (!(q || '').trim()) { box.classList.remove('show'); box.innerHTML = ''; return; }
+  var res = searchPca(q);
+  if (res === null) { box.innerHTML = '<div class="addr-sugg-empty">地址数据加载中，请稍候…</div>'; box.classList.add('show'); return; }
+  if (!res.length) { box.innerHTML = '<div class="addr-sugg-empty">没找到「' + esc(q) + '」，换个关键词试试<br>比如只输区县名：朝阳 / 天河 / 锦江</div>'; box.classList.add('show'); return; }
+  box.innerHTML = res.slice(0, 8).map(function(it){
+    var label = (it.p === it.c) ? (it.p + ' · ' + it.d) : (it.p + ' · ' + it.c + ' · ' + it.d);
+    return '<div class="addr-sugg-item" onclick="applyPcaPick(\'' + jsq(it.p) + '\',\'' + jsq(it.c) + '\',\'' + jsq(it.d) + '\')">'
+      + label.replace(esc(it.d), '<b>' + esc(it.d) + '</b>') + '</div>';
+  }).join('');
+  box.classList.add('show');
+}
+function jsq(s) { return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function applyPcaPick(p, c, d) {
+  if ($('pSelect')) { $('pSelect').value = p; onProvinceChange(true); }
+  if ($('cSelect')) { $('cSelect').value = c; onCityChange(true); }
+  if ($('dSelect')) { $('dSelect').value = d; }
+  deliveryAddr.p = p; deliveryAddr.c = c; deliveryAddr.d = d;
+  var box = $('addrSugg'); if (box) { box.classList.remove('show'); box.innerHTML = ''; }
+  if ($('addrSearch')) $('addrSearch').value = '';
+  saveAddr();
+  toast('已选：' + (p === c ? p : p + ' ' + c) + ' ' + d + '，请补充详细地址', 2600);
+  var di = $('detailInput'); if (di) { di.focus(); }
+}
+
+/* ========== 常用地址（历史地址一键复用） ========== */
+function getAddrBook() { try { return JSON.parse(localStorage.getItem('om_addr_book') || '[]'); } catch(e) { return []; } }
+function pushAddrBook(a) {
+  if (!a || !a.detail || !a.pca) return;
+  var book = getAddrBook();
+  var sig = a.pca + '|' + a.detail;
+  book = book.filter(function(x){ return (x.pca + '|' + x.detail) !== sig; });
+  book.unshift({ name: a.name || '', phone: a.phone || '', pca: a.pca, detail: a.detail, p: a.p, c: a.c, d: a.d, lat: a.lat || 0, lng: a.lng || 0 });
+  localStorage.setItem('om_addr_book', JSON.stringify(book.slice(0, 5)));
+}
+function useAddrBook(i) {
+  var book = getAddrBook(); var a = book[i];
+  if (!a) return;
+  deliveryAddr = { name: a.name, phone: a.phone, pca: a.pca, detail: a.detail, p: a.p, c: a.c, d: a.d, lat: a.lat || 0, lng: a.lng || 0 };
+  localStorage.setItem('om_addr', JSON.stringify(deliveryAddr));
+  drawCart();  // drawCart 才是重绘购物车弹窗（renderCart 只更新底部悬浮栏）
+  toast('已填入：' + a.detail, 2200);
+}
+function delAddrBook(i, ev) {
+  if (ev) ev.stopPropagation();
+  var book = getAddrBook(); book.splice(i, 1);
+  localStorage.setItem('om_addr_book', JSON.stringify(book));
+  drawCart();
+}
+
+/* ========== 定位：只负责拿坐标（给骑手导航用），不再假装能填地址 ========== */
 function startGpsLocate() {
   var btn = document.querySelector('.addr-locate');
-  if (btn) { btn.textContent = '定位中…'; btn.style.opacity = '0.7'; }
-  function finishBtn(){ if (btn) { btn.textContent = '📍 定位我的位置（地图选点）'; btn.style.opacity = ''; } }
-  function goPicker(center, hint) {
-    finishBtn();
-    if (hint) toast(hint, 2500);
-    openAmapPicker(center);
+  var btnHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '定位中…'; btn.style.opacity = '0.65'; }
+  function done(){ if (btn) { btn.innerHTML = btnHtml; btn.style.opacity = ''; } }
+  function focusSearch(){ var s = $('addrSearch'); if (s) { s.focus(); } }
+
+  if (!navigator.geolocation) {
+    done(); toast('当前浏览器不支持定位，请在上方搜索框选择区县', 3200); focusSearch(); return;
   }
-  if (!navigator.geolocation) { goPicker(null, '正在打开地图选点…'); return; }
-  toast('正在定位…', 6000);
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat = pos.coords.latitude, lng = pos.coords.longitude;
-    deliveryAddr.lat = lat; deliveryAddr.lng = lng; saveAddr(); // 立即保存坐标
+    deliveryAddr.lat = lat; deliveryAddr.lng = lng;
+    localStorage.setItem('om_addr', JSON.stringify(deliveryAddr));
     var gk = localStorage.getItem('amap_key') || '';
     if (gk) {
-      // 有高德 key：直接逆地理，一步到位（无需再选点）
-      fetch('https://restapi.amap.com/v3/geocode/regeo?key='+gk+'&location='+lng+','+lat+'&extensions=base')
+      // 配了高德 key 才能把坐标翻译成文字地址（一步到位）
+      fetch('https://restapi.amap.com/v3/geocode/regeo?key=' + gk + '&location=' + lng + ',' + lat + '&extensions=base')
         .then(function(r){ return r.json(); })
-        .then(function(data){ if (data.status==='1' && data.regeocode) { fillGeo(data.regeocode.addressComponent, data.regeocode, lat, lng); finishBtn(); } else goPicker({lat:lat,lng:lng}); })
-        .catch(function(){ goPicker({lat:lat,lng:lng}); });
-    } else {
-      // 无 key：拿到坐标后打开高德地图选点，让用户确认精确位置（墙内最稳、无需 key）
-      goPicker({lat:lat,lng:lng}, '已获取定位，请在地图上确认位置');
+        .then(function(data){
+          done();
+          if (data.status === '1' && data.regeocode) fillGeo(data.regeocode.addressComponent, data.regeocode, lat, lng);
+          else { drawCart(); toast('已记录位置坐标 ✓ 请在上方搜索框选择区县', 3200); focusSearch(); }
+        })
+        .catch(function(){ done(); drawCart(); toast('已记录位置坐标 ✓ 请在上方搜索框选择区县', 3200); focusSearch(); });
+      return;
     }
+    done();
+    drawCart(); // 重绘购物车弹窗以显示"坐标已获取"绿标
+    toast('已记录位置坐标 ✓ 骑手可精准导航到你这里，地址请在上方搜索框选', 3600);
+    focusSearch();
   }, function(err){
+    done();
     var inWeChat = /MicroMessenger/i.test(navigator.userAgent);
-    // GPS 失败（拒绝/不支持/微信内受限）→ 直接打开地图选点，体验依然顺
-    goPicker(null, inWeChat ? '微信内定位受限，请在地图中选点' : '正在打开地图选点…');
-  }, {enableHighAccuracy:false, timeout:6000, maximumAge:3000});
+    var msg = err && err.code === 1
+      ? (inWeChat ? '定位权限被拒绝。微信内需在「设置-隐私-定位服务」开启' : '定位权限被拒绝，请在浏览器地址栏左侧允许定位')
+      : (inWeChat ? '微信内定位超时，直接在上方搜索框选区县更快' : '定位超时，直接在上方搜索框选区县更快');
+    toast(msg, 3600);
+    focusSearch();
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
 }
-function openAmapPicker(center) {
-  // 高德地图选点（keyless，墙内可用）：打开地图让用户点选，确认后 AMap 会重定向回本页并带上地址参数
-  var base = location.origin + location.pathname; // 去掉 query，避免 AMap 拼接出错
-  var url = 'https://m.amap.com/picker/?src=xiaomiao&coordinate=gaode&callnative=1&referer=' + encodeURIComponent(base);
-  if (center && center.lat && center.lng) url += '&center=' + center.lng + ',' + center.lat;
-  toast('正在打开地图选点…', 3000);
-  setTimeout(function(){ location.href = url; }, 300);
+
+/* ========== 坐标系转换：GPS(WGS84) → 高德/腾讯(GCJ02) → 百度(BD09) ==========
+   不转的话在国内会偏移 300~500 米，骑手会送错门。 */
+var _PI = 3.1415926535897932384626, _A = 6378245.0, _EE = 0.00669342162296594323;
+function _outOfChina(lat, lng) { return (lng < 72.004 || lng > 137.8347) || (lat < 0.8293 || lat > 55.8271); }
+function _transLat(x, y) {
+  var r = -100.0 + 2.0*x + 3.0*y + 0.2*y*y + 0.1*x*y + 0.2*Math.sqrt(Math.abs(x));
+  r += (20.0*Math.sin(6.0*x*_PI) + 20.0*Math.sin(2.0*x*_PI)) * 2.0/3.0;
+  r += (20.0*Math.sin(y*_PI) + 40.0*Math.sin(y/3.0*_PI)) * 2.0/3.0;
+  r += (160.0*Math.sin(y/12.0*_PI) + 320*Math.sin(y*_PI/30.0)) * 2.0/3.0;
+  return r;
+}
+function _transLng(x, y) {
+  var r = 300.0 + x + 2.0*y + 0.1*x*x + 0.1*x*y + 0.1*Math.sqrt(Math.abs(x));
+  r += (20.0*Math.sin(6.0*x*_PI) + 20.0*Math.sin(2.0*x*_PI)) * 2.0/3.0;
+  r += (20.0*Math.sin(x*_PI) + 40.0*Math.sin(x/3.0*_PI)) * 2.0/3.0;
+  r += (150.0*Math.sin(x/12.0*_PI) + 300.0*Math.sin(x/30.0*_PI)) * 2.0/3.0;
+  return r;
+}
+function wgs84ToGcj02(lat, lng) {
+  if (_outOfChina(lat, lng)) return { lat: lat, lng: lng };
+  var dLat = _transLat(lng - 105.0, lat - 35.0), dLng = _transLng(lng - 105.0, lat - 35.0);
+  var radLat = lat / 180.0 * _PI, magic = Math.sin(radLat);
+  magic = 1 - _EE * magic * magic;
+  var sqrtMagic = Math.sqrt(magic);
+  dLat = (dLat * 180.0) / ((_A * (1 - _EE)) / (magic * sqrtMagic) * _PI);
+  dLng = (dLng * 180.0) / (_A / sqrtMagic * Math.cos(radLat) * _PI);
+  return { lat: lat + dLat, lng: lng + dLng };
+}
+function gcj02ToBd09(lat, lng) {
+  var z = Math.sqrt(lng*lng + lat*lat) + 0.00002 * Math.sin(lat * _PI * 3000.0 / 180.0);
+  var t = Math.atan2(lat, lng) + 0.000003 * Math.cos(lng * _PI * 3000.0 / 180.0);
+  return { lat: z * Math.sin(t) + 0.006, lng: z * Math.cos(t) + 0.0065 };
+}
+
+/* ========== 导航：弹面板让用户选手机上装的地图 App ========== */
+function openMapPanel(addrText, lat, lng) {
+  window._navTarget = { name: addrText || '目的地', lat: +lat || 0, lng: +lng || 0 };
+  var t = window._navTarget;
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var apps = [
+    { k: 'amap',   n: '高德地图', bg: 'linear-gradient(135deg,#0091FF,#0064D2)', ico: '高' },
+    { k: 'baidu',  n: '百度地图', bg: 'linear-gradient(135deg,#3385FF,#1A5FD0)', ico: '百' },
+    { k: 'qq',     n: '腾讯地图', bg: 'linear-gradient(135deg,#22B4F5,#0B84C9)', ico: '腾' },
+    { k: 'copy',   n: '复制地址', bg: 'linear-gradient(135deg,#B9A894,#8E7B66)', ico: '⧉' }
+  ];
+  if (isIOS) apps.splice(3, 0, { k: 'apple', n: '苹果地图', bg: 'linear-gradient(135deg,#7BD16A,#3C9E2C)', ico: '' });
+
+  var html = '<div class="sheet-title">选择地图导航</div>'
+    + '<div class="mapapp-addr">📍 ' + esc(t.name) + (t.lat && t.lng ? '<br><span style="color:#1B9A59;font-weight:700">✓ 已带精确坐标</span>' : '<br><span style="color:#C08A2E">按地址名称搜索（无坐标，可能不够精确）</span>') + '</div>'
+    + '<div class="mapapp-list">'
+    + apps.map(function(a){
+        return '<div class="mapapp-item" onclick="launchMapApp(\'' + a.k + '\')">'
+          + '<div class="mapapp-ico" style="background:' + a.bg + '">' + a.ico + '</div>'
+          + '<div class="mapapp-name">' + a.n + '</div></div>';
+      }).join('')
+    + '</div>'
+    + '<div class="mapapp-tip">点击后会尝试打开手机里已安装的地图 App<br>没装该 App 会自动跳转到它的网页版</div>';
+  $('mapSheet').innerHTML = html;
+  openMask('mapMask');
+}
+function launchMapApp(kind) {
+  var t = window._navTarget || {};
+  var name = t.name || '目的地';
+  var hasCoord = !!(t.lat && t.lng);
+  var en = encodeURIComponent(name);
+
+  if (kind === 'copy') {
+    var txt = name + (hasCoord ? ('（坐标 ' + t.lat.toFixed(6) + ',' + t.lng.toFixed(6) + '）') : '');
+    copyText(txt); closeMask('mapMask'); return;
+  }
+
+  // GPS 原始坐标是 WGS84，各家地图坐标系不同，必须转换
+  var g = hasCoord ? wgs84ToGcj02(t.lat, t.lng) : null;                 // 高德/腾讯/苹果(国内)
+  var b = g ? gcj02ToBd09(g.lat, g.lng) : null;                          // 百度
+  var scheme = '', web = '';
+
+  if (kind === 'amap') {
+    // 注意：高德 URI 的 position 是「经度,纬度」，顺序写反会飞到别的省
+    if (hasCoord) {
+      scheme = (/iPhone|iPad|iPod/i.test(navigator.userAgent) ? 'iosamap' : 'androidamap')
+        + '://viewMap?sourceApplication=xiaomiao&poiname=' + en + '&lat=' + g.lat + '&lon=' + g.lng + '&dev=0';
+      web = 'https://uri.amap.com/marker?position=' + g.lng + ',' + g.lat + '&name=' + en + '&src=xiaomiao&coordinate=gaode&callnative=1';
+    } else {
+      web = 'https://uri.amap.com/search?keyword=' + en + '&src=xiaomiao&callnative=1';
+    }
+  } else if (kind === 'baidu') {
+    if (hasCoord) {
+      scheme = 'baidumap://map/marker?location=' + b.lat + ',' + b.lng + '&title=' + en + '&content=' + en + '&coord_type=bd09ll&src=xiaomiao';
+      web = 'https://api.map.baidu.com/marker?location=' + b.lat + ',' + b.lng + '&title=' + en + '&content=' + en + '&output=html&coord_type=bd09ll&src=xiaomiao';
+    } else {
+      web = 'https://api.map.baidu.com/geocoder?address=' + en + '&output=html&src=xiaomiao';
+    }
+  } else if (kind === 'qq') {
+    if (hasCoord) {
+      scheme = 'qqmap://map/marker?marker=coord:' + g.lat + ',' + g.lng + ';title:' + en + '&referer=xiaomiao';
+      web = 'https://apis.map.qq.com/uri/v1/marker?marker=coord:' + g.lat + ',' + g.lng + ';title:' + en + '&referer=xiaomiao';
+    } else {
+      web = 'https://apis.map.qq.com/uri/v1/search?keyword=' + en + '&referer=xiaomiao';
+    }
+  } else if (kind === 'apple') {
+    // 国内苹果地图数据源是高德，用 GCJ02
+    web = 'https://maps.apple.com/?q=' + en + (hasCoord ? '&ll=' + g.lat + ',' + g.lng : '');
+  }
+
+  closeMask('mapMask');
+  if (!scheme) { location.href = web; return; }
+
+  // 先试唤起 App；1.4 秒后如果页面还在前台，说明没装该 App → 回退网页版
+  var left = false;
+  var onHide = function(){ if (document.hidden) left = true; };
+  document.addEventListener('visibilitychange', onHide);
+  var ifr = document.createElement('iframe');
+  ifr.style.display = 'none'; ifr.src = scheme;
+  document.body.appendChild(ifr);
+  setTimeout(function(){ try { location.href = scheme; } catch(e) {} }, 60);
+  setTimeout(function(){
+    document.removeEventListener('visibilitychange', onHide);
+    try { ifr.parentNode && ifr.parentNode.removeChild(ifr); } catch(e) {}
+    if (!left && !document.hidden && web) location.href = web;
+  }, 1400);
+}
+function copyText(txt) {
+  var ok = false;
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+  } catch(e) {}
+  if (!ok && navigator.clipboard) { navigator.clipboard.writeText(txt); ok = true; }
+  toast(ok ? '地址已复制，去地图 App 里粘贴搜索' : '复制失败，请长按选中文字复制', 2800);
 }
 function fillGeo(comp, regeo, lat, lng) {
   var p = comp.province || '', c = comp.city || comp.district || '', d = comp.district || comp.township || '';
@@ -825,20 +1093,8 @@ function findMatch(arr, val) {
 }
 function openMapAddr() {
   var full = (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + (deliveryAddr.detail || '');
-  // 有经纬度时直接用坐标导航（最精准），否则用文字地址搜索
-  if (deliveryAddr.lat && deliveryAddr.lng) {
-    var pos = deliveryAddr.lat + ',' + deliveryAddr.lng;
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      location.href = 'https://maps.apple.com/?q=' + encodeURIComponent(full || '收货地址') + '&ll=' + pos;
-    } else {
-      location.href = 'https://uri.amap.com/marker?position=' + pos + '&name=' + encodeURIComponent(full || '收货地址') + '&src=mypage&coordinate=gaode&callnative=1';
-    }
-    return;
-  }
-  if (!full) return;
-  var q = encodeURIComponent(full);
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) { location.href = 'http://maps.apple.com/?q=' + q; }
-  else { location.href = 'https://uri.amap.com/search?keyword=' + q; }
+  if (!full.trim()) { toast('请先填写收货地址', 2200); return; }
+  openMapPanel(full, deliveryAddr.lat, deliveryAddr.lng);
 }
 function $(id) { return document.getElementById(id); }
 function money(n) { return Store.money(n); }
@@ -849,12 +1105,8 @@ function toast(msg, duration) {
 function openMask(id) { $(id).classList.add('show'); }
 function closeMask(id) { $(id).classList.remove('show'); }
 function openMap(address) {
-  var q = encodeURIComponent(address);
-  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-    window.open('http://maps.apple.com/?q=' + q, '_blank');
-  } else {
-    window.open('https://uri.amap.com/search?keyword=' + q, '_blank');
-  }
+  // 到店自取：同样弹地图 App 选择面板（店铺只有文字地址，按名称搜索）
+  openMapPanel(address, 0, 0);
 }
 document.querySelectorAll('.mask').forEach(function (m) {
   m.addEventListener('click', function (e) { if (e.target === m) m.classList.remove('show'); });
@@ -1296,16 +1548,37 @@ function drawCart() {
       + '<div class="addr-row">'
       + '<div class="addr-icon">🛵</div>'
       + '<div class="addr-info">'
-      + '<div class="addr-title">配送地址</div>'
-      + '<input class="addr-input" id="addrName" placeholder="收件人姓名" value="' + esc(deliveryAddr.name || '') + '" oninput="saveAddr()">'
+      + '<div class="addr-title">配送地址</div>';
+
+    // 常用地址：一键复用，填地址最快的路径
+    var book = getAddrBook();
+    if (book.length) {
+      html += '<div class="addr-book">' + book.map(function(a, i){
+        return '<div class="addr-book-card" onclick="useAddrBook(' + i + ')">'
+          + '<div class="addr-book-del" onclick="delAddrBook(' + i + ',event)">×</div>'
+          + '<div class="addr-book-name">' + esc(a.name || '未填姓名') + (a.phone ? ' · ' + esc(a.phone) : '') + '</div>'
+          + '<div class="addr-book-text">' + esc((a.pca || '') + ' ' + (a.detail || '')) + '</div>'
+          + '</div>';
+      }).join('') + '</div>';
+    }
+
+    html += '<input class="addr-input" id="addrName" placeholder="收件人姓名" value="' + esc(deliveryAddr.name || '') + '" oninput="saveAddr()">'
       + '<input class="addr-input" id="addrPhone" placeholder="联系电话" value="' + esc(deliveryAddr.phone || '') + '" oninput="saveAddr()">'
+      // 关键词搜索：输入区县名秒定位到省市区，本地数据、离线可用
+      + '<div class="addr-search-wrap">'
+      + '<input class="addr-search" id="addrSearch" placeholder="搜索区县，如：朝阳 / 天河 / 锦江" autocomplete="off" oninput="onAddrSearch(this.value)" onfocus="onAddrSearch(this.value)">'
+      + '<div class="addr-sugg" id="addrSugg"></div>'
+      + '</div>'
       + '<div class="pca-row">'
       + '<select class="addr-select" id="pSelect" onchange="onProvinceChange()"><option value="">省</option></select>'
       + '<select class="addr-select" id="cSelect" onchange="onCityChange()"><option value="">市</option></select>'
       + '<select class="addr-select" id="dSelect" onchange="onDistrictChange()"><option value="">区/县</option></select></div>'
       + '<input class="addr-input" id="detailInput" placeholder="详细地址（街道/门牌号/小区/楼层）" value="' + esc(deliveryAddr.detail || '') + '" oninput="saveAddr()">'
-      + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 定位我的位置（地图选点）</div>'
-      + (deliveryAddr.detail ? '<div class="addr-map" onclick="openMapAddr()">📍 在地图中查看地址</div>' : '')
+      + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 获取我的位置坐标（让骑手精准找到你）</div>'
+      + (deliveryAddr.lat && deliveryAddr.lng
+          ? '<div class="addr-gps-ok">✓ 已记录精确坐标 ' + deliveryAddr.lat.toFixed(4) + ', ' + deliveryAddr.lng.toFixed(4) + '</div>'
+          : '<div class="addr-hint">选好区县 + 填详细地址即可下单。点上方按钮可额外记录精确坐标，骑手导航更准。</div>')
+      + (deliveryAddr.detail ? '<div class="addr-map" onclick="openMapAddr()">🧭 用手机地图导航到这里</div>' : '')
       + '</div></div></div>';
   }
 
@@ -1384,39 +1657,14 @@ function restoreCartState() {
 }
 // 页面初始化时恢复状态
 setTimeout(restoreCartState, 100);
-setTimeout(checkAmapPickerReturn, 60);
-function checkAmapPickerReturn() {
-  // 高德地图选点返回：URL 带 position/province/city/district/address，解析后回填地址
-  if (location.search.indexOf('position=') < 0) return;
-  var params = new URLSearchParams(location.search);
-  var pos = (params.get('position') || '').split(',');
-  var lng = parseFloat(pos[0]), lat = parseFloat(pos[1]);
-  var p0 = params.get('province') || '';
-  var c0 = params.get('city') || '';
-  var d0 = params.get('district') || '';
-  var address = params.get('address') || '';
-  var cFinal = c0 || p0; // 直辖市时 AMap 返回的 city 即省名（与下拉项一致），直接用即可
-  // 用原始省/市/区全称从地址文本中剥离，得到详细地址（避免残留"市"等后缀）
-  var detail = address;
-  var guard = 0;
-  while (guard++ < 10) {
-    var changed = false;
-    [p0, c0, d0].forEach(function(s){ if (s && detail.indexOf(s) === 0) { detail = detail.substring(s.length); changed = true; } });
-    if (!changed) break;
-  }
-  detail = detail.replace(/^[,，\s]+/, '').trim();
-  deliveryAddr.p = p0 || deliveryAddr.p;        // 存全称，匹配下拉项
-  deliveryAddr.c = cFinal || deliveryAddr.c;
-  deliveryAddr.d = d0 || deliveryAddr.d;
-  deliveryAddr.detail = detail || deliveryAddr.detail;
-  if (lat && lng) { deliveryAddr.lat = lat; deliveryAddr.lng = lng; }
-  saveAddr();
-  history.replaceState({}, '', location.pathname); // 清掉参数，避免刷新重复触发
-  mode = 'delivery'; // 确保展示配送地址表单
-  var label = [p0, cFinal, d0, detail].filter(Boolean).join(' ');
-  drawCart(); openMask('cartMask');
-  toast('已为你选定地址：' + (label || '请在地图中确认'), 3500);
-}
+
+// 点搜索建议以外的地方，收起建议列表
+document.addEventListener('click', function(e){
+  var box = $('addrSugg');
+  if (!box || !box.classList.contains('show')) return;
+  if (e.target.closest && e.target.closest('.addr-search-wrap')) return;
+  box.classList.remove('show');
+}, true);
 function lineStep(i, d) {
   cart[i].qty += d;
   if (cart[i].qty <= 0) cart.splice(i, 1);
@@ -1468,6 +1716,7 @@ function submitOrder() {
       address: addr,
       phone: mode === 'delivery' ? deliveryAddr.phone : (me ? me.phone : '')
     });
+    if (mode === 'delivery') pushAddrBook(deliveryAddr); // 下单成功即存入常用地址，下次一键复用
     myOrderId = order.id;
     localStorage.setItem('om_my_order', order.id);
     cart = []; couponId = null; window._remark = '';
