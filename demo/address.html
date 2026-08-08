@@ -37,7 +37,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 .loc-label{font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:3px}
 .loc-addr{font-size:16px;font-weight:700;color:var(--ink);line-height:1.35;word-break:break-all}
 .loc-status{font-size:12px;color:var(--brand);margin-top:4px;min-height:16px}
+.loc-actions{display:flex;gap:8px;margin-top:8px}
+.loc-act{flex:1;border:0;border-radius:9px;padding:9px 10px;font-size:13px;font-weight:700;background:var(--brand);color:#fff;cursor:pointer}
+.loc-act:active{background:var(--brand-d)}
+.loc-act.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+.loc-act.ghost:active{background:var(--brand-soft)}
 .loc-relocate{flex:none;font-size:13px;font-weight:700;color:var(--brand);padding:6px 4px;cursor:pointer;align-self:center}
+
+/* 表单卡片脉冲高亮（点"新增地址"时） */
+.form-card.pulse{animation:pulseB 1s ease 1}
+@keyframes pulseB{0%{box-shadow:0 0 0 0 rgba(7,193,96,.55)}100%{box-shadow:0 0 0 14px rgba(7,193,96,0)}}
 
 /* 搜索 */
 .search-bar{margin:14px 12px 0;background:#fff;border-radius:var(--r-m);box-shadow:var(--sh-s);display:flex;align-items:center;gap:8px;padding:11px 14px}
@@ -112,6 +121,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
     <div class="loc-label">当前位置</div>
     <div class="loc-addr" id="locAddr">正在获取位置…</div>
     <div class="loc-status" id="locStatus"></div>
+    <div class="loc-actions" id="locActions" style="display:none">
+      <button class="loc-act" onclick="focusSearch()">🔍 手动搜索选地区</button>
+      <button class="loc-act ghost" onclick="scrollToForm()">✍️ 直接填地址</button>
+    </div>
   </div>
   <div class="loc-relocate" onclick="reLocate()">重新定位</div>
 </div>
@@ -382,17 +395,30 @@ function autostartGps(){
     drawMap();
     setLocAddr('正在解析地址…'); setLocStatus('已获取定位，正在转换为详细地址');
     reverseGeocode(state.centerLat, state.centerLng).then(function(r){ applyReverse(r); if(!r||!r.p) setLocStatus('可拖动地图微调，或下方手动搜索'); });
+    $('locActions').style.display='none';
   }, function(err){
     hideCover();
     var inWx=/MicroMessenger/i.test(navigator.userAgent);
-    var msg = err&&err.code===1 ? (inWx?'微信内定位被拒绝，请允许定位或手动拖动':'定位权限被拒绝，请在浏览器允许定位') : '定位失败，请手动拖动地图选择位置';
+    var msg = err&&err.code===1 ? (inWx?'微信内定位被拒绝，点下方手动选地区或拖动地图':'定位权限被拒绝，请在浏览器允许定位后重试') : '自动定位失败，可手动选择';
     setLocAddr('未能自动定位'); setLocStatus(msg);
+    $('locActions').style.display='flex';
     reverseGeocode(state.centerLat, state.centerLng).then(applyReverse); // 默认中心点也给个地址兜底
   }, { enableHighAccuracy:false, timeout:10000, maximumAge:60000 });
 }
 function reLocate(){
   if(state.hasGps){ state.centerLat=state.gpsLat; state.centerLng=state.gpsLng; drawMap(); setLocAddr('正在解析地址…'); reverseGeocode(state.centerLat,state.centerLng).then(applyReverse); }
   else { autostartGps(); }
+}
+function focusSearch(){
+  $('locActions').style.display='none';
+  $('searchInput').focus();
+  $('searchInput').scrollIntoView({behavior:'smooth', block:'center'});
+  toast('输入省/市/区或小区名，下方会自动出结果', 2000);
+}
+function scrollToForm(){
+  $('locActions').style.display='none';
+  document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
+  setTimeout(function(){ $('fDetail').focus(); }, 380);
 }
 
 /* ===================== 搜索 ===================== */
@@ -401,8 +427,8 @@ function onSearchInput(){
   clearTimeout(searchTimer);
   var v=$('searchInput').value.trim();
   if(!v){ $('results').classList.remove('show'); $('results').innerHTML=''; return; }
-  if(amapKey){ searchTimer=setTimeout(doSearch, 500); }
-  // 本地无 key 时不自动搜（避免误触），点搜索按钮才搜
+  // 输入即搜：有 key 走高德，无 key 走本地省市区库（美团同款体验）
+  searchTimer=setTimeout(function(){ amapKey ? searchAmap(v) : searchLocal(v); }, 280);
 }
 function doSearch(){
   var q=$('searchInput').value.trim();
@@ -456,7 +482,13 @@ function applyAmap(lng,lat,name,addr){
 /* ===================== 表单 ===================== */
 function pickTag(el){ var box=$('tagBox').children; for(var i=0;i<box.length;i++) box[i].classList.remove('active'); el.classList.add('active'); state.tag=el.getAttribute('data-t'); }
 function onDetailInput(){ var v=$('fDetail').value.trim(); }
-function newAddress(){ document.getElementById('formSection').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ $('fDetail').focus(); }, 350); }
+function newAddress(){
+  var fs=document.getElementById('formSection');
+  fs.scrollIntoView({behavior:'smooth'});
+  fs.classList.remove('pulse'); void fs.offsetWidth; fs.classList.add('pulse');
+  setTimeout(function(){ $('fDetail').focus(); }, 380);
+  toast('在下方填写新地址，填完点"保存地址"', 1900);
+}
 
 function pushAddrBook(a){
   if(!a||!a.detail||!a.pca) return;
