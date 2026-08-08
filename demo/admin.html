@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>商家后台 · 扫码点餐</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%9E%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
@@ -297,6 +297,29 @@ canvas.qr { border-radius: 8px; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* ===== 手机端适配兜底：避免放大/横向溢出/布局错乱 ===== */
+@media (max-width: 768px) {
+  .product-layout { flex-direction: column; gap: 12px; }
+  .product-sidebar { width: 100%; }
+  .product-main { width: 100%; }
+  .form-row { flex-direction: column; align-items: stretch; gap: 5px; padding: 12px 0; }
+  .form-label { min-width: 0; font-size: 13px; }
+  .form-ctl { justify-content: flex-start; flex-wrap: wrap; }
+  .form-ctl select, .form-ctl input { width: 100%; box-sizing: border-box; }
+  .ptable { display: block; width: 100%; overflow-x: auto; white-space: nowrap; font-size: 12px; }
+  .ptable th, .ptable td { padding: 7px 6px; }
+  .modal-card { width: 92% !important; max-width: 92% !important; }
+  .qr-box { width: auto; max-width: 100%; }
+  .card { padding: 13px 12px; }
+  .topbar { gap: 8px; }
+  .page-title { font-size: 15px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-v { font-size: 21px; }
+  .bulk-bar, .order-bulk-bar { gap: 6px; padding: 8px; }
+  .o-code { font-size: 22px; }
+  .order-grid { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>

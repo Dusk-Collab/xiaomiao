@@ -642,6 +642,7 @@ body { background: var(--bg); }
 
 <script src="assets/sync.js"></script>
 <script src="assets/store.js"></script>
+<script src="assets/pca.js"></script>
 <script>
 /* ================= 状态 ================= */
 var D = null;
@@ -663,21 +664,20 @@ var areaData = {};
 var areaDataLoaded = false;
 function loadAreaData() {
   if (areaDataLoaded) return;
-  // 清除旧版缓存（防止之前缓存了错误格式）
+  // 本地内置省市区数据（同源加载，离线/墙内均可用，不再依赖外部 CDN）
+  if (window.PCA_DATA) {
+    try { areaData = JSON.parse(JSON.stringify(window.PCA_DATA)); } catch(e) { areaData = window.PCA_DATA; }
+    normalizeAreaData(areaData);
+    return;
+  }
+  // 兜底：远程（极少触发，仅当 pca.js 未加载时）
   var cached = localStorage.getItem('area_data_v3');
-  if (!cached) { try { localStorage.removeItem('area_data_v2'); } catch(e){} }
-  if (cached) { try { areaData = JSON.parse(cached); areaDataLoaded = true; return; } catch(e) {} }
-  // 加载 pca.json（省→市→区 对象格式，不是数组）
-  var url1 = 'https://raw.githubusercontent.com/modood/Administrative-divisions-of-China/master/dist/pca.json';
-  var url2 = 'https://cdn.jsdelivr.net/gh/modood/Administrative-divisions-of-China@master/dist/pca.json';
-  fetch(url1)
-    .then(function(r){ return r.json(); })
-    .then(function(d){ normalizeAreaData(d); })
-    .catch(function(){ fetch(url2)
-      .then(function(r){ return r.json(); })
-      .then(function(d){ normalizeAreaData(d); })
-      .catch(function(){ toast('地址数据加载失败，请检查网络'); });
-    });
+  if (cached) { try { areaData = JSON.parse(cached); normalizeAreaData(areaData); return; } catch(e){} }
+  var url1 = 'https://cdn.jsdelivr.net/gh/modood/Administrative-divisions-of-China@master/dist/pca.json';
+  var url2 = 'https://raw.githubusercontent.com/modood/Administrative-divisions-of-China/master/dist/pca.json';
+  fetch(url1).then(function(r){ return r.json(); }).then(function(d){ normalizeAreaData(d); })
+    .catch(function(){ fetch(url2).then(function(r){ return r.json(); }).then(function(d){ normalizeAreaData(d); })
+      .catch(function(){ toast('地址数据加载失败，请检查网络'); }); });
 }
 function normalizeAreaData(raw) {
   // pca.json 格式: { "北京市": { "市辖区": ["东城区",...] }, "河北省": { "石家庄市": [...] } }
@@ -756,6 +756,7 @@ function startGpsLocate() {
     if (btn) { btn.textContent = '🎯 自动定位当前位置'; btn.style.opacity = ''; }
     var lat = pos.coords.latitude, lng = pos.coords.longitude;
     deliveryAddr.lat = lat; deliveryAddr.lng = lng;
+    saveAddr(); // 立即保存坐标，逆地理解析失败也不丢失定位
     // 优先用高德逆地理编码
     var gk = localStorage.getItem('amap_key') || '';
     if (gk) {
@@ -838,6 +839,16 @@ function findMatch(arr, val) {
 }
 function openMapAddr() {
   var full = (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + (deliveryAddr.detail || '');
+  // 有经纬度时直接用坐标导航（最精准），否则用文字地址搜索
+  if (deliveryAddr.lat && deliveryAddr.lng) {
+    var pos = deliveryAddr.lat + ',' + deliveryAddr.lng;
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      location.href = 'https://maps.apple.com/?q=' + encodeURIComponent(full || '收货地址') + '&ll=' + pos;
+    } else {
+      location.href = 'https://uri.amap.com/marker?position=' + pos + '&name=' + encodeURIComponent(full || '收货地址') + '&src=mypage&coordinate=gaode&callnative=1';
+    }
+    return;
+  }
   if (!full) return;
   var q = encodeURIComponent(full);
   if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) { location.href = 'http://maps.apple.com/?q=' + q; }
