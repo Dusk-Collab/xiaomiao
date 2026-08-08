@@ -29,6 +29,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 .m-btn{width:42px;height:42px;border-radius:12px;background:#fff;box-shadow:var(--sh-m);display:grid;place-items:center;font-size:22px;color:var(--ink-2);cursor:pointer;border:0}
 .m-btn:active{background:#f3f3f3}
 .m-btn.loc{color:var(--brand)}
+/* 高德真地图容器 */
+#amapLayer{position:absolute;inset:0;width:100%;height:100%;background:#E9EEF1}
+/* 中心选点准星（两种地图模式共用，固定居中） */
+.map-crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-100%);width:24px;height:32px;z-index:7;pointer-events:none}
+.map-crosshair::before{content:'';position:absolute;left:1px;top:0;width:22px;height:22px;border-radius:50% 50% 50% 0;background:#07C160;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.map-crosshair::after{content:'';position:absolute;left:9px;top:8px;width:6px;height:6px;border-radius:50%;background:#fff}
 
 /* 当前位置卡片（叠在地图底部） */
 .loc-card{position:relative;z-index:10;margin:-18px 12px 0;background:#fff;border-radius:var(--r-l);box-shadow:var(--sh-m);padding:14px 14px;display:flex;align-items:flex-start;gap:12px}
@@ -107,6 +113,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 
 <div class="map-wrap" id="mapWrap">
   <canvas id="map"></canvas>
+  <div id="amapLayer" style="display:none"></div>
+  <div class="map-crosshair"></div>
   <div class="map-hint" id="mapHint">拖动地图，可微调收货位置</div>
   <div class="map-ctrl">
     <button class="m-btn" onclick="zoomIn()">＋</button>
@@ -178,7 +186,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 /* ===================== 数据 ===================== */
 var areaData = window.PCA_DATA || {};
 var pcaIndex = null;
-var amapKey = (function(){ try { return localStorage.getItem('amap_key') || ''; } catch(e){ return ''; } })();
+// 高德 key：优先用内置常量（部署后所有人可用），其次 localStorage.amap_key（用户自助填）
+var AMAP_KEY_BUILTIN = '';   // ← 用户发来 key 后填这里，例：'xxxxxxxxxxxxxxxxxxxxxxxx'
+var AMAP_SEC_BUILTIN = '';   // ← 高德安全密钥（JS API 2.0 必需），例：'yyyyyyyyyyyyyyyy'
+var amapKey = (function(){ try { return localStorage.getItem('amap_key') || ''; } catch(e){ return ''; } })() || AMAP_KEY_BUILTIN;
+var amapSecurity = (function(){ try { return localStorage.getItem('amap_security') || ''; } catch(e){ return ''; } })() || AMAP_SEC_BUILTIN;
 
 /* ===================== 状态 ===================== */
 var state = {
@@ -291,11 +303,44 @@ function updateRegionText(){
 
 /* ===================== 地图渲染 ===================== */
 var canvas, ctx, dpr=1;
+var mapMode='canvas';   // 'canvas' | 'amap'
 function initMap(){
+  if(amapKey && amapSecurity){ loadAmap(onAmapReady, onAmapFail); }
+  else { initCanvasMap(); }
+}
+function initCanvasMap(){
+  mapMode='canvas';
   canvas=$('map'); ctx=canvas.getContext('2d');
   resizeMap(); window.addEventListener('resize', resizeMap);
   bindDrag();
   drawMap();
+}
+/* 动态加载高德 JS API（双模式：加载成功用真地图，失败/超时回退程序化） */
+function loadAmap(ok, fail){
+  if(!window.AMap){ window._AMapSecurityConfig = { securityJsCode: amapSecurity }; }
+  var s=document.createElement('script');
+  s.src='https://webapi.amap.com/maps?v=2.0&key='+amapKey+'&plugin=AMap.Geolocation,AMap.Geocoder';
+  s.async=true;
+  var done=false;
+  var to=setTimeout(function(){ if(done) return; done=true; fail&&fail(); }, 6500);
+  s.onload=function(){ clearTimeout(to); if(done) return; done=true; window.AMap ? ok&&ok() : (fail&&fail()); };
+  s.onerror=function(){ clearTimeout(to); if(done) return; done=true; fail&&fail(); };
+  document.head.appendChild(s);
+}
+function onAmapFail(){ initCanvasMap(); }
+function onAmapReady(){
+  mapMode='amap';
+  try {
+    $('map').style.display='none';
+    var layer=$('amapLayer'); layer.style.display='block';
+    var map=new AMap.Map('amapLayer', { zoom: 16, center:[state.centerLng, state.centerLat], viewMode:'2D', dragEnable:true, zoomEnable:true, keyboardEnable:false });
+    state.map=map;
+    map.on('moveend', function(){
+      var c=map.getCenter(); state.centerLng=c.getLng(); state.centerLat=c.getLat();
+      scheduleReverse();
+    });
+    AMap.plugin(['AMap.Geolocation','AMap.Geocoder'], function(){});
+  } catch(e){ onAmapFail(); }
 }
 function resizeMap(){
   var wrap=$('mapWrap'); dpr=window.devicePixelRatio||1;
@@ -366,8 +411,8 @@ function panBy(dxCss, dyCss){
   state.centerLat += dyCss*degPerPxLat;
   drawMap();
 }
-function zoomIn(){ state.mpp=Math.max(8, state.mpp*0.62); drawMap(); scheduleReverse(); }
-function zoomOut(){ state.mpp=Math.min(400, state.mpp/0.62); drawMap(); scheduleReverse(); }
+function zoomIn(){ if(mapMode==='amap'&&state.map){ state.map.zoomIn(); scheduleReverse(); } else { state.mpp=Math.max(8, state.mpp*0.62); drawMap(); scheduleReverse(); } }
+function zoomOut(){ if(mapMode==='amap'&&state.map){ state.map.zoomOut(); scheduleReverse(); } else { state.mpp=Math.min(400, state.mpp/0.62); drawMap(); scheduleReverse(); } }
 
 /* 拖动 */
 var drag={on:false,x:0,y:0,moved:false};
@@ -387,12 +432,31 @@ function scheduleReverse(){
 /* ===================== GPS ===================== */
 function autostartGps(){
   showCover('正在定位…');
+  // 高德模式：优先用高德 Geolocation（定位更准、国内稳定）
+  if(mapMode==='amap' && window.AMap && AMap.Geolocation){
+    var geo=new AMap.Geolocation({ enableHighAccuracy:false, timeout:8000, GeoLocationFirst:true });
+    geo.getCurrentPosition(function(status, result){
+      hideCover();
+      if(status==='complete' && result.position){
+        state.gpsLat=result.position.lat; state.gpsLng=result.position.lng; state.hasGps=true;
+        state.centerLat=state.gpsLat; state.centerLng=state.gpsLng;
+        state.map.setZoomAndCenter(16, [state.gpsLng, state.gpsLat]);
+        setLocAddr('正在解析地址…'); setLocStatus('已获取定位，正在转换为详细地址');
+        reverseGeocode(state.centerLat, state.centerLng).then(function(r){ applyReverse(r); if(!r||!r.p) setLocStatus('可拖动地图微调，或下方手动搜索'); });
+        $('locActions').style.display='none';
+      } else {
+        hideCover(); setLocAddr('未能自动定位'); setLocStatus('自动定位失败，可手动选择'); $('locActions').style.display='flex';
+        reverseGeocode(state.centerLat, state.centerLng).then(applyReverse);
+      }
+    });
+    return;
+  }
   if(!navigator.geolocation){ hideCover(); setLocAddr('浏览器不支持定位'); setLocStatus('请手动拖动地图选择位置'); return; }
   navigator.geolocation.getCurrentPosition(function(pos){
     hideCover();
     state.gpsLat=pos.coords.latitude; state.gpsLng=pos.coords.longitude; state.hasGps=true;
     state.centerLat=state.gpsLat; state.centerLng=state.gpsLng;
-    drawMap();
+    if(mapMode==='amap'&&state.map){ state.map.setZoomAndCenter(16,[state.gpsLng,state.gpsLat]); } else { drawMap(); }
     setLocAddr('正在解析地址…'); setLocStatus('已获取定位，正在转换为详细地址');
     reverseGeocode(state.centerLat, state.centerLng).then(function(r){ applyReverse(r); if(!r||!r.p) setLocStatus('可拖动地图微调，或下方手动搜索'); });
     $('locActions').style.display='none';
@@ -406,7 +470,7 @@ function autostartGps(){
   }, { enableHighAccuracy:false, timeout:10000, maximumAge:60000 });
 }
 function reLocate(){
-  if(state.hasGps){ state.centerLat=state.gpsLat; state.centerLng=state.gpsLng; drawMap(); setLocAddr('正在解析地址…'); reverseGeocode(state.centerLat,state.centerLng).then(applyReverse); }
+  if(state.hasGps){ state.centerLat=state.gpsLat; state.centerLng=state.gpsLng; if(mapMode==='amap'&&state.map){ state.map.setZoomAndCenter(16,[state.gpsLng,state.gpsLat]); } else { drawMap(); } setLocAddr('正在解析地址…'); reverseGeocode(state.centerLat,state.centerLng).then(applyReverse); }
   else { autostartGps(); }
 }
 function focusSearch(){
