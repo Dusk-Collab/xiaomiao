@@ -71,6 +71,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 .suggest-dist{font-size:11px;color:var(--brand);margin-top:2px;flex:none;white-space:nowrap}
 .suggest-loading,.suggest-empty,.suggest-error{padding:24px 16px;text-align:center;font-size:13px;color:var(--ink-3)}
 
+/* 高德 Key 设置入口 */
+.key-setting{margin:8px 12px 0;font-size:12px;color:var(--ink-3);text-align:center}
+.key-toggle{display:inline-block;cursor:pointer;color:var(--brand);text-decoration:underline;opacity:.85}
+.key-toggle:active{opacity:.6}
+.key-panel{display:none;margin-top:8px;background:#fff;border-radius:var(--r-m);box-shadow:var(--sh-s);padding:10px 12px;align-items:center;gap:8px}
+.key-panel.show{display:flex}
+.key-panel input{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px;outline:none;min-width:0}
+.key-panel .kb{padding:9px 12px;border:0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;flex:none}
+.key-panel .kb-save{background:var(--brand);color:#fff}
+.key-panel .kb-clear{background:#f0f0f0;color:var(--ink-2)}
+.key-status{font-size:11px;margin-top:6px;color:var(--ink-3)}
+.key-status.ok{color:#1a9c5b}
+
 /* 表单 */
 .form-card{margin:14px 12px 0;background:#fff;border-radius:var(--r-l);box-shadow:var(--sh-m);padding:6px 16px 16px}
 .form-title{font-size:16px;font-weight:800;padding:14px 0 6px}
@@ -161,6 +174,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
     <span class="clear-btn" id="searchClear" onclick="clearSearch()">✕</span>
   </div>
   <div class="suggest-list" id="suggestList"></div>
+  <div class="key-setting">
+    <span class="key-toggle" id="keyToggle" onclick="toggleKeyPanel()">⚙ 搜索不够准？点此填高德 Key 提升精度</span>
+    <div class="key-panel" id="keyPanel">
+      <input id="amapKeyInput" placeholder="粘贴高德「Web服务」Key" autocomplete="off" spellcheck="false">
+      <button class="kb kb-save" onclick="saveAmapKey()">保存</button>
+      <button class="kb kb-clear" onclick="clearAmapKey()">清除</button>
+    </div>
+    <div class="key-status" id="keyStatus"></div>
+  </div>
 </div>
 
 <div class="form-card" id="formSection">
@@ -240,6 +262,32 @@ function $(id){ return document.getElementById(id); }
 function toast(m, d){ var t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove('on'); }, d||1800); }
 function showCover(m){ $('coverMsg').textContent=m||'加载中…'; $('cover').classList.add('show'); }
 function hideCover(){ $('cover').classList.remove('show'); }
+
+/* ===================== 高德 Key 自助填写 ===================== */
+function toggleKeyPanel(){
+  var p=$('keyPanel'); p.classList.toggle('show');
+  if(p.classList.contains('show')){ $('amapKeyInput').value=(localStorage.getItem('amap_key')||''); }
+}
+function saveAmapKey(){
+  var v=($('amapKeyInput').value||'').trim();
+  if(!v){ toast('请输入 Key'); return; }
+  try{ localStorage.setItem('amap_key', v); }catch(e){}
+  toast('已保存，正在刷新…', 1200);
+  setTimeout(function(){ location.reload(); }, 700);
+}
+function clearAmapKey(){
+  try{ localStorage.removeItem('amap_key'); }catch(e){}
+  $('amapKeyInput').value='';
+  toast('已清除，正在刷新…', 1200);
+  setTimeout(function(){ location.reload(); }, 700);
+}
+function showKeyStatus(){
+  var el=$('keyStatus'), has=false;
+  try{ has=!!localStorage.getItem('amap_key'); }catch(e){}
+  if(has){ el.textContent='✓ 已配置高德 Key，搜索精度已提升'; el.classList.add('ok'); $('keyToggle').textContent='⚙ 已配置高德 Key（点击可修改）'; }
+  else { el.textContent='提示：填「Web服务」Key 可让小区/楼栋搜索更精准'; el.classList.remove('ok'); }
+}
+showKeyStatus();
 
 /* JSONP 请求（绕过 CORS，用于跨域 API 调用） */
 var _jsonpSeq=0;
