@@ -240,6 +240,30 @@ function $(id){ return document.getElementById(id); }
 function toast(m, d){ var t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove('on'); }, d||1800); }
 function showCover(m){ $('coverMsg').textContent=m||'加载中…'; $('cover').classList.add('show'); }
 function hideCover(){ $('cover').classList.remove('show'); }
+
+/* JSONP 请求（绕过 CORS，用于跨域 API 调用） */
+var _jsonpSeq=0;
+function jsonp(url, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var cbName='_jsonp_cb'+(++_jsonpSeq);
+    var timer;
+    window[cbName]=function(data){
+      cleanup(); resolve(data);
+    };
+    function cleanup(){
+      clearTimeout(timer);
+      delete window[cbName];
+      if(s && s.parentNode) s.parentNode.removeChild(s);
+    }
+    // 添加 callback 参数（自动处理已有参数）
+    var sep=(url.indexOf('?')>=0)?'&':'?';
+    var s=document.createElement('script');
+    s.src=url+sep+'callback='+cbName+'&t='+Date.now();
+    s.onerror=function(){ cleanup(); reject(new Error('JSONP加载失败')); };
+    document.head.appendChild(s);
+    timer=setTimeout(function(){ cleanup(); reject(new Error('JSONP超时')); }, timeoutMs||8000);
+  });
+}
 function hash2(i,j){ var n=(i*73856093)^(j*19349663); n=(n<0?-n:n); return n; }
 
 /* 繁→简（BigDataCloud 返回繁体） */
@@ -304,9 +328,9 @@ function reverseGeocode(lat,lng){
 function tryAmap(lat,lng){
   return new Promise(function(resolve){
     if(!amapKey){ resolve(null); return; }
-    // extensions=all 获取最详细地址（含街道、门牌、POI）
+    // extensions=all 获取最详细地址（含街道、门牌、POI）—— 用 JSONP 绕过 CORS
     var url='https://restapi.amap.com/v3/geocode/regeo?key='+amapKey+'&location='+lng+','+lat+'&extensions=all&poitype=&radius=100';
-    fetch(url).then(function(r){ return r.json(); }).then(function(data){
+    jsonp(url, 6000).then(function(data){
       if(data && data.status==='1' && data.regeocode && data.regeocode.addressComponent){
         var comp=data.regeocode.addressComponent;
         // 提取最近的道路/门牌信息
@@ -726,14 +750,11 @@ function doRealSearch(q){
   // 计数：OSM总是跑 + 高德(如果有key)×2 + 本地兜底
   totalEngines = 1 + (amapKey ? 2 : 0) + 1;
 
-  // ---- 引擎1：高德 inputtips（POI 联想，国内最准）----
+  // ---- 引擎1：高德 inputtips（POI 联想，国内最准）—— 用 JSONP 绕过 CORS ----
   if(amapKey){
     (function(){
       var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all&city='+(hintCity?encodeURIComponent(hintCity):'')+'&rows=25';
-      fetch(url, {mode:'cors'}).then(function(r){
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        return r.json();
-      }).then(function(d){
+      jsonp(url, 6000).then(function(d){
         if(d.status==='1'&&d.tips&&d.tips.length){
           var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
           for(var i=0;i<tips.length;i++){
@@ -756,13 +777,10 @@ function doRealSearch(q){
       }).catch(function(){ tickDone(); });
     })();
 
-    // ---- 引擎1b：高德地理编码 API（补充冷门地名/村庄）----
+    // ---- 引擎1b：高德地理编码 API（补充冷门地名/村庄）—— JSONP ----
     (function(){
       var url2='https://restapi.amap.com/v3/geocode/geo?key='+amapKey+'&address='+encodeURIComponent(q)+'&city='+(hintCity?encodeURIComponent(hintCity):'');
-      fetch(url2, {mode:'cors'}).then(function(r){
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        return r.json();
-      }).then(function(d){
+      jsonp(url2, 6000).then(function(d){
         if(d.status==='1'&&d.geocodes&&d.geocodes.length){
           for(var i=0;i<d.geocodes.length;i++){
             var g=d.geocodes[i], loc=g.location.split(',');
