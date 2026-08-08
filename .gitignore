@@ -19,3 +19,11 @@ node_modules/
 # ===== 本地工具（不提交） =====
 cloudflared.exe
 *.exe
+
+# ===== 沙箱诊断/截图/日志（前缀下划线，不入库）=====
+_*.cjs
+_*.js
+_*.html
+_*.txt
+_*.json
+_*.png
