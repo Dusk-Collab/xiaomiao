@@ -889,36 +889,80 @@ function startGpsLocate() {
   if (!navigator.geolocation) {
     done(); toast('当前浏览器不支持定位，请在上方搜索框选择区县', 3200); focusSearch(); return;
   }
+  toast('正在定位…', 9000);
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat = pos.coords.latitude, lng = pos.coords.longitude;
     deliveryAddr.lat = lat; deliveryAddr.lng = lng;
     localStorage.setItem('om_addr', JSON.stringify(deliveryAddr));
-    var gk = localStorage.getItem('amap_key') || '';
-    if (gk) {
-      // 配了高德 key 才能把坐标翻译成文字地址（一步到位）
-      fetch('https://restapi.amap.com/v3/geocode/regeo?key=' + gk + '&location=' + lng + ',' + lat + '&extensions=base')
-        .then(function(r){ return r.json(); })
-        .then(function(data){
-          done();
-          if (data.status === '1' && data.regeocode) fillGeo(data.regeocode.addressComponent, data.regeocode, lat, lng);
-          else { drawCart(); toast('已记录位置坐标 ✓ 请在上方搜索框选择区县', 3200); focusSearch(); }
-        })
-        .catch(function(){ done(); drawCart(); toast('已记录位置坐标 ✓ 请在上方搜索框选择区县', 3200); focusSearch(); });
-      return;
-    }
-    done();
-    drawCart(); // 重绘购物车弹窗以显示"坐标已获取"绿标
-    toast('已记录位置坐标 ✓ 骑手可精准导航到你这里，地址请在上方搜索框选', 3600);
-    focusSearch();
+    // 把 GPS 坐标翻译成 省/市/区：免 key 优先，高德 key 兜底（更准、能拿到小区）
+    reverseGeocode(lat, lng).then(function(r){
+      done();
+      if (r && r.p) {
+        fillSelects(r.p, r.c, r.d, r.detail, lat, lng);
+      } else {
+        drawCart();
+        toast('已记录位置坐标 ✓ 地址请在上方搜索框选', 3200); focusSearch();
+      }
+    }).catch(function(){
+      done(); drawCart();
+      toast('已记录位置坐标 ✓ 地址请在上方搜索框选', 3200); focusSearch();
+    });
   }, function(err){
     done();
     var inWeChat = /MicroMessenger/i.test(navigator.userAgent);
     var msg = err && err.code === 1
-      ? (inWeChat ? '定位权限被拒绝。微信内需在「设置-隐私-定位服务」开启' : '定位权限被拒绝，请在浏览器地址栏左侧允许定位')
-      : (inWeChat ? '微信内定位超时，直接在上方搜索框选区县更快' : '定位超时，直接在上方搜索框选区县更快');
-    toast(msg, 3600);
-    focusSearch();
-  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+      ? (inWeChat ? '定位权限被拒绝。微信内点右上角「…」→ 设置 → 开启定位' : '定位权限被拒绝，请在浏览器允许定位')
+      : (inWeChat ? '微信内定位失败，直接在上方搜索框选区县' : '定位失败，直接在上方搜索框选区县');
+    toast(msg, 3600); focusSearch();
+  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+}
+
+/* ========== GPS 坐标 → 省/市/区（逆地理）==========
+   免 key：BigDataCloud（国内可达、CORS 开放、无需 key）；若用户配了高德 key（localStorage.amap_key）则用它兜底，更准且能拿到小区/POI。 */
+function toSimp(s) {
+  if (!s) return '';
+  var map = {'東':'东','華':'华','樹':'树','僑':'侨','鹽':'盐','醫':'医','補':'补','達':'达','顯':'显','體':'体','幾':'几','畫':'画','對':'对','歲':'岁','歸':'归','靈':'灵','會':'会','殺':'杀','產':'产','單':'单','賣':'卖','讀':'读','擊':'击','機':'机','權':'权','樣':'样','檢':'检','驗':'验','稱':'称','執':'执','區':'区','縣':'县','鎮':'镇','鄉':'乡','莊':'庄','場':'场','陽':'阳','寧':'宁','廣':'广','廈':'厦','烏':'乌','蘭':'兰','蘇':'苏','龍':'龙','鳳':'凤','臺':'台','島':'岛','義':'义','興':'兴','豐':'丰','營':'营','樂':'乐','來':'来','歷':'历','餘':'余','觀':'观','開':'开','遠':'远','遼':'辽','順':'顺','運':'运','進':'进','選':'选','點':'点','熱':'热','愛':'爱','當':'当','劉':'刘','張':'张','陳':'陈','楊':'杨','黃':'黄','趙':'赵','孫':'孙','吳':'吴','鄭':'郑','錢':'钱','馬':'马','馮':'冯','許':'许','謝':'谢','羅':'罗','蕭':'萧','韓':'韩','溫':'温','連':'连','呂':'吕','葉':'叶','簡':'简','薦':'荐','嚴':'严','譚':'谭','鄧':'邓','鍾':'钟','盧':'卢','蔣':'蒋','歐':'欧','範':'范','賴':'赖','頭':'头','門':'门','關':'关','崗':'岗','灣':'湾','壩':'坝','壇':'坛','裏':'里','專':'专','廠':'厂','屬':'属','圖':'图','圓':'圆','遷':'迁','過':'过','週':'周','環':'环','團':'团','園':'园','廬':'庐','劃':'划','處':'处','審':'审','實':'实','學':'学','衛':'卫','勝':'胜','職':'职','總':'总','種':'种','備':'备','發':'发','務':'务','講':'讲','讓':'让','認':'认','間':'间','閉':'闭','屬':'属','報':'报'};
+  return String(s).split('').map(function(ch){ return map[ch] || ch; }).join('');
+}
+function reverseGeocode(lat, lng) {
+  return new Promise(function(resolve){
+    var settled = false;
+    function go(fn){ if (settled) return; settled = true; resolve(fn); }
+    var url = 'https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat + '&longitude=' + lng + '&localityLanguage=zh';
+    var timer = setTimeout(function(){ go(tryAmap(lat, lng)); }, 6500); // 超时兜底到高德 key
+    fetch(url).then(function(r){ return r.json(); }).then(function(d){
+      clearTimeout(timer);
+      if (d && d.principalSubdivision) {
+        var p = toSimp(d.principalSubdivision);
+        var c = toSimp(d.city || d.principalSubdivision);
+        var d0 = toSimp(d.locality || '');
+        var street = '';
+        if (d.localityInfo && d.localityInfo.administrative) {
+          for (var i = 0; i < d.localityInfo.administrative.length; i++) {
+            if (d.localityInfo.administrative[i].adminLevel === 8) { street = toSimp(d.localityInfo.administrative[i].name); break; }
+          }
+        }
+        go({ p: p, c: c, d: d0, detail: street });
+      } else { go(tryAmap(lat, lng)); }
+    }).catch(function(){ clearTimeout(timer); go(tryAmap(lat, lng)); });
+  });
+}
+function tryAmap(lat, lng) {
+  return new Promise(function(resolve){
+    var gk = localStorage.getItem('amap_key') || '';
+    if (!gk) { resolve(null); return; }
+    fetch('https://restapi.amap.com/v3/geocode/regeo?key=' + gk + '&location=' + lng + ',' + lat + '&extensions=base')
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.status === '1' && data.regeocode && data.regeocode.addressComponent) {
+          var comp = data.regeocode.addressComponent;
+          var p = comp.province || '', c = comp.city || comp.district || '', d = comp.district || comp.township || '';
+          var detail = (comp.street || '') + (comp.streetNumber || '');
+          if (!detail && data.regeocode.formatted_address) detail = data.regeocode.formatted_address.replace(p,'').replace(c,'').replace(d,'').trim();
+          resolve({ p: p, c: c, d: d, detail: detail });
+        } else resolve(null);
+      }).catch(function(){ resolve(null); });
+  });
 }
 
 /* ========== 坐标系转换：GPS(WGS84) → 高德/腾讯(GCJ02) → 百度(BD09) ==========
@@ -1574,7 +1618,7 @@ function drawCart() {
       + '<select class="addr-select" id="cSelect" onchange="onCityChange()"><option value="">市</option></select>'
       + '<select class="addr-select" id="dSelect" onchange="onDistrictChange()"><option value="">区/县</option></select></div>'
       + '<input class="addr-input" id="detailInput" placeholder="详细地址（街道/门牌号/小区/楼层）" value="' + esc(deliveryAddr.detail || '') + '" oninput="saveAddr()">'
-      + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 获取我的位置坐标（让骑手精准找到你）</div>'
+      + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 一键定位并自动填地址</div>'
       + (deliveryAddr.lat && deliveryAddr.lng
           ? '<div class="addr-gps-ok">✓ 已记录精确坐标 ' + deliveryAddr.lat.toFixed(4) + ', ' + deliveryAddr.lng.toFixed(4) + '</div>'
           : '<div class="addr-hint">选好区县 + 填详细地址即可下单。点上方按钮可额外记录精确坐标，骑手导航更准。</div>')
