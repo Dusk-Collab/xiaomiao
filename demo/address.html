@@ -375,22 +375,36 @@ function reverseGeocode(lat,lng){
 }
 function tryAmap(lat,lng){
   return new Promise(function(resolve){
-    if(!amapKey){ resolve(null); return; }
-    // extensions=all 获取最详细地址（含街道、门牌、POI）—— 用 JSONP 绕过 CORS
-    var url='https://restapi.amap.com/v3/geocode/regeo?key='+amapKey+'&location='+lng+','+lat+'&extensions=all&poitype=&radius=100';
-    jsonp(url, 6000).then(function(data){
-      if(data && data.status==='1' && data.regeocode && data.regeocode.addressComponent){
-        var comp=data.regeocode.addressComponent;
-        // 提取最近的道路/门牌信息
-        var street=comp.street||comp.streetNumber?((comp.street||'')+(comp.streetNumber&&comp.streetNumber.street?' '+comp.streetNumber.street:'')+(comp.streetNumber&&comp.streetNumber.number?' '+comp.streetNumber.number:'')):'';
-        var aois=[];  // AOI（小区/建筑）信息
-        if(data.regeocode.aois&&data.regeocode.aois.length){ aois=data.regeocode.aois; }
-        var pois=[];   // POI 信息
-        if(data.regeocode.pois&&data.regeocode.pois.length){ pois=data.regeocode.pois; }
-        resolve({p:comp.province||'',c:comp.city||'',d:comp.district||'',street:street,aoi:(aois[0]&&aois[0].name)||'',poi:(pois[0]&&pois[0].name)||''});
-      } else resolve(null);
-    }).catch(function(){ resolve(null); });
+    // 优先用高德 JS API Geocoder（逆地理，国内最准）—— 此 key 为 JS API 类型，不能调 REST
+    if(window.__amapReady && window.AMap && AMap.Geocoder){
+      try {
+        var geocoder=new AMap.Geocoder({ extensions:'all', radius:100 });
+        geocoder.getAddress([lng, lat], function(status, result){
+          if(status==='complete' && result.regeocode && result.regeocode.addressComponent){
+            var comp=result.regeocode.addressComponent;
+            var street=comp.street||'';
+            if(comp.streetNumber && comp.streetNumber.number){ street=(street?street+' ':'')+comp.streetNumber.number; }
+            var aois=result.regeocode.aois||[];
+            var pois=result.regeocode.pois||[];
+            resolve({p:comp.province||'',c:comp.city||'',d:comp.district||'',street:street,aoi:(aois[0]&&aois[0].name)||'',poi:(pois[0]&&pois[0].name)||''});
+          } else resolve(null);
+        });
+      } catch(e){ resolve(null); }
+    } else {
+      resolve(null);  // 未加载高德 JS API，交由 OSM/手动选择兜底
+    }
   });
+}
+
+/* 高德 JS API 搜索（AutoComplete，国内 POI 最准，返回 tips 数组） */
+function amapSearchJS(q, cb){
+  if(!window.__amapReady || !window.__amapAC){ cb(null); return; }
+  try {
+    window.__amapAC.search(q, function(status, result){
+      if(status==='complete' && result && result.tips && result.tips.length){ cb(result.tips); }
+      else cb(null);
+    });
+  } catch(e){ cb(null); }
 }
 
 /* 把逆地理结果应用到界面 */
@@ -445,7 +459,7 @@ function initCanvasMap(){
 function loadAmap(ok, fail){
   if(!window.AMap){ window._AMapSecurityConfig = { securityJsCode: amapSecurity }; }
   var s=document.createElement('script');
-  s.src='https://webapi.amap.com/maps?v=2.0&key='+amapKey+'&plugin=AMap.Geolocation,AMap.Geocoder';
+  s.src='https://webapi.amap.com/maps?v=2.0&key='+amapKey+'&plugin=AMap.Geolocation,AMap.Geocoder,AMap.AutoComplete';
   s.async=true;
   var done=false;
   var to=setTimeout(function(){ if(done) return; done=true; fail&&fail(); }, 6500);
@@ -465,7 +479,10 @@ function onAmapReady(){
       var c=map.getCenter(); state.centerLng=c.getLng(); state.centerLat=c.getLat();
       scheduleReverse();
     });
-    AMap.plugin(['AMap.Geolocation','AMap.Geocoder'], function(){});
+    AMap.plugin(['AMap.Geolocation','AMap.Geocoder','AMap.AutoComplete'], function(){});
+    // 初始化 AutoComplete（国内 POI 搜索最准），供搜索联想使用
+    window.__amapReady=true;
+    try { window.__amapAC = new AMap.AutoComplete({}); } catch(e){ window.__amapAC=null; }
   } catch(e){ onAmapFail(); }
 }
 function resizeMap(){
@@ -754,7 +771,7 @@ function onSearchInput(){
 function doRealSearch(q){
   showSuggest();
   var list=$('suggestList');
-  list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…<br><small style="opacity:.6">搜索源：Photon · OSM · 本地库</small></div>';
+  list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…<br><small style="opacity:.6">搜索源：高德 · Photon · OSM · 本地库</small></div>';
 
   /* ---- 聚合器：收集所有引擎结果，合并去重后渲染 ---- */
   var allItems=[];       // {html, name, lng, lat, sortWeight}
@@ -795,56 +812,34 @@ function doRealSearch(q){
     }
   }
 
-  // 计数：Photon(多轮，最多3) + Nominatim×2 + 高德(如果有key)×2 + 本地兜底
-  totalEngines = 3 + 2 + (amapKey ? 2 : 0) + 1;
+  // 计数：Photon(多轮) + Nominatim×2 + 高德 JS API(若就绪)×1 + 本地兜底
+  totalEngines = 3 + 2 + (window.__amapReady ? 1 : 0) + 1;
 
-  // ---- 引擎1：高德 inputtips（POI 联想，国内最准）—— 用 JSONP 绕过 CORS ----
-  if(amapKey){
+  // ---- 引擎1：高德 JS API AutoComplete（国内 POI 最准；此 key 为 JS API 类型，走 JS API 而非 REST）----
+  if(window.__amapReady){
     (function(){
-      var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all&city='+(hintCity?encodeURIComponent(hintCity):'')+'&rows=25';
-      jsonp(url, 6000).then(function(d){
-        if(d.status==='1'&&d.tips&&d.tips.length){
-          var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
+      amapSearchJS(q, function(tips){
+        if(tips){
           for(var i=0;i<tips.length;i++){
-            var t=tips[i], loc=t.location.split(',');
+            var t=tips[i];
+            if(!t.location || t.location.indexOf(',')<0) continue; // 无坐标跳过
+            var loc=t.location.split(',');
             var district=t.district||'', addr=t.address||'';
             var fullAddr = district + (addr ? ' '+addr : '');
-            var dist=t.distance ? (parseInt(t.distance)>1000 ? (parseInt(t.distance)/1000).toFixed(1)+'km' : parseInt(t.distance)+'m') : '';
-            var icon = (t.type&&t.type.indexOf('POI')>=0) ? '🏢' : '📍';
-            var isPOI = !!(t.type&&t.type.indexOf('POI')>=0);
+            var isPOI = !!(t.type && (t.type==='POI' || (t.type.indexOf && t.type.indexOf('POI')>=0)));
+            var icon = isPOI ? '🏢' : '📍';
             var html='<div class="suggest-item" onclick="pickSuggest('+loc[0]+','+loc[1]+',\''+jq(t.name)+'\',\''+jq(fullAddr)+'\',\''+jq(district || '')+'\',\''+jq(t.type||'')+'\')"'
               +'><div class="suggest-icon">'+icon+'</div>'
               + '<div class="suggest-body">'
                 + '<div class="suggest-name">'+highlight(esc(t.name), q)+'</div>'
                 + '<div class="suggest-addr">'+esc(fullAddr || district)+'</div>'
-              + '</div>' + (dist ? '<div class="suggest-dist">'+dist+'</div>' : '') + '</div>';
+              + '</div></div>';
             addItem(html, t.name, parseFloat(loc[0]), parseFloat(loc[1]), isPOI ? 100 : 70);
           }
         }
         tickDone();
-      }).catch(function(){ tickDone(); });
+      });
     })();
-
-    // ---- 引擎1b：高德地理编码 API（补充冷门地名/村庄）—— JSONP ----
-    (function(){
-      var url2='https://restapi.amap.com/v3/geocode/geo?key='+amapKey+'&address='+encodeURIComponent(q)+'&city='+(hintCity?encodeURIComponent(hintCity):'');
-      jsonp(url2, 6000).then(function(d){
-        if(d.status==='1'&&d.geocodes&&d.geocodes.length){
-          for(var i=0;i<d.geocodes.length;i++){
-            var g=d.geocodes[i], loc=g.location.split(',');
-            var formatted=g.formatted_address||'';
-            var html='<div class="suggest-item" onclick="pickGeocode('+loc[0]+','+loc[1]+',\''+jq(formatted.replace(/,/g,' '))+'\',\''+jq((g.province||'')+','+(g.city||'')+','+(g.district||''))+'\')"'
-              +'><div class="suggest-icon">🏠</div><div class="suggest-body">'
-              + '<div class="suggest-name">'+highlight(esc(formatted.split(',')[0]||formatted), q)+'</div>'
-              + '<div class="suggest-addr">'+esc(formatted)+'</div></div></div>';
-            addItem(html, formatted.split(',')[0]||formatted, parseFloat(loc[0]), parseFloat(loc[1]), 60);
-          }
-        }
-        tickDone();
-      }).catch(function(){ tickDone(); });
-    })();
-  } else {
-    engineDone += 2; // 没有高德key，这两个引擎直接跳过
   }
 
   // ---- 引擎2：Photon（Komoot 出品，OSM 数据，搜索质量远超 Nominatim，支持 CORS，免费无 key）----
