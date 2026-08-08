@@ -775,17 +775,54 @@ function startGpsLocate() {
 }
 function tryIpLocate() {
   // 使用 IP 定位作为降级方案（无需 GPS 权限）
-  toast('尝试用 IP 定位…', 8000);
-  fetch('https://whois.pconline.com.cn/ipJson.jsp?json=true')
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if (data && data.pro) {
-        // data.pro = 省份, data.city = 城市, data.addr = 完整地址
-        fillSelects(data.pro, data.city || '', '', data.addr || '', 0, 0);
-        toast('已根据 IP 定位到 ' + data.pro + ' ' + (data.city||''));
-      } else { toast('IP 定位失败，请手动选择省市区'); }
-    })
-    .catch(function(){ toast('IP 定位失败，请手动选择省市区'); });
+  // 注：whois.pconline.com.cn 无 CORS 头，浏览器直接拦截 fetch，改用 Sohu 的 JSONP 接口（墙内可用，HTTPS）
+  toast('正在用 IP 定位…', 8000);
+  var done = false;
+  function finish(ok, msg) {
+    if (done) return;
+    done = true;
+    toast(msg || (ok ? 'IP 定位成功' : 'IP 定位失败，请手动选择省市区'));
+  }
+  // Sohu 返回: var returnCitySN = {"cip":"...","cid":"...","cname":"广东省广州市"}
+  window.returnCitySN = null;
+  var s = document.createElement('script');
+  s.src = 'https://pv.sohu.com/cityjson?t=' + Date.now();
+  s.onerror = function(){ finish(false, 'IP 定位失败，请手动选择省市区'); s.remove(); };
+  s.onload = function(){
+    setTimeout(function(){
+      var data = window.returnCitySN;
+      if (data && data.cname && data.cname !== '未知' && data.cid !== '00') {
+        var pro = '', city = '';
+        if (window.PCA_DATA && window.PCA_DATA[data.cname]) {
+          // 直辖市: cname == 省名（如 "北京市"）
+          pro = data.cname; city = data.cname;
+        } else if (window.PCA_DATA) {
+          // 其他: 遍历省找前缀匹配，再从剩余部分里匹配市
+          for (var p in window.PCA_DATA) {
+            if (data.cname.indexOf(p) === 0) {
+              pro = p;
+              var rest = data.cname.substring(p.length);
+              var cities = window.PCA_DATA[p];
+              for (var c in cities) {
+                if (rest === c || rest.indexOf(c) === 0) { city = c; break; }
+              }
+              if (city) break;
+            }
+          }
+        }
+        if (pro && city) {
+          fillSelects(pro, city, '', data.cname, 0, 0);
+        } else {
+          toast('IP 定位结果: ' + data.cname + '，请手动确认');
+        }
+      } else {
+        finish(false, 'IP 定位失败，请手动选择省市区');
+      }
+      s.remove();
+    }, 50);
+  };
+  document.head.appendChild(s);
+  setTimeout(function(){ if (!done) finish(false, 'IP 定位超时，请手动选择省市区'); }, 8000);
 }
 function tryNominatim(lat,lng) {
   fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1&accept-language=zh-CN')
