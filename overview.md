@@ -130,3 +130,27 @@ demo/
 1. **营业执照是否已有**（唯一硬阻塞项）
 2. **一期做单店还是多店**（架构已按 shopId 分片预留）
 3. **商家后台优先级**：建议手机小程序优先，电脑网页第 3 周补，App 打包放二期（iOS 上架需 688 元/年）
+
+---
+
+## 🔧 更新日志
+
+### 2026-08-08 定位与导航重做（commit `cb10c54`）
+
+**背景**：顾客端外卖地址定位连续三轮修不好——不显示地址、加载慢（最长 12 秒）。
+
+**根因（真机+浏览器实测定位到）**：
+1. IP 定位三源（Sohu / vvhan / ip-api）对该用户所在网络全部返回"未知"，串行重试导致最长 12 秒白等。
+2. GPS 成功后无高德 key 时回退 Nominatim（OpenStreetMap），该接口在国内返回 **HTTP 403**，地址永远填不上。
+
+**方案**：改为 **高德地图选点（`m.amap.com/picker`，无需 API key）**
+- 点「📍 定位我的位置（地图选点）」→ 尝试 GPS（6 秒超时）→ 打开高德地图页面，用户手指点一下确认 → 高德带 `province/city/district/address/position` 跳回本站 → 自动回填省市区+详细地址+经纬度，弹 toast「已为你选定地址：…」
+- GPS 被拒 / 微信内被限制 → 直接打开地图选点，不影响使用
+- 已配置 `localStorage.amap_key` 的用户走逆地理快速通道，无需手动点图
+- 彻底删除 IP 定位链与 Nominatim 代码
+
+**顺带修掉的两个隐藏 Bug（静态看代码看不出来，浏览器实测才暴露）**：
+- `renderPcaSelects()` 调用 `onProvinceChange(true)`，`skipSave=true` 会跳过市/区赋值 → 只回填省份。改为 `false`。
+- `openMapAddr` 被定义了两次，后面的短版本覆盖了前面基于经纬度的版本 → 导航实际没用上坐标。删除重复定义。
+
+**验证方式**：系统 Chrome + puppeteer-core 真实浏览器 E2E，3 个场景全部 PASS（高德回跳直填 / GPS 成功→选点 / GPS 拒绝→选点），导航 URL 生成校验 PASS（`uri.amap.com/marker?position=39.908,116.397`）。线上 gh-pages 已核验新代码上线、旧 IP 代码归零。
