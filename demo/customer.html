@@ -184,6 +184,50 @@ body { background: var(--bg); }
 .addr-title { font-size: 13px; font-weight: 700; color: var(--ink); }
 .addr-text { font-size: 12px; color: var(--ink-2); margin-top: 3px; line-height: 1.5; }
 .addr-map { display: inline-flex; align-items: center; gap: 4px; color: var(--brand); font-size: 12px; font-weight: 700; margin-top: 4px; cursor: pointer; }
+
+/* ---- 美团式地址卡片（点击整张跳 address.html） ---- */
+.addr-card {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border-radius: 10px; padding: 12px 12px;
+  border: 1px solid var(--line); cursor: pointer; transition: all .15s;
+  box-shadow: 0 1px 0 rgba(0,0,0,.02);
+}
+.addr-card:active { background: #FFF4F0; border-color: #F5C3B0; transform: scale(.995); }
+.addr-card-icon { font-size: 20px; flex: none; line-height: 1; }
+.addr-card-body { flex: 1; min-width: 0; }
+.addr-card-line1 { font-size: 14px; font-weight: 700; color: var(--ink); line-height: 1.35; }
+.addr-card-line2 {
+  font-size: 12px; color: var(--ink-2); margin-top: 3px; line-height: 1.45;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.addr-card-line2 .placeholder,
+.addr-card-line1 .placeholder { color: #B8A99A; font-weight: 500; }
+.addr-card-gps { font-size: 11px; color: #2A9D5C; margin-top: 5px; font-weight: 600; }
+.addr-card-arrow { font-size: 24px; color: #C8B8A7; flex: none; line-height: 1; font-weight: 300; }
+.addr-card-extra {
+  font-size: 12px; color: var(--brand); font-weight: 600; margin-top: 8px; padding-left: 2px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 3px;
+}
+.addr-card-extra:active { opacity: .7; }
+
+/* ---- 常用地址横滚（精简版） ---- */
+.addr-book { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding: 2px 1px 4px; scrollbar-width: none; }
+.addr-book::-webkit-scrollbar { display: none; }
+.addr-book-card {
+  flex: none; min-width: 140px; max-width: 180px;
+  background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px;
+  cursor: pointer; position: relative; transition: all .15s;
+}
+.addr-book-card.on { border-color: var(--brand); background: #FFF4F0; }
+.addr-book-card:active { transform: scale(.98); }
+.addr-book-tag {
+  position: absolute; top: -1px; right: -1px;
+  background: var(--brand); color: #fff; font-size: 10px; padding: 1px 6px;
+  border-radius: 0 8px 0 6px; font-weight: 700;
+}
+.addr-book-text { font-size: 11px; color: var(--ink-2); line-height: 1.4; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.addr-book-card.on .addr-book-text { color: var(--ink); font-weight: 600; }
+
 .addr-input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; margin-top: 6px; background: #fff; color: var(--ink); }
 .addr-input:focus { outline: none; border-color: var(--brand); }
 .addr-input::placeholder { color: #B8A99A; }
@@ -209,15 +253,6 @@ body { background: var(--bg); }
 .addr-sugg-empty { padding: 12px; font-size: 12px; color: var(--ink-3); text-align: center; }
 .addr-hint { font-size: 11px; color: var(--ink-3); margin-top: 5px; line-height: 1.5; }
 .addr-gps-ok { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #1B9A59; font-weight: 700; background: #E9F8F0; border-radius: 5px; padding: 2px 6px; margin-top: 5px; }
-
-/* ---- 常用地址卡片 ---- */
-.addr-book { display: flex; gap: 7px; overflow-x: auto; margin-top: 7px; padding-bottom: 3px; -webkit-overflow-scrolling: touch; }
-.addr-book::-webkit-scrollbar { display: none; }
-.addr-book-card { flex: none; max-width: 205px; background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; cursor: pointer; position: relative; }
-.addr-book-card:active { border-color: var(--brand); background: #FFF7F4; }
-.addr-book-name { font-size: 12px; font-weight: 700; color: var(--ink); }
-.addr-book-text { font-size: 11px; color: var(--ink-2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.addr-book-del { position: absolute; top: -5px; right: -5px; width: 17px; height: 17px; border-radius: 50%; background: #C9BDB2; color: #fff; font-size: 11px; line-height: 17px; text-align: center; }
 
 /* ---- 地图 App 选择面板 ---- */
 .mapapp-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
@@ -1590,43 +1625,50 @@ function drawCart() {
       + '<div class="addr-map" onclick="openMap(\'' + esc(shopAddr).replace(/'/g, "\\'") + '\')">📍 查看地图导航</div>'
       + '</div></div></div>';
   } else {
-    html += '<div class="cart-addr">'
-      + '<div class="addr-row">'
-      + '<div class="addr-icon">🛵</div>'
-      + '<div class="addr-info">'
-      + '<div class="addr-title">配送地址</div>';
-
-    // 常用地址：一键复用，填地址最快的路径
+    // 已选地址精炼显示：点卡片跳 address.html 美团式拖动选点
+    var picked = deliveryAddr.detail && deliveryAddr.pca;
     var book = getAddrBook();
+    var nameLine = (deliveryAddr.name || '').trim()
+      || (book[0] && book[0].name) || '';
+    var phoneLine = (deliveryAddr.phone || '').trim()
+      || (book[0] && book[0].phone) || '';
+    var contactLine = nameLine
+      ? esc(nameLine) + (phoneLine ? ' · ' + esc(phoneLine) : '')
+      : '';
+    var addrLine = picked
+      ? esc(deliveryAddr.pca + ' ' + deliveryAddr.detail)
+      : (book[0] ? esc((book[0].pca || '') + ' ' + (book[0].detail || '')) : '');
+
+    html += '<div class="cart-addr">'
+      + '<div class="addr-card" onclick="location.href=\'address.html\'">'
+      + '<div class="addr-card-icon">📍</div>'
+      + '<div class="addr-card-body">'
+      + '<div class="addr-card-line1">' + (contactLine || '<span class="placeholder">请选择收货地址</span>') + '</div>'
+      + '<div class="addr-card-line2">' + (addrLine ? esc(addrLine) : '<span class="placeholder">点击选择收货地址（支持地图拖动选点）</span>') + '</div>'
+      + (deliveryAddr.lat && deliveryAddr.lng
+          ? '<div class="addr-card-gps">✓ 已记录精确坐标 ' + deliveryAddr.lat.toFixed(4) + ', ' + deliveryAddr.lng.toFixed(4) + '</div>'
+          : '')
+      + '</div>'
+      + '<div class="addr-card-arrow">›</div>'
+      + '</div>';
+
+    // 常用地址：横向滚动小卡片，点一下直接切换当前地址（不跳页）
     if (book.length) {
       html += '<div class="addr-book">' + book.map(function(a, i){
-        return '<div class="addr-book-card" onclick="useAddrBook(' + i + ')">'
-          + '<div class="addr-book-del" onclick="delAddrBook(' + i + ',event)">×</div>'
-          + '<div class="addr-book-name">' + esc(a.name || '未填姓名') + (a.phone ? ' · ' + esc(a.phone) : '') + '</div>'
+        var active = (picked && (deliveryAddr.pca || '') === (a.pca || '') && (deliveryAddr.detail || '') === (a.detail || ''));
+        return '<div class="addr-book-card' + (active ? ' on' : '') + '" onclick="useAddrBook(' + i + ')">'
+          + (active ? '<div class="addr-book-tag">当前</div>' : '')
           + '<div class="addr-book-text">' + esc((a.pca || '') + ' ' + (a.detail || '')) + '</div>'
           + '</div>';
       }).join('') + '</div>';
     }
 
-    html += '<input class="addr-input" id="addrName" placeholder="收件人姓名" value="' + esc(deliveryAddr.name || '') + '" oninput="saveAddr()">'
-      + '<input class="addr-input" id="addrPhone" placeholder="联系电话" value="' + esc(deliveryAddr.phone || '') + '" oninput="saveAddr()">'
-      // 关键词搜索：输入区县名秒定位到省市区，本地数据、离线可用
-      + '<div class="addr-search-wrap">'
-      + '<input class="addr-search" id="addrSearch" placeholder="搜索区县，如：朝阳 / 天河 / 锦江" autocomplete="off" oninput="onAddrSearch(this.value)" onfocus="onAddrSearch(this.value)">'
-      + '<div class="addr-sugg" id="addrSugg"></div>'
-      + '</div>'
-      + '<div class="pca-row">'
-      + '<select class="addr-select" id="pSelect" onchange="onProvinceChange()"><option value="">省</option></select>'
-      + '<select class="addr-select" id="cSelect" onchange="onCityChange()"><option value="">市</option></select>'
-      + '<select class="addr-select" id="dSelect" onchange="onDistrictChange()"><option value="">区/县</option></select></div>'
-      + '<input class="addr-input" id="detailInput" placeholder="详细地址（街道/门牌号/小区/楼层）" value="' + esc(deliveryAddr.detail || '') + '" oninput="saveAddr()">'
-      + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 一键定位并自动填地址</div>'
-      + '<div class="addr-goto-map" onclick="location.href=\'address.html\'">🗺 去地图选地址（美团式拖动选点） ›</div>'
-      + (deliveryAddr.lat && deliveryAddr.lng
-          ? '<div class="addr-gps-ok">✓ 已记录精确坐标 ' + deliveryAddr.lat.toFixed(4) + ', ' + deliveryAddr.lng.toFixed(4) + '</div>'
-          : '<div class="addr-hint">选好区县 + 填详细地址即可下单。点上方按钮可额外记录精确坐标，骑手导航更准。</div>')
-      + (deliveryAddr.detail ? '<div class="addr-map" onclick="openMapAddr()">🧭 用手机地图导航到这里</div>' : '')
-      + '</div></div></div>';
+    // 附加操作：导航到当前地址（不跳页，只是反向唤起地图 App）
+    if (picked) {
+      html += '<div class="addr-card-extra" onclick="event.stopPropagation();openMapAddr()">🧭 用手机地图导航到这里</div>';
+    }
+
+    html += '</div>';
   }
 
   cart.forEach(function (c, i) {
@@ -1669,14 +1711,15 @@ function drawCart() {
 
 function setMode(m) { mode = m; renderCart(); drawCart(); }
 function saveAddr() {
+  // 姓名/电话：购物车里已无输入框（移到 address.html），保留现有值
   var p = ($('pSelect') && $('pSelect').value) || deliveryAddr.p || '';
   var c = ($('cSelect') && $('cSelect').value) || deliveryAddr.c || '';
   var d = ($('dSelect') && $('dSelect').value) || deliveryAddr.d || '';
   var detail = ($('detailInput') && $('detailInput').value) || deliveryAddr.detail || '';
   var pca = (p && c && d) ? (p + ' ' + c + ' ' + d) : (deliveryAddr.pca || '');
   deliveryAddr = {
-    name: ($('addrName') && $('addrName').value) || '',
-    phone: ($('addrPhone') && $('addrPhone').value) || '',
+    name: ($('addrName') && $('addrName').value) || deliveryAddr.name || '',
+    phone: ($('addrPhone') && $('addrPhone').value) || deliveryAddr.phone || '',
     pca: pca,
     detail: detail,
     p: p, c: c, d: d,
