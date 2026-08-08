@@ -774,55 +774,90 @@ function startGpsLocate() {
   }, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
 }
 function tryIpLocate() {
-  // 使用 IP 定位作为降级方案（无需 GPS 权限）
-  // 注：whois.pconline.com.cn 无 CORS 头，浏览器直接拦截 fetch，改用 Sohu 的 JSONP 接口（墙内可用，HTTPS）
-  toast('正在用 IP 定位…', 8000);
-  var done = false;
-  function finish(ok, msg) {
-    if (done) return;
-    done = true;
-    toast(msg || (ok ? 'IP 定位成功' : 'IP 定位失败，请手动选择省市区'));
+  // IP 定位作为 GPS 失败的降级。多源 JSONP 兜底，任何一家认出来就 OK。
+  // 注：whois.pconline.com.cn 无 CORS 头已被排除；fetch 跨域在 GitHub Pages 上经常被拦。
+  // 失败安静收尾，不打扰用户 —— 省市区下拉框就在那一行。
+  var services = [
+    { name:'sohu',    url:'https://pv.sohu.com/cityjson?cb=ipSohu_cb&t=',   cb:'ipSohu_cb',  parse: parseSohu    },
+    { name:'vvhan',   url:'https://api.vvhan.com/api/getIpInfo?cb=ipVvhan_cb&t=', cb:'ipVvhan_cb', parse: parseVvhan },
+    { name:'ip-api',  url:'https://ip-api.com/json/?lang=zh-CN&callback=ipIpapi_cb&t=', cb:'ipIpapi_cb', parse: parseIpApi }
+  ];
+  var idx = 0, finished = false;
+  toast('正在尝试 IP 定位…', 4000); // 4 秒短提示，失败就消失，不挡用户
+
+  function done(ok, msg) {
+    if (finished) return;
+    finished = true;
+    if (ok && msg) toast(msg, 2500);
+    // 失败时不弹"失败"toast —— 省市区下拉就在那里，用户自己点
   }
-  // Sohu 返回: var returnCitySN = {"cip":"...","cid":"...","cname":"广东省广州市"}
-  window.returnCitySN = null;
-  var s = document.createElement('script');
-  s.src = 'https://pv.sohu.com/cityjson?t=' + Date.now();
-  s.onerror = function(){ finish(false, 'IP 定位失败，请手动选择省市区'); s.remove(); };
-  s.onload = function(){
-    setTimeout(function(){
-      var data = window.returnCitySN;
-      if (data && data.cname && data.cname !== '未知' && data.cid !== '00') {
-        var pro = '', city = '';
-        if (window.PCA_DATA && window.PCA_DATA[data.cname]) {
-          // 直辖市: cname == 省名（如 "北京市"）
-          pro = data.cname; city = data.cname;
-        } else if (window.PCA_DATA) {
-          // 其他: 遍历省找前缀匹配，再从剩余部分里匹配市
-          for (var p in window.PCA_DATA) {
-            if (data.cname.indexOf(p) === 0) {
-              pro = p;
-              var rest = data.cname.substring(p.length);
-              var cities = window.PCA_DATA[p];
-              for (var c in cities) {
-                if (rest === c || rest.indexOf(c) === 0) { city = c; break; }
-              }
-              if (city) break;
-            }
+  function tryNext() {
+    if (idx >= services.length) { done(false); return; }
+    var sv = services[idx++];
+    var tag = '__ipLocate_' + sv.name + '_' + Date.now();
+    window[sv.cb] = null;
+    var s = document.createElement('script');
+    var timer = setTimeout(function(){ s.remove(); tryNext(); }, 4000);
+    s.onerror = function(){ clearTimeout(timer); s.remove(); tryNext(); };
+    s.onload = function(){
+      setTimeout(function(){
+        var raw = window[sv.cb];
+        clearTimeout(timer);
+        s.remove();
+        if (raw) {
+          var hit = sv.parse(raw);
+          if (hit && hit.pro && hit.city) {
+            fillSelects(hit.pro, hit.city, '', hit.label || (hit.pro + ' ' + hit.city), 0, 0);
+            return done(true, '已自动定位到 ' + (hit.label || (hit.pro + ' ' + hit.city)));
           }
         }
-        if (pro && city) {
-          fillSelects(pro, city, '', data.cname, 0, 0);
-        } else {
-          toast('IP 定位结果: ' + data.cname + '，请手动确认');
+        tryNext();
+      }, 60);
+    };
+    s.src = sv.url + Date.now() + '_' + tag;
+    document.head.appendChild(s);
+  }
+  tryNext();
+
+  // Sohu: var returnCitySN = {cip,cid,cname}; 直辖市 cname==省名；普通省 "广东省广州市"
+  function parseSohu(raw) {
+    if (!raw || raw.cname === '未知' || raw.cid === '00') return null;
+    return matchPca(raw.cname);
+  }
+  // vvhan: {success:true, province:"北京", city:"", info:"..."}
+  function parseVvhan(raw) {
+    if (!raw || !raw.success || !raw.province) return null;
+    return matchPca(raw.province + (raw.city ? raw.city : ''));
+  }
+  // ip-api: {status:'success', country, regionName, city, ...}
+  function parseIpApi(raw) {
+    if (!raw || raw.status !== 'success') return null;
+    var pro = (raw.regionName||'').replace(/省|市|自治区|维吾尔|壮族|回族|蒙古族|特别行政区/g, '');
+    var label = raw.regionName + (raw.city && raw.city !== raw.regionName ? ' ' + raw.city : '');
+    return matchPca(label);
+  }
+  // 用本地 PCA_DATA 把 "广东省广州市" / "北京市" / "北京市朝阳区" 拆成省+市
+  function matchPca(label) {
+    if (!label || !window.PCA_DATA) return null;
+    // 直辖市：label 本身就是省名（cname = "北京市"）
+    if (window.PCA_DATA[label]) return { pro: label, city: label, label: label };
+    // 普通省：label 形如 "广东省广州市"
+    for (var p in window.PCA_DATA) {
+      if (label.indexOf(p) === 0) {
+        var rest = label.substring(p.length);
+        var cities = window.PCA_DATA[p];
+        // 完全匹配 / 前缀匹配
+        for (var c in cities) {
+          if (rest === c || rest.indexOf(c) === 0) {
+            return { pro: p, city: c, label: label };
+          }
         }
-      } else {
-        finish(false, 'IP 定位失败，请手动选择省市区');
+        // 兜底：只填省，市留空让用户挑
+        return { pro: p, city: '', label: label };
       }
-      s.remove();
-    }, 50);
-  };
-  document.head.appendChild(s);
-  setTimeout(function(){ if (!done) finish(false, 'IP 定位超时，请手动选择省市区'); }, 8000);
+    }
+    return null;
+  }
 }
 function tryNominatim(lat,lng) {
   fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat='+lat+'&lon='+lng+'&zoom=18&addressdetails=1&accept-language=zh-CN')
