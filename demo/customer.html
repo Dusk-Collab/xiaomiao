@@ -189,6 +189,8 @@ body { background: var(--bg); }
 .addr-input::placeholder { color: #B8A99A; }
 .addr-locate { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--brand); font-weight: 700; margin-top: 6px; cursor: pointer; background: #fff; border: 1px dashed var(--brand); padding: 7px 10px; border-radius: 8px; text-align: center; justify-content: center; }
 .addr-locate:active { background: #FFF4F0; }
+.addr-goto-map { display: block; font-size: 12px; color: #fff; font-weight: 600; margin-top: 6px; cursor: pointer; background: var(--brand); padding: 8px 10px; border-radius: 8px; text-align: center; }
+.addr-goto-map:active { opacity: 0.85; }
 .pca-row { display: flex; gap: 8px; margin-top: 6px; }
 .addr-select { flex: 1; min-width: 0; padding: 8px 6px; border: 1px solid var(--line); border-radius: 8px; font-size: 13px; background: #fff; color: var(--ink); -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; padding-right: 22px; }
 .addr-select:focus { outline: none; border-color: var(--brand); }
@@ -1619,6 +1621,7 @@ function drawCart() {
       + '<select class="addr-select" id="dSelect" onchange="onDistrictChange()"><option value="">区/县</option></select></div>'
       + '<input class="addr-input" id="detailInput" placeholder="详细地址（街道/门牌号/小区/楼层）" value="' + esc(deliveryAddr.detail || '') + '" oninput="saveAddr()">'
       + '<div class="addr-locate" onclick="startGpsLocate()"><span>📍</span> 一键定位并自动填地址</div>'
+      + '<div class="addr-goto-map" onclick="location.href=\'address.html\'">🗺 去地图选地址（美团式拖动选点） ›</div>'
       + (deliveryAddr.lat && deliveryAddr.lng
           ? '<div class="addr-gps-ok">✓ 已记录精确坐标 ' + deliveryAddr.lat.toFixed(4) + ', ' + deliveryAddr.lng.toFixed(4) + '</div>'
           : '<div class="addr-hint">选好区县 + 填详细地址即可下单。点上方按钮可额外记录精确坐标，骑手导航更准。</div>')
