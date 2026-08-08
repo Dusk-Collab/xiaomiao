@@ -661,45 +661,59 @@ function onSearchInput(){
   }, 250);
 }
 
-/* 统一搜索入口：高德优先 → 本地降级 */
+/* 统一搜索入口：多引擎竞速（高德 + OSM Nominatim + 本地省市区） */
 function doRealSearch(q){
   showSuggest();
   var list=$('suggestList');
-
-  // 显示加载中
   list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…</div>';
 
+  var settled=false;
+  function settle(html){
+    if(settled) return; settled=true;
+    list.innerHTML=html;
+  }
+
+  // ---- 引擎1：高德 inputtips（POI 联想，国内最准）----
   if(amapKey){
-    // 方案1：高德 inputtips（POI 联想，最准）
-    var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all';
-    fetch(url).then(function(r){
+    (function(){
+      var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all';
+      fetch(url, {mode:'cors'}).then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.json();
+      }).then(function(d){
+        if(settled) return;
+        if(d.status==='1'&&d.tips&&d.tips.length){
+          var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
+          if(tips.length) return settle(renderAmapTipsHtml(tips, q));
+        }
+      }).catch(function(){ /* 高德失败，静默 */ });
+    })();
+  }
+
+  // ---- 引擎2：OpenStreetMap Nominatim（免费、无需 key、全球可用）----
+  (function(){
+    var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=8&accept-language=zh-CN,zh';
+    fetch(url, {mode:'cors'}).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
-    }).then(function(d){
-      renderAmapTips(d, q);
-    }).catch(function(err){
-      console.warn('高德搜索失败，降级到本地:', err);
-      doLocalSearch(q);
-    });
-  } else {
+    }).then(function(data){
+      if(settled || !data||!data.length) return;
+      settle(renderOsmHtml(data, q));
+    }).catch(function(){ /* OSM 也失败，静默 */ });
+  })();
+
+  // ---- 引擎3：本地省市区兜底（保证永远有结果）----
+  setTimeout(function(){
+    if(settled) return;
     doLocalSearch(q);
-  }
+  }, 1800);  // 等 1.8 秒，两个网络引擎都没回来才走本地
 }
 
-/* 渲染高德联想结果 */
-function renderAmapTips(d, q){
-  var list=$('suggestList');
-  if(d.status!=='1'||!d.tips||!d.tips.length){
-    list.innerHTML='<div class="suggest-empty">没找到「'+esc(q)+'」，换个关键词试试</div>';
-    return;
-  }
-  // 过滤掉没有坐标的结果（无法定位）
-  var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
-  if(!tips.length){
-    list.innerHTML='<div class="suggest-empty">没找到精确位置，试试更具体的关键词</div>';
-    return;
-  }
-  list.innerHTML=tips.slice(0,15).map(function(t){
+/* 渲染高德联想结果 → 返回HTML */
+function renderAmapTipsHtml(tips, q){
+  var filtered=tips.filter(function(t){ return t.location && t.location.length>0; });
+  if(!filtered.length) return '<div class="suggest-empty">没找到精确位置</div>';
+  return filtered.slice(0,15).map(function(t){
     var loc=t.location.split(',');
     var district=t.district||'';
     var addr=t.address||'';
@@ -714,6 +728,43 @@ function renderAmapTips(d, q){
       + (dist ? '<div class="suggest-dist">'+dist+'</div>' : '')
       + '</div>';
   }).join('');
+}
+
+/* 渲染 OSM Nominatim 结果 → 返回HTML */
+function renderOsmHtml(data, q){
+  if(!data||!data.length) return '<div class="suggest-empty">未找到结果</div>';
+  return data.slice(0,10).map(function(item){
+    var name=item.display_name.split(',')[0];
+    var ad=item.address||{};
+    var district=ad.city||ad.town||ad.county||ad.state||ad.province||'';
+    var shortAddr=item.display_name.split(',').slice(0,4).join(',').trim();
+    return '<div class="suggest-item" onclick="pickOsm('+item.lon+','+item.lat+',\''+jq(name)+'\',\''+jq(item.display_name.replace(/,/g,' '))+'\',\''+jq(district || '')+'\')">'
+      + '<div class="suggest-icon">📍</div>'
+      + '<div class="suggest-body">'
+        + '<div class="suggest-name">'+highlight(esc(name), q)+'</div>'
+        + '<div class="suggest-addr">'+esc(shortAddr)+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+/* 点击 OSM 搜索结果 */
+function pickOsm(lng, lat, name, fullAddr, district){
+  hideSuggest();
+  $('searchInput').value=name;
+  $('searchClear').classList.add('show');
+  state.centerLat=parseFloat(lat);
+  state.centerLng=parseFloat(lng);
+  if(mapMode==='amap'&&state.map){ state.map.setZoomAndCenter(17, [state.centerLng, state.centerLat]); }
+  else { drawMap(); }
+  setLocAddr(name); setLocStatus('正在解析地址…');
+  reverseGeocode(state.centerLat, state.centerLng).then(function(r){
+    if(r&&r.p){ applyReverse(r); }
+    else { parseDistrictToRegion(district||fullAddr, name); }
+    $('fDetail').value=name+(fullAddr?' '+fullAddr:'');
+    toast('已选择：'+name, 1500);
+    document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
+    setTimeout(function(){ $('fName').focus(); }, 400);
+  });
 }
 
 /* 高亮匹配文字 */
