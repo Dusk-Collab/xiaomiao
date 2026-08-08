@@ -706,7 +706,7 @@ function onSearchInput(){
 function doRealSearch(q){
   showSuggest();
   var list=$('suggestList');
-  list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…</div>';
+  list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…<br><small style="opacity:.6">搜索源：Photon · OSM · 本地库</small></div>';
 
   /* ---- 聚合器：收集所有引擎结果，合并去重后渲染 ---- */
   var allItems=[];       // {html, name, lng, lat, sortWeight}
@@ -736,7 +736,7 @@ function doRealSearch(q){
     }
     // 按权重排序（POI/楼栋 > 县/区 > 省/市）
     allItems.sort(function(a,b){ return b.sortWeight - a.sortWeight; });
-    list.innerHTML=allItems.slice(0,25).map(function(it){ return it.html; }).join('');
+    list.innerHTML=allItems.slice(0,35).map(function(it){ return it.html; }).join('');
   }
 
   function tickDone(){
@@ -747,8 +747,8 @@ function doRealSearch(q){
     }
   }
 
-  // 计数：Photon + Nominatim×2 + 高德(如果有key)×2 + 本地兜底
-  totalEngines = 3 + (amapKey ? 2 : 0) + 1;
+  // 计数：Photon(多轮，最多3) + Nominatim×2 + 高德(如果有key)×2 + 本地兜底
+  totalEngines = 3 + 2 + (amapKey ? 2 : 0) + 1;
 
   // ---- 引擎1：高德 inputtips（POI 联想，国内最准）—— 用 JSONP 绕过 CORS ----
   if(amapKey){
@@ -800,40 +800,62 @@ function doRealSearch(q){
   }
 
   // ---- 引擎2：Photon（Komoot 出品，OSM 数据，搜索质量远超 Nominatim，支持 CORS，免费无 key）----
+  // 多轮搜索：原词 + 分词变体，最大化命中率
   (function(){
-    var url='https://photon.komoot.io/api/?q='+encodeURIComponent(q)+'&limit=20&lang=zh';
-    fetch(url, {mode:'cors'}).then(function(r){
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      return r.json();
-    }).then(function(data){
-      if(data&&data.features){
-        for(var i=0;i<data.features.length;i++){
-          var f=data.features[i];
-          var coords=f.geometry.coordinates;
-          var p=f.properties;
-          var name=p.name||(q);
-          var city=p.city||p.town||p.state||p.county||'';
-          var country=p.country||'';
-          var street=p.street||p.road||'';
-          var fullAddr=[name, street, city, p.state, country].filter(Boolean).join(', ');
-          var icon='📍';
-          if(p.osm_key && p.osm_key==='building'){ icon='🏢'; }
-          else if(p.osm_value==='house'||p.osm_value==='apartments'){ icon='🏠'; }
-          else if(p.osm_key==='highway'){ icon='🛣️'; }
-          else if(p.osm_key==='place'||p.osm_value==='village'){ icon='🏘️'; }
-          var html='<div class="suggest-item" onclick="pickOsm('+coords[0]+','+coords[1]+',\''+jq(name)+'\',\''+jq(fullAddr.substring(0,80))+'\',\''+jq(city||p.state||'')+'\')"'
-            +'><div class="suggest-icon">'+icon+'</div><div class="suggest-body">'
-            + '<div class="suggest-name">'+highlight(esc(name), q)+'</div>'
-            + '<div class="suggest-addr">'+esc([city, street, p.state].filter(Boolean).join(' ') || fullAddr.substring(0,50))+'</div></div></div>';
-          var w=65;
-          if(p.osm_key==='building'||p.osm_value==='apartments') w=95;
-          else if(p.osm_value==='village'||p.osm_value==='town') w=75;
-          else if(p.osm_value==='city') w=55;
-          addItem(html, name, coords[0], coords[1], w);
-        }
+    // 生成查询变体：原词 + 拆分后的各部分
+    var variants=[q];
+    if(q.length>2){
+      // 常见中文地名拆法：取前2字（县/市名）+ 后部分；或按空格拆
+      var parts=q.split(/\s+/).filter(Boolean);
+      if(parts.length>1){
+        parts.forEach(function(p){ if(p.length>=2 && variants.indexOf(p)<0) variants.push(p); });
       }
-      tickDone();
-    }).catch(function(){ tickDone(); });
+      // 去掉前2字（地名）看后面是什么（小区/路名）
+      var tail=q.substring(2);
+      if(tail.length>=2 && variants.indexOf(tail)<0) variants.push(tail);
+    }
+    var photonRounds=0;
+    variants.forEach(function(vq){
+      if(!vq||vq.length<2) return;
+      photonRounds++;
+      (function(term){
+        var url='https://photon.komoot.io/api/?q='+encodeURIComponent(term)+'&limit=15&lang=zh';
+        fetch(url, {mode:'cors'}).then(function(r){
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return r.json();
+        }).then(function(data){
+          if(data&&data.features){
+            for(var i=0;i<data.features.length;i++){
+              var f=data.features[i];
+              var coords=f.geometry.coordinates;
+              var p=f.properties;
+              var name=p.name||(term);
+              var city=p.city||p.town||p.state||p.county||'';
+              var country=p.country||'';
+              var street=p.street||p.road||'';
+              var fullAddr=[name, street, city, p.state, country].filter(Boolean).join(', ');
+              var icon='📍';
+              if(p.osm_key && p.osm_key==='building'){ icon='🏢'; }
+              else if(p.osm_value==='house'||p.osm_value==='apartments'){ icon='🏠'; }
+              else if(p.osm_key==='highway'){ icon='🛣️'; }
+              else if(p.osm_key==='place'||p.osm_value==='village'){ icon='🏘️'; }
+              var html='<div class="suggest-item" onclick="pickOsm('+coords[0]+','+coords[1]+',\''+jq(name)+'\',\''+jq(fullAddr.substring(0,80))+'\',\''+jq(city||p.state||'')+'\')"'
+                +'><div class="suggest-icon">'+icon+'</div><div class="suggest-body">'
+                + '<div class="suggest-name">'+highlight(esc(name), q)+'</div>'
+                + '<div class="suggest-addr">'+esc([city, street, p.state].filter(Boolean).join(' ') || fullAddr.substring(0,50))+'</div></div></div>';
+              var w=65;
+              if(p.osm_key==='building'||p.osm_value==='apartments') w=95;
+              else if(p.osm_value==='village'||p.osm_value==='town') w=75;
+              else if(p.osm_value==='city') w=55;
+              addItem(html, name, coords[0], coords[1], w);
+            }
+          }
+          tickDone();
+        }).catch(function(){ tickDone(); });
+      })(vq);
+    });
+    // 防止 variants 为空导致引擎计数不足
+    if(photonRounds===0){ tickDone(); }
   })();
 
   // ---- 引擎3：OpenStreetMap Nominatim（免费、无需 key、全球可用）----
