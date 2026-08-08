@@ -49,23 +49,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 .form-card.pulse{animation:pulseB 1s ease 1}
 @keyframes pulseB{0%{box-shadow:0 0 0 0 rgba(7,193,96,.55)}100%{box-shadow:0 0 0 14px rgba(7,193,96,0)}}
 
-/* 搜索 */
-.search-bar{margin:14px 12px 0;background:#fff;border-radius:var(--r-m);box-shadow:var(--sh-s);display:flex;align-items:center;gap:8px;padding:11px 14px}
+/* 搜索（实时联想下拉） */
+.search-wrap{position:relative;margin:14px 12px 0;z-index:25}
+.search-bar{background:#fff;border-radius:var(--r-m);box-shadow:var(--sh-s);display:flex;align-items:center;gap:8px;padding:11px 14px}
 .search-bar .ico{font-size:16px;color:var(--ink-3);flex:none}
 .search-bar input{flex:1;border:0;outline:none;font-size:15px;background:transparent;color:var(--ink)}
 .search-bar input::placeholder{color:var(--ink-3)}
-.search-bar .go{font-size:13px;font-weight:700;color:#fff;background:var(--brand);border:0;border-radius:8px;padding:7px 14px;cursor:pointer;flex:none}
-.search-bar .go:active{background:var(--brand-d)}
+.search-bar .clear-btn{width:20px;height:20px;border-radius:50%;background:var(--ink-3);color:#fff;font-size:12px;display:none;place-items:center;cursor:pointer;flex:none;line-height:1}
+.search-bar .clear-btn.show{display:grid}
 
-/* 搜索结果 */
-.results{margin:10px 12px 0;display:none}
-.results.show{display:block}
-.res-item{background:#fff;border-radius:var(--r-m);box-shadow:var(--sh-s);padding:13px 14px;margin-bottom:8px;cursor:pointer}
-.res-item:active{background:#f7faf8}
-.res-name{font-size:15px;font-weight:600;color:var(--ink)}
-.res-name b{color:var(--brand)}
-.res-addr{font-size:12px;color:var(--ink-3);margin-top:3px;line-height:1.4}
-.res-dist{font-size:11px;color:var(--brand);margin-top:3px}
+/* 搜索下拉列表 */
+.suggest-list{position:absolute;top:100%;left:0;right:0;background:#fff;border-radius:0 0 var(--r-m) var(--r-m);box-shadow:var(--sh-m);max-height:320px;overflow-y:auto;display:none;margin-top:-1px}
+.suggest-list.show{display:block}
+.suggest-item{padding:13px 16px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;align-items:flex-start;gap:10px}
+.suggest-item:last-child{border-bottom:0}
+.suggest-item:active{background:#f7faf8}
+.suggest-icon{width:22px;height:22px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:2px}
+.suggest-body{flex:1;min-width:0}
+.suggest-name{font-size:15px;font-weight:600;color:var(--ink);line-height:1.3}
+.suggest-addr{font-size:12px;color:var(--ink-3);margin-top:2px;line-height:1.4;word-break:break-all}
+.suggest-dist{font-size:11px;color:var(--brand);margin-top:2px;flex:none;white-space:nowrap}
+.suggest-loading,.suggest-empty,.suggest-error{padding:24px 16px;text-align:center;font-size:13px;color:var(--ink-3)}
 
 /* 表单 */
 .form-card{margin:14px 12px 0;background:#fff;border-radius:var(--r-l);box-shadow:var(--sh-m);padding:6px 16px 16px}
@@ -150,13 +154,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
   <div class="loc-relocate" onclick="reLocate()">重新定位</div>
 </div>
 
-<div class="search-bar">
-  <span class="ico">🔍</span>
-  <input id="searchInput" placeholder="请输入小区、写字楼、学校名称" oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-  <button class="go" onclick="doSearch()">搜索</button>
+<div class="search-wrap">
+  <div class="search-bar">
+    <span class="ico">🔍</span>
+    <input id="searchInput" placeholder="搜索小区、写字楼、学校、地标" oninput="onSearchInput()" onfocus="onSearchFocus()" autocomplete="off">
+    <span class="clear-btn" id="searchClear" onclick="clearSearch()">✕</span>
+  </div>
+  <div class="suggest-list" id="suggestList"></div>
 </div>
-
-<div class="results" id="results"></div>
 
 <div class="form-card" id="formSection">
   <div class="form-title">填写收货信息</div>
@@ -628,63 +633,190 @@ function pickDistrict(n){
   toast('已选择：'+pcaState.p+' '+pcaState.d+'，请补充详细地址', 2000);
 }
 
-/* ===================== 搜索 ===================== */
-var searchTimer=null;
+/* ===================== 搜索（实时联想下拉） ===================== */
+var searchTimer=null, searchXhr=null;
+function onSearchFocus(){
+  var v=$('searchInput').value.trim();
+  if(v) { showSuggest(); }
+}
+function clearSearch(){
+  $('searchInput').value='';
+  $('searchClear').classList.remove('show');
+  hideSuggest();
+}
+function showSuggest(){ $('suggestList').classList.add('show'); }
+function hideSuggest(){ $('suggestList').classList.remove('show'); $('suggestList').innerHTML=''; }
+
 function onSearchInput(){
   clearTimeout(searchTimer);
+  if(searchXhr){ searchXhr.abort(); searchXhr=null; }
   var v=$('searchInput').value.trim();
-  if(!v){ $('results').classList.remove('show'); $('results').innerHTML=''; return; }
-  // 输入即搜：有 key 走高德，无 key 走本地省市区库（美团同款体验）
-  searchTimer=setTimeout(function(){ amapKey ? searchAmap(v) : searchLocal(v); }, 280);
+  // 清除按钮
+  if(v){ $('searchClear').classList.add('show'); } else { $('searchClear').classList.remove('show'); hideSuggest(); return; }
+  // 至少2个字才触发（避免太泛）
+  if(v.length<2){ hideSuggest(); return; }
+
+  searchTimer=setTimeout(function(){
+    doRealSearch(v);
+  }, 250);
 }
-function doSearch(){
-  var q=$('searchInput').value.trim();
-  if(!q){ toast('请输入搜索内容'); return; }
-  if(amapKey){ searchAmap(q); } else { searchLocal(q); }
+
+/* 统一搜索入口：高德优先 → 本地降级 */
+function doRealSearch(q){
+  showSuggest();
+  var list=$('suggestList');
+
+  // 显示加载中
+  list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…</div>';
+
+  if(amapKey){
+    // 方案1：高德 inputtips（POI 联想，最准）
+    var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all';
+    fetch(url).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(d){
+      renderAmapTips(d, q);
+    }).catch(function(err){
+      console.warn('高德搜索失败，降级到本地:', err);
+      doLocalSearch(q);
+    });
+  } else {
+    doLocalSearch(q);
+  }
 }
-function searchLocal(q){
-  var res=searchPca(q);
-  var box=$('results');
-  if(res===null){ box.innerHTML='<div class="res-item"><div class="res-addr">地址数据加载中，请稍候…</div></div>'; box.classList.add('show'); return; }
-  if(!res.length){ box.innerHTML='<div class="res-item"><div class="res-addr">没找到「'+esc(q)+'」，换个关键词试试（如：朝阳 / 天河）</div></div>'; box.classList.add('show'); return; }
-  box.innerHTML=res.map(function(it){
-    var label=(it.p===it.c)?(it.p+' · '+it.d):(it.p+' · '+it.c+' · '+it.d);
-    return '<div class="res-item" onclick="applySearch(\''+jq(it.p)+'\',\''+jq(it.c)+'\',\''+jq(it.d)+'\')">'
-      + '<div class="res-name">'+esc(it.d)+'</div><div class="res-addr">'+esc(label)+'</div></div>';
+
+/* 渲染高德联想结果 */
+function renderAmapTips(d, q){
+  var list=$('suggestList');
+  if(d.status!=='1'||!d.tips||!d.tips.length){
+    list.innerHTML='<div class="suggest-empty">没找到「'+esc(q)+'」，换个关键词试试</div>';
+    return;
+  }
+  // 过滤掉没有坐标的结果（无法定位）
+  var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
+  if(!tips.length){
+    list.innerHTML='<div class="suggest-empty">没找到精确位置，试试更具体的关键词</div>';
+    return;
+  }
+  list.innerHTML=tips.slice(0,15).map(function(t){
+    var loc=t.location.split(',');
+    var district=t.district||'';
+    var addr=t.address||'';
+    var fullAddr = district + (addr ? ' '+addr : '');
+    var dist=t.distance ? (parseInt(t.distance)>1000 ? (parseInt(t.distance)/1000).toFixed(1)+'km' : parseInt(t.distance)+'m') : '';
+    return '<div class="suggest-item" onclick="pickSuggest('+loc[0]+','+loc[1]+',\''+jq(t.name)+'\',\''+jq(fullAddr)+'\',\''+jq(district || '')+'\')">'
+      + '<div class="suggest-icon">📍</div>'
+      + '<div class="suggest-body">'
+        + '<div class="suggest-name">'+highlight(esc(t.name), q)+'</div>'
+        + '<div class="suggest-addr">'+esc(fullAddr)+'</div>'
+      + '</div>'
+      + (dist ? '<div class="suggest-dist">'+dist+'</div>' : '')
+      + '</div>';
   }).join('');
-  box.classList.add('show');
 }
-function searchAmap(q){
-  showCover('搜索中…');
-  var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json';
-  fetch(url).then(function(r){ return r.json(); }).then(function(d){
-    hideCover();
-    var box=$('results');
-    if(d.status!=='1'||!d.tips){ toast('未搜索到结果'); return; }
-    var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
-    if(!tips.length){ toast('未搜索到匹配地址'); return; }
-    box.innerHTML=tips.slice(0,12).map(function(t){
-      var loc=t.location.split(',');
-      return '<div class="res-item" onclick="applyAmap(\''+loc[0]+'\',\''+loc[1]+'\',\''+jq(t.name)+'\',\''+jq((t.district||'')+(t.address?' '+t.address:''))+'\')">'
-        + '<div class="res-name">'+esc(t.name)+'</div><div class="res-addr">'+esc((t.district||'')+(t.address?' '+t.address:''))+'</div></div>';
-    }).join('');
-    box.classList.add('show');
-  }).catch(function(){ hideCover(); toast('搜索失败，请重试'); });
+
+/* 高亮匹配文字 */
+function highlight(text, q){
+  if(!q) return text;
+  var idx=text.toLowerCase().indexOf(q.toLowerCase());
+  if(idx<0) return text;
+  return text.substring(0,idx)+'<b>'+text.substring(idx,idx+q.length)+'</b>'+text.substring(idx+q.length);
 }
+
+/* 本地省市区降级搜索 */
+function doLocalSearch(q){
+  var res=searchPca(q);
+  var list=$('suggestList');
+  if(res===null){
+    list.innerHTML='<div class="suggest-error">地址数据未加载</div>'; return;
+  }
+  if(!res.length){
+    list.innerHTML='<div class="suggest-empty">没找到「'+esc(q)+'」</div>'; return;
+  }
+  list.innerHTML=res.map(function(it){
+    var label=(it.p===it.c)?(it.p+' · '+it.d):(it.p+' · '+it.c+' · '+it.d);
+    return '<div class="suggest-item" onclick="pickPcaResult(\''+jq(it.p)+'\',\''+jq(it.c)+'\',\''+jq(it.d)+'\')">'
+      + '<div class="suggest-icon">🏠</div>'
+      + '<div class="suggest-body">'
+        + '<div class="suggest-name">'+highlight(esc(it.d), q)+'</div>'
+        + '<div class="suggest-addr">'+esc(label)+'</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+/* 点击高德联想结果 → 填充地址+跳地图 */
+function pickSuggest(lng, lat, name, fullAddr, district){
+  hideSuggest();
+  $('searchInput').value=name;
+  $('searchClear').classList.add('show');
+
+  state.centerLat=parseFloat(lat);
+  state.centerLng=parseFloat(lng);
+
+  // 地图跳转
+  if(mapMode==='amap'&&state.map){
+    state.map.setZoomAndCenter(17, [state.centerLng, state.centerLat]);
+  } else {
+    drawMap();
+  }
+
+  // 逆地理获取省市区
+  setLocAddr(name); setLocStatus('正在解析省市区…');
+  reverseGeocode(state.centerLat, state.centerLng).then(function(r){
+    if(r&&r.p){
+      applyReverse(r);
+      // 填详细地址
+      var detail=name;
+      if(fullAddr && fullAddr.indexOf(name)<0) detail=detail+' '+fullAddr;
+      $('fDetail').value=detail;
+      toast('已选择：'+name, 1500);
+    } else {
+      // 逆地理失败但district有值时手动解析
+      if(district){
+        parseDistrictToRegion(district, name);
+      }
+      $('fDetail').value=name+(fullAddr?' '+fullAddr:'');
+      setLocStatus('已选择地址，请确认所在地区');
+    }
+    document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
+    setTimeout(function(){ $('fName').focus(); }, 400);
+  });
+}
+
+/* 把高德返回的 district 字段解析为省市区（简单启发式） */
+function parseDistrictToRegion(districtStr, name){
+  if(!districtStr) return;
+  var parts=districtStr.replace(/市$/,'|').replace(/区$/,'|').replace(/县$/,'|').split('|').filter(Boolean);
+  if(parts.length>=3){
+    state.region={p:parts[0], c:parts[0]+'市', d:parts[1]};
+  } else if(parts.length===2){
+    state.region={p:parts[0], c:parts[0]+'市', d:parts[1]};
+  } else {
+    state.region={p:districtStr.replace(/[市区县].*$/,''), c:districtStr, d:''};
+  }
+  updateRegionText();
+}
+
+/* 点击本地省市区结果 */
+function pickPcaResult(p,c,d){
+  hideSuggest();
+  applySearch(p,c,d);
+}
+
 function applySearch(p,c,d){
   state.region={p:p,c:c,d:d}; updateRegionText();
-  $('results').classList.remove('show'); $('results').innerHTML='';
-  $('searchInput').value='';
+  $('searchInput').value=d; $('searchClear').classList.add('show');
   toast('已选择：'+(p===c?p:p+' '+c)+' '+d+'，请补充详细地址', 2200);
   document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
   setTimeout(function(){ $('fDetail').focus(); }, 350);
 }
-function applyAmap(lng,lat,name,addr){
-  state.centerLat=parseFloat(lat); state.centerLng=parseFloat(lng); drawMap();
-  $('results').classList.remove('show'); $('results').innerHTML=''; $('searchInput').value=name;
-  reverseGeocode(state.centerLat, state.centerLng).then(function(r){ applyReverse(r); if(r&&r.p){ $('fDetail').value=(name+(addr?(' '+addr):'')); onDetailInput(); } });
-  document.getElementById('formSection').scrollIntoView({behavior:'smooth'});
-}
+
+/* 点页面其他区域关闭下拉 */
+document.addEventListener('click', function(e){
+  var wrap=document.querySelector('.search-wrap');
+  if(wrap && !wrap.contains(e.target)){ hideSuggest(); }
+});
 
 /* ===================== 表单 ===================== */
 function pickTag(el){ var box=$('tagBox').children; for(var i=0;i<box.length;i++) box[i].classList.remove('active'); el.classList.add('active'); state.tag=el.getAttribute('data-t'); }
@@ -734,5 +866,6 @@ window.addEventListener('load', function(){
   autostartGps();
 });
 </script>
+<div style="text-align:center;padding:12px 0;font-size:12px;color:#9AA1A8;border-top:1px solid #ECEEF0;margin-top:16px">🏠 永久访问地址：<a href="https://d2322921132-ops.github.io/xiaomiao-fandian/" style="color:#07C160;text-decoration:none;font-weight:600">d2322921132-ops.github.io/xiaomiao-fandian/</a></div>
 </body>
 </html>
