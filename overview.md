@@ -194,3 +194,18 @@ demo/
 5. 常用地址卡片显示 + 一键复用后地址全部填好
 
 线上 gh-pages 已核验：新代码标记（addrSearch/openMapPanel/wgs84ToGcj02/getAddrBook）全部 > 0；旧代码（checkAmapPickerReturn/openAmapPicker/m.amap.com/picker）全部 = 0。文件从 86KB 涨到 100KB。
+
+### 2026-08-08（续）一键定位自动填省市区（commit `0418e9c`）
+
+**背景**：用户第三轮反馈"点击获取位置没反应、不自动填"。根因：上一版定位按钮**只有配了高德 key 才反查地址**，无 key 时只存 GPS 坐标、不填省市区——用户没设 key，所以点完地址是空的，感觉"没反应"。
+
+**修法**：点击 → GPS → **免 key 逆地理（BigDataCloud）**自动填 省/市/区 + 街道。
+- BigDataCloud `api.bigdatacloud.net/data/reverse-geocode-client`：国内可达、返回 `access-control-allow-origin: *`（GitHub Pages 上 fetch 不被拦）、**无需任何 key**。已 curl 实测 HTTP 200 + CORS 头。
+- 它返回繁体（"東城區"），加 `toSimp()` 繁→简转换表匹配简体区划库，正确回填。
+- 兜底：若 `localStorage.amap_key` 有值，仍走高德逆地理（更准、能拿小区/POI）。
+- 按钮文案改为"📍 一键定位并自动填地址"。
+- 定位被拒/超时：明确提示（区分微信内/浏览器）+ 聚焦搜索框，不再白等。
+
+**验证**：真浏览器（系统 Chrome + puppeteer）9 项断言全过：定位成功→自动填 北京市/北京市/东城区 + 街道"东华门街道" + 坐标与完整 pca 存入 localStorage；定位拒绝→<10ms 给出提示且不误填。
+
+**踩坑（测试桩）**：`page.evaluateOnNewDocument` 对 `navigator.geolocation` 的接管在 puppeteer 隐身上下文里不生效，真 Chrome 无头模式直接返回 `code=1` 拒绝，导致误判产品代码失败。改用 `Object.defineProperty(navigator,'geolocation',...)` 在 `page.goto` 后于页面上下文硬接管才稳定。
