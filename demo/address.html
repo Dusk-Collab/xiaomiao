@@ -678,107 +678,169 @@ function onSearchInput(){
   }, 250);
 }
 
-/* 统一搜索入口：多引擎竞速（高德 + OSM Nominatim + 高德地理编码 + 本地省市区） */
+/* 统一搜索入口：多引擎聚合（收集所有引擎结果→合并去重→一起显示） */
 function doRealSearch(q){
   showSuggest();
   var list=$('suggestList');
   list.innerHTML='<div class="suggest-loading">🔍 正在搜索「'+esc(q)+'」…</div>';
 
-  var settled=false;
-  function settle(html){
-    if(settled) return; settled=true;
-    list.innerHTML=html;
-  }
-
-  // 根据当前位置推测城市名，传给搜索引擎提高命中率
-  var hintCity = '';
+  /* ---- 聚合器：收集所有引擎结果，合并去重后渲染 ---- */
+  var allItems=[];       // {html, name, lng, lat, sortWeight}
+  var engineDone=0;      // 已完成引擎数
+  var totalEngines=0;    // 预计总引擎数
+  var finished=false;
+  var hintCity='';
   if(state.region && state.region.c){ hintCity = state.region.c.replace(/市$/,''); }
 
-  // ---- 引擎1：高德 inputtips（POI 联想，国内最准，覆盖小区/楼栋/门牌）----
+  function addItem(html, name, lng, lat, weight){
+    // 去重：同名+同坐标视为同一项
+    for(var i=0;i<allItems.length;i++){
+      if(allItems[i].name===name && Math.abs(allItems[i].lng-lng)<0.0001 && Math.abs(allItems[i].lat-lat)<0.0001){
+        if(weight > allItems[i].sortWeight) allItems[i].sortWeight = weight; // 保留更高权重的
+        return;
+      }
+    }
+    allItems.push({html:html, name:name, lng:lng, lat:lat, sortWeight:weight});
+  }
+
+  function renderFinal(){
+    if(finished) return;
+    finished=true;
+    if(!allItems.length){
+      list.innerHTML='<div class="suggest-empty">没找到「'+esc(q)+'」，换个关键词试试</div>';
+      return;
+    }
+    // 按权重排序（POI/楼栋 > 县/区 > 省/市）
+    allItems.sort(function(a,b){ return b.sortWeight - a.sortWeight; });
+    list.innerHTML=allItems.slice(0,25).map(function(it){ return it.html; }).join('');
+  }
+
+  function tickDone(){
+    engineDone++;
+    // 所有引擎都回来了（或超时），渲染最终结果
+    if(engineDone >= totalEngines){
+      setTimeout(renderFinal, 80); // 短暂延迟确保最后一个addItem已处理
+    }
+  }
+
+  // 计数：OSM总是跑 + 高德(如果有key)×2 + 本地兜底
+  totalEngines = 1 + (amapKey ? 2 : 0) + 1;
+
+  // ---- 引擎1：高德 inputtips（POI 联想，国内最准）----
   if(amapKey){
     (function(){
-      var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all&city='+(hintCity?encodeURIComponent(hintCity):'');
+      var url='https://restapi.amap.com/v3/assistant/inputtips?key='+amapKey+'&keywords='+encodeURIComponent(q)+'&output=json&citylimit=false&datatype=all&city='+(hintCity?encodeURIComponent(hintCity):'')+'&rows=25';
       fetch(url, {mode:'cors'}).then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
       }).then(function(d){
-        if(settled) return;
         if(d.status==='1'&&d.tips&&d.tips.length){
           var tips=d.tips.filter(function(t){ return t.location && t.location.length>0; });
-          if(tips.length) return settle(renderAmapTipsHtml(tips, q));
+          for(var i=0;i<tips.length;i++){
+            var t=tips[i], loc=t.location.split(',');
+            var district=t.district||'', addr=t.address||'';
+            var fullAddr = district + (addr ? ' '+addr : '');
+            var dist=t.distance ? (parseInt(t.distance)>1000 ? (parseInt(t.distance)/1000).toFixed(1)+'km' : parseInt(t.distance)+'m') : '';
+            var icon = (t.type&&t.type.indexOf('POI')>=0) ? '🏢' : '📍';
+            var isPOI = !!(t.type&&t.type.indexOf('POI')>=0);
+            var html='<div class="suggest-item" onclick="pickSuggest('+loc[0]+','+loc[1]+',\''+jq(t.name)+'\',\''+jq(fullAddr)+'\',\''+jq(district || '')+'\',\''+jq(t.type||'')+'\')"'
+              +'><div class="suggest-icon">'+icon+'</div>'
+              + '<div class="suggest-body">'
+                + '<div class="suggest-name">'+highlight(esc(t.name), q)+'</div>'
+                + '<div class="suggest-addr">'+esc(fullAddr || district)+'</div>'
+              + '</div>' + (dist ? '<div class="suggest-dist">'+dist+'</div>' : '') + '</div>';
+            addItem(html, t.name, parseFloat(loc[0]), parseFloat(loc[1]), isPOI ? 100 : 70);
+          }
         }
-      }).catch(function(){ /* 高德失败，静默 */ });
+        tickDone();
+      }).catch(function(){ tickDone(); });
     })();
 
-    // ---- 引擎1b：高德地理编码 API（补充 inputtips 搜不到的冷门地名）----
+    // ---- 引擎1b：高德地理编码 API（补充冷门地名/村庄）----
     (function(){
       var url2='https://restapi.amap.com/v3/geocode/geo?key='+amapKey+'&address='+encodeURIComponent(q)+'&city='+(hintCity?encodeURIComponent(hintCity):'');
       fetch(url2, {mode:'cors'}).then(function(r){
         if(!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
       }).then(function(d){
-        if(settled) return;
         if(d.status==='1'&&d.geocodes&&d.geocodes.length){
-          settle(renderAmapGeocodesHtml(d.geocodes, q));
+          for(var i=0;i<d.geocodes.length;i++){
+            var g=d.geocodes[i], loc=g.location.split(',');
+            var formatted=g.formatted_address||'';
+            var html='<div class="suggest-item" onclick="pickGeocode('+loc[0]+','+loc[1]+',\''+jq(formatted.replace(/,/g,' '))+'\',\''+jq((g.province||'')+','+(g.city||'')+','+(g.district||''))+'\')"'
+              +'><div class="suggest-icon">🏠</div><div class="suggest-body">'
+              + '<div class="suggest-name">'+highlight(esc(formatted.split(',')[0]||formatted), q)+'</div>'
+              + '<div class="suggest-addr">'+esc(formatted)+'</div></div></div>';
+            addItem(html, formatted.split(',')[0]||formatted, parseFloat(loc[0]), parseFloat(loc[1]), 60);
+          }
         }
-      }).catch(function(){});
+        tickDone();
+      }).catch(function(){ tickDone(); });
     })();
+  } else {
+    engineDone += 2; // 没有高德key，这两个引擎直接跳过
   }
 
   // ---- 引擎2：OpenStreetMap Nominatim（免费、无需 key、全球可用）----
   (function(){
-    var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=12&accept-language=zh-CN,zh&countrycodes=cn';
+    var url='https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(q)+'&addressdetails=1&limit=20&accept-language=zh-CN,zh&countrycodes=cn&extratags=1';
     fetch(url, {mode:'cors'}).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }).then(function(data){
-      if(settled || !data||!data.length) return;
-      settle(renderOsmHtml(data, q));
-    }).catch(function(){ /* OSM 也失败，静默 */ });
+      if(data&&data.length){
+        for(var i=0;i<data.length;i++){
+          var m=data[i];
+          var displayName=m.display_name||'';
+          var shortName=m.name||(displayName.split(',')[0]||q);
+          var type=m.type||'', cls=m.class||'';
+          var icon='📍';
+          if(cls==='building'||type==='apartments'){ icon='🏢'; }
+          else if(cls==='highway'||type==='residential'){ icon='🛣️'; }
+          else if(cls==='place'||type==='village'||type==='town'){ icon='🏘️'; }
+          else if(type==='suburb'||type==='neighbourhood'){ icon='🏡'; }
+          var addrParts=[];
+          if(m.address){
+            if(m.address.state && addrParts.indexOf(m.address.state)<0) addrParts.push(m.address.state);
+            if(m.address.city || m.address.town || m.address.county) addrParts.push(m.address.city||m.address.town||m.address.county);
+            if(m.address.suburb) addrParts.push(m.address.suburb);
+            if(m.address.road) addrParts.push(m.address.road);
+          }
+          var html='<div class="suggest-item" onclick="pickOsm('+m.lon+','+m.lat+',\''+jq(shortName)+'\',\''+jq(displayName.replace(/,/g,' ').substring(0,80))+'\',\''+jq((m.address&&m.address.state)||'')+'\')"'
+            +'><div class="suggest-icon">'+icon+'</div><div class="suggest-body">'
+            + '<div class="suggest-name">'+highlight(esc(shortName), q)+'</div>'
+            + '<div class="suggest-addr">'+esc(addrParts.join(' ') || displayName.substring(0,50))+'</div></div></div>';
+          var w=50;
+          if(type==='apartments'||cls==='building') w=90;
+          else if(type==='village'||type==='town') w=70;
+          else if(type==='city'||type==='county') w=55;
+          addItem(html, shortName, parseFloat(m.lon), parseFloat(m.lat), w);
+        }
+      }
+      tickDone();
+    }).catch(function(){ tickDone(); });
   })();
 
   // ---- 引擎3：本地省市区兜底（保证永远有结果）----
   setTimeout(function(){
-    if(settled) return;
-    doLocalSearch(q);
-  }, 2200);  // 等 2.2 秒
-}
+    var res=searchPca(q);
+    if(res===null){ tickDone(); return; }
+    if(res.length){
+      for(var i=0;i<res.length;i++){
+        var it=res[i];
+        var label=(it.p===it.c)?(it.p+' · '+it.d):(it.p+' · '+it.c+' · '+it.d);
+        var html='<div class="suggest-item" onclick="applySearch(\''+jq(it.p)+'\',\''+jq(it.c)+'\',\''+jq(it.d)+'\')"'
+          +'><div class="suggest-icon">🗺️</div><div class="suggest-body">'
+          + '<div class="suggest-name">'+highlight(esc(it.d), q)+'</div>'
+          + '<div class="suggest-addr">'+esc(label)+'</div></div></div>';
+        addItem(html, it.d, 0, 0, 30); // 无坐标，权重最低
+      }
+    }
+    tickDone();
+  }, 1500);
 
-/* 渲染高德联想结果 → 返回HTML */
-function renderAmapTipsHtml(tips, q){
-  var filtered=tips.filter(function(t){ return t.location && t.location.length>0; });
-  if(!filtered.length) return '<div class="suggest-empty">没找到精确位置</div>';
-  return filtered.slice(0,15).map(function(t){
-    var loc=t.location.split(',');
-    var district=t.district||'';
-    var addr=t.address||'';
-    var fullAddr = district + (addr ? ' '+addr : '');
-    var dist=t.distance ? (parseInt(t.distance)>1000 ? (parseInt(t.distance)/1000).toFixed(1)+'km' : parseInt(t.distance)+'m') : '';
-    var icon = (t.type&&t.type.indexOf('POI')>=0) ? '🏢' : '📍';
-    return '<div class="suggest-item" onclick="pickSuggest('+loc[0]+','+loc[1]+',\''+jq(t.name)+'\',\''+jq(fullAddr)+'\',\''+jq(district || '')+'\',\''+jq(t.type||'')+'\')">'
-      + '<div class="suggest-icon">'+icon+'</div>'
-      + '<div class="suggest-body">'
-        + '<div class="suggest-name">'+highlight(esc(t.name), q)+'</div>'
-        + '<div class="suggest-addr">'+esc(fullAddr || district)+'</div>'
-      + '</div>'
-      + (dist ? '<div class="suggest-dist">'+dist+'</div>' : '')
-      + '</div>';
-  }).join('');
-}
-
-/* 渲染高德地理编码结果 → 返回HTML（补充 inputtips 搜不到的冷门地名/村庄） */
-function renderAmapGeocodesHtml(geocodes, q){
-  if(!geocodes||!geocodes.length) return '';
-  return geocodes.slice(0,8).map(function(g){
-    var loc=g.location.split(',');
-    var formatted=g.formatted_address||'';
-    return '<div class="suggest-item" onclick="pickGeocode('+loc[0]+','+loc[1]+',\''+jq(formatted.replace(/,/g,' '))+'\',\''+jq((g.province||'')+','+(g.city||'')+','+(g.district||''))+'\')">'
-      + '<div class="suggest-icon">🏠</div>'
-      + '<div class="suggest-body">'
-        + '<div class="suggest-name">'+highlight(esc(formatted.split(',')[0]||formatted), q)+'</div>'
-        + '<div class="suggest-addr">'+esc(formatted)+'</div>'
-      + '</div></div>';
-  }).join('');
+  // ---- 超时兜底：3秒后不管引擎是否都返回，先渲染已有结果 ----
+  setTimeout(function(){ renderFinal(); }, 3500);
 }
 
 /* 点击高德地理编码结果（村庄/乡镇级） */
@@ -796,24 +858,7 @@ function pickGeocode(lng, lat, fullAddr, pcStr){
   reverseGeocode(state.centerLat, state.centerLng).then(function(r){ if(r&&r.p){ applyReverse(r); } $('fDetail').value=fullAddr; toast('已选择：'+fullAddr, 1500); document.getElementById('formSection').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ $('fName').focus(); }, 400); });
 }
 
-/* 渲染 OSM Nominatim 结果 → 返回HTML */
-function renderOsmHtml(data, q){
-  if(!data||!data.length) return '<div class="suggest-empty">未找到结果</div>';
-  return data.slice(0,10).map(function(item){
-    var name=item.display_name.split(',')[0];
-    var ad=item.address||{};
-    var district=ad.city||ad.town||ad.county||ad.state||ad.province||'';
-    var shortAddr=item.display_name.split(',').slice(0,4).join(',').trim();
-    return '<div class="suggest-item" onclick="pickOsm('+item.lon+','+item.lat+',\''+jq(name)+'\',\''+jq(item.display_name.replace(/,/g,' '))+'\',\''+jq(district || '')+'\')">'
-      + '<div class="suggest-icon">📍</div>'
-      + '<div class="suggest-body">'
-        + '<div class="suggest-name">'+highlight(esc(name), q)+'</div>'
-        + '<div class="suggest-addr">'+esc(shortAddr)+'</div>'
-      + '</div></div>';
-  }).join('');
-}
-
-/* 点击 OSM 搜索结果 */
+/* 高亮匹配文字 */
 function pickOsm(lng, lat, name, fullAddr, district){
   hideSuggest();
   $('searchInput').value=name;
@@ -843,26 +888,7 @@ function highlight(text, q){
   return text.substring(0,idx)+'<b>'+text.substring(idx,idx+q.length)+'</b>'+text.substring(idx+q.length);
 }
 
-/* 本地省市区降级搜索 */
-function doLocalSearch(q){
-  var res=searchPca(q);
-  var list=$('suggestList');
-  if(res===null){
-    list.innerHTML='<div class="suggest-error">地址数据未加载</div>'; return;
-  }
-  if(!res.length){
-    list.innerHTML='<div class="suggest-empty">没找到「'+esc(q)+'」</div>'; return;
-  }
-  list.innerHTML=res.map(function(it){
-    var label=(it.p===it.c)?(it.p+' · '+it.d):(it.p+' · '+it.c+' · '+it.d);
-    return '<div class="suggest-item" onclick="pickPcaResult(\''+jq(it.p)+'\',\''+jq(it.c)+'\',\''+jq(it.d)+'\')">'
-      + '<div class="suggest-icon">🏠</div>'
-      + '<div class="suggest-body">'
-        + '<div class="suggest-name">'+highlight(esc(it.d), q)+'</div>'
-        + '<div class="suggest-addr">'+esc(label)+'</div>'
-      + '</div></div>';
-  }).join('');
-}
+/* 省市区数据搜索（返回匹配数组） */
 
 /* 点击高德联想结果 → 填充地址+跳地图（POI放大到18级看门牌） */
 function pickSuggest(lng, lat, name, fullAddr, district, type){
