@@ -187,8 +187,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue"
 var areaData = window.PCA_DATA || {};
 var pcaIndex = null;
 // 高德 key：优先用内置常量（部署后所有人可用），其次 localStorage.amap_key（用户自助填）
-var AMAP_KEY_BUILTIN = '';   // ← 用户发来 key 后填这里，例：'xxxxxxxxxxxxxxxxxxxxxxxx'
-var AMAP_SEC_BUILTIN = '';   // ← 高德安全密钥（JS API 2.0 必需），例：'yyyyyyyyyyyyyyyy'
+var AMAP_KEY_BUILTIN = 'abc6aa993699942ad825eb21b1aaa272';
+var AMAP_SEC_BUILTIN = '1b4332d0b278898ccee8051d2fd0a1f3';
 var amapKey = (function(){ try { return localStorage.getItem('amap_key') || ''; } catch(e){ return ''; } })() || AMAP_KEY_BUILTIN;
 var amapSecurity = (function(){ try { return localStorage.getItem('amap_security') || ''; } catch(e){ return ''; } })() || AMAP_SEC_BUILTIN;
 
