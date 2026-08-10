@@ -185,6 +185,12 @@
     font-size: 13px; color: var(--ink-2); line-height: 1.7;
     margin-top: 8px; word-break: break-word;
   }
+  /* 评价图片（点开进 Lightbox 放大） */
+  .review-imgs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .review-img {
+    width: 72px; height: 72px; object-fit: cover; border-radius: 8px;
+    background: #f3f3f3; cursor: pointer; flex: none;
+  }
   .review-more {
     width: 100%; padding: 11px; margin-top: 14px;
     background: var(--bg); border: 1px dashed var(--line);
@@ -324,6 +330,7 @@
 <script src="assets/product-extras.js"></script>
 <script src="assets/lightbox.js"></script>
 <script src="assets/cart-shared.js"></script>
+<script src="assets/review-store.js"></script>
 <script>
 /* ================= 状态 ================= */
 var D = null;
@@ -509,36 +516,74 @@ function renderDetail() {
   $('detailTable').innerHTML = html;
 }
 
-/* ================= 评价 ================= */
+/* ================= 评价（真实用户评价） ================= */
 function renderReviews() {
   show($('panelReview'));
   $('panelReview').classList.remove('hide');
-  var r = ProductExtras.getRating(P);
-  var reviews = ProductExtras.getReviews(P, Math.min(15, Math.max(r.count, 10)));
-  P._reviews = reviews;
+
+  var reviews = (window.ReviewStore ? ReviewStore.getByProduct(P.id) : []);
+  var st = (window.ReviewStore ? ReviewStore.stats(P.id) : null);
+
   // 概览
-  $('reviewSummary').innerHTML =
-    '<div class="review-score mono">' + r.percent + '<small style="font-size:14px;color:var(--ink-2);font-weight:600;margin-left:2px">%</small></div>' +
-    '<div class="review-score-info">' +
-      '<div class="stars">' + '★★★★★'.slice(0, Math.round(r.percent / 20)) + '☆☆☆☆☆'.slice(Math.round(r.percent / 20)) + '</div>' +
-      '<div class="meta">好评率 <b>' + r.percent + '%</b> · 共 <b>' + r.count + '</b> 条评价</div>' +
-    '</div>';
+  if (st) {
+    var full = Math.round(st.avg);
+    $('reviewSummary').innerHTML =
+      '<div class="review-score mono">' + st.avg + '<small style="font-size:13px;color:var(--ink-2);font-weight:600;margin-left:2px">分</small></div>' +
+      '<div class="review-score-info">' +
+        '<div class="stars">' + '★'.repeat(full) + '☆'.repeat(5 - full) + '</div>' +
+        '<div class="meta">好评率 <b>' + st.percent + '%</b> · 共 <b>' + st.count + '</b> 条评价</div>' +
+      '</div>';
+  } else {
+    $('reviewSummary').innerHTML =
+      '<div class="review-score-info" style="padding:4px 0">' +
+        '<div class="meta">暂无评价 · 买过的顾客快来抢沙发 🛋️</div>' +
+      '</div>';
+  }
+
   // 列表
-  $('reviewList').innerHTML = reviews.slice(0, reviewVisible).map(function (rv) {
-    return '<div class="review-item">' +
-      '<div class="review-head">' +
-        '<div class="review-avatar" style="background:' + rv.color + '">' + esc(rv.initial) + '</div>' +
-        '<div><div class="review-name">' + esc(rv.user) + '</div>' +
-        '<div class="review-stars">' + '★'.repeat(rv.stars) + '☆'.repeat(5 - rv.stars) + '</div></div>' +
-        '<div class="review-time">' + esc(rv.time) + '</div>' +
-      '</div>' +
-      '<div class="review-text">' + esc(rv.text) + '</div>' +
-    '</div>';
-  }).join('');
-  $('reviewMore').style.display = reviews.length > reviewVisible ? '' : 'none';
+  if (reviews.length) {
+    $('reviewList').innerHTML = reviews.slice(0, reviewVisible).map(renderReviewItem).join('');
+    $('reviewMore').style.display = reviews.length > reviewVisible ? '' : 'none';
+    // 图片点击放大（事件委托，避免内联传数组）
+    Array.prototype.forEach.call($('reviewList').querySelectorAll('.review-img'), function (im) {
+      var arr; try { arr = JSON.parse(im.getAttribute('data-imgs')); } catch (e) { arr = [im.src]; }
+      var i = parseInt(im.getAttribute('data-i'), 10) || 0;
+      im.addEventListener('click', function () { Lightbox.open(arr, { start: i }); });
+    });
+  } else {
+    $('reviewList').innerHTML =
+      '<div class="empty-hint" style="padding:26px 0">' +
+        '<div class="icon">💬</div>' +
+        '<div class="txt">还没有人评价，期待你的第一条～</div>' +
+      '</div>';
+    $('reviewMore').style.display = 'none';
+  }
+
+  // 评价角标用真实条数
+  $('reviewCount').textContent = st ? st.count : 0;
 }
+
+function renderReviewItem(rv) {
+  var imgs = (rv.images && rv.images.length)
+    ? '<div class="review-imgs">' + rv.images.map(function (src, i) {
+        return '<img class="review-img" data-imgs="' + esc(JSON.stringify(rv.images)) + '" data-i="' + i + '" src="' + src + '">';
+      }).join('') + '</div>'
+    : '';
+  var stars = rv.stars || 5;
+  return '<div class="review-item">' +
+    '<div class="review-head">' +
+      '<div class="review-avatar" style="background:' + (rv.color || '#999') + '">' + esc(rv.initial || '匿') + '</div>' +
+      '<div><div class="review-name">' + esc(rv.user || '匿名食客') + '</div>' +
+      '<div class="review-stars">' + '★'.repeat(stars) + '☆'.repeat(5 - stars) + '</div></div>' +
+      '<div class="review-time">' + esc(rv.time || '') + '</div>' +
+    '</div>' +
+    (rv.text ? '<div class="review-text">' + esc(rv.text) + '</div>' : '') +
+    imgs +
+  '</div>';
+}
+
 function showAllReviews() {
-  reviewVisible = (P._reviews || []).length;
+  reviewVisible = (window.ReviewStore ? ReviewStore.getByProduct(P.id).length : 0);
   renderReviews();
   $('reviewMore').style.display = 'none';
 }

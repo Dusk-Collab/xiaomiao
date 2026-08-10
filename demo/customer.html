@@ -721,6 +721,46 @@ body { background: var(--bg); }
 <script src="assets/product-extras.js"></script>
 <script src="assets/lightbox.js"></script>
 <script src="assets/cart-shared.js"></script>
+<script src="assets/review-store.js"></script>
+<style>
+  #reviewModal .sheet { max-height: 88vh; overflow-y: auto; }
+  .rv-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .rv-close { width:30px; height:30px; border-radius:50%; background:#f2f2f2; color:#666; border:none; font-size:18px; cursor:pointer; display:grid; place-items:center; }
+  .rv-prod { font-size:14px; font-weight:700; color:var(--brand); margin-bottom:12px; }
+  .rv-field { margin-bottom:14px; }
+  .rv-label { font-size:13px; color:var(--ink-2); margin-bottom:8px; font-weight:600; }
+  .rv-stars { font-size:30px; color:#E0E0E0; letter-spacing:4px; cursor:pointer; user-select:none; }
+  .rv-stars .on { color:#F5A623; }
+  .rv-text { width:100%; min-height:84px; border:1px solid var(--line); border-radius:10px; padding:10px; font-size:14px; resize:none; box-sizing:border-box; font-family:inherit; }
+  .rv-imgs { display:flex; flex-wrap:wrap; gap:8px; }
+  .rv-thumb { position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; background:#f3f3f3; flex:none; }
+  .rv-thumb img { width:100%; height:100%; object-fit:cover; }
+  .rv-thumb span { position:absolute; top:1px; right:1px; width:18px; height:18px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:12px; line-height:18px; text-align:center; cursor:pointer; }
+  .rv-thumb.add { display:grid; place-items:center; font-size:26px; color:#bbb; border:1px dashed #ccc; cursor:pointer; }
+</style>
+<div class="mask" id="reviewModal">
+  <div class="sheet">
+    <div class="rv-head">
+      <div style="font-weight:800;font-size:16px">评价商品</div>
+      <button class="rv-close" onclick="closeReview()">×</button>
+    </div>
+    <div class="rv-prod" id="rvName"></div>
+    <div class="rv-field">
+      <div class="rv-label">商品评分</div>
+      <div class="rv-stars" id="rvStarBox"></div>
+      <input type="hidden" id="rvStars" value="5">
+    </div>
+    <div class="rv-field">
+      <div class="rv-label">评价内容</div>
+      <textarea id="rvText" class="rv-text" maxlength="200" placeholder="说说这道菜的味道、分量、服务…（最多 200 字）"></textarea>
+    </div>
+    <div class="rv-field">
+      <div class="rv-label">上传图片（最多 6 张）</div>
+      <div class="rv-imgs" id="rvImgs"></div>
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:13px;margin-top:6px" onclick="submitReview()">提交评价</button>
+  </div>
+</div>
 <script>
 /* ================= 状态 ================= */
 var D = null;
@@ -1824,7 +1864,7 @@ function submitOrder() {
       ? (D.shop.address || '到店自取')
       : (deliveryAddr.detail ? (deliveryAddr.name + ' ' + deliveryAddr.phone + ' ' + (deliveryAddr.pca ? deliveryAddr.pca + ' ' : '') + deliveryAddr.detail) : '外送到家');
     var order = Store.createOrder({
-      items: cart.map(function (c) { return { name: c.name, spec: c.spec, price: c.price, qty: c.qty, emoji: c.emoji, color: c.color, img: c.img }; }),
+      items: cart.map(function (c) { return { pid: c.pid || c.id, id: c.pid || c.id, name: c.name, spec: c.spec, price: c.price, qty: c.qty, emoji: c.emoji, color: c.color, img: c.img }; }),
       goodsTotal: b.goods, deliveryFee: b.ship, discount: b.cut, couponName: b.cname,
       total: b.total, mode: mode, remark: window._remark || '', table: table,
       customerId: me ? me.cid : '',
@@ -2002,13 +2042,23 @@ function renderOrderPage() {
 
   html += '<div class="op-card"><h4>🧾 商品清单</h4>';
   o.items.forEach(function (it) {
-    html += '<div class="cart-line" style="padding:9px 0">'
+    var gkey = it.pid || it.name;
+    var reviewed = (window.ReviewStore && ReviewStore.hasReviewed(o.id, gkey));
+    var rvBtn = (o.status !== 'canceled')
+      ? (reviewed
+          ? '<div style="text-align:right;margin-top:2px;font-size:11px;color:var(--ink-3)">✓ 已评价</div>'
+          : '<div style="text-align:right;margin-top:4px"><button style="padding:5px 14px;font-size:12px;border-radius:14px;border:1px solid var(--brand);color:var(--brand);background:#fff;font-weight:700;cursor:pointer" onclick="openReview(\'' + o.id + '\',\'' + gkey + '\',\'' + esc(it.name).replace(/'/g, "\\'") + '\')">评价</button></div>')
+      : '';
+    html += '<div style="padding:9px 0;border-bottom:1px solid #f3f3f3">'
+      + '<div class="cart-line" style="padding:0">'
       + '<div class="cart-line-pic' + (it.img ? ' has-img' : '') + '" style="width:40px;height:40px;font-size:20px;'
       + (it.img ? ("background-image:url('" + it.img + "')") : ("background:" + it.color)) + '">' + (it.img ? '' : it.emoji) + '</div>'
       + '<div style="flex:1;min-width:0"><div class="cl-name ell">' + esc(it.name) + '</div>'
       + (it.spec ? '<div class="cl-spec ell">' + esc(it.spec) + '</div>' : '') + '</div>'
       + '<div style="text-align:right"><div class="mono" style="font-weight:700">' + money(it.price * it.qty) + '</div>'
-      + '<div style="font-size:11px;color:var(--ink-3)">×' + it.qty + '</div></div></div>';
+      + '<div style="font-size:11px;color:var(--ink-3)">×' + it.qty + '</div></div></div>'
+      + rvBtn
+      + '</div>';
   });
   html += '<div style="padding-top:10px">'
     + '<div class="sum-row"><span>商品小计</span><span class="mono">' + money(o.goodsTotal) + '</span></div>'
@@ -2037,6 +2087,76 @@ function kv(k, v) {
     + '<span style="margin-left:auto;text-align:right;max-width:62%">' + esc(v) + '</span></div>';
 }
 function backToMenu() { $('orderPage').classList.remove('show'); switchTab('orders'); }
+
+/* ================= 写评价（真实用户评价） ================= */
+var reviewCtx = null;   // { orderId, gkey, name }
+var reviewImgs = [];    // 评价图片 base64 数组
+
+function openReview(orderId, gkey, name) {
+  if (!window.ReviewStore) { toast('评价功能未加载'); return; }
+  reviewCtx = { orderId: orderId, gkey: gkey, name: name };
+  $('rvName').textContent = '评价：' + (name || '本商品');
+  $('rvStars').value = 5;
+  renderRvStars(5);
+  $('rvText').value = '';
+  reviewImgs = [];
+  renderRvImgs();
+  $('reviewModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeReview() {
+  $('reviewModal').classList.remove('show');
+  document.body.style.overflow = '';
+  reviewCtx = null;
+}
+function setRvStars(n) { $('rvStars').value = n; renderRvStars(n); }
+function renderRvStars(n) {
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += '<span class="' + (i <= n ? 'on' : '') + '" onclick="setRvStars(' + i + ')">★</span>';
+  }
+  $('rvStarBox').innerHTML = html;
+}
+function onRvPickImages(e) {
+  var files = Array.prototype.slice.call((e.target.files) || []);
+  files.slice(0, 6 - reviewImgs.length).forEach(function (f) {
+    Store.compressImage(f, 800, 0.6, function (b64) {
+      if (b64) { reviewImgs.push(b64); renderRvImgs(); }
+    });
+  });
+  e.target.value = '';
+}
+function renderRvImgs() {
+  $('rvImgs').innerHTML = reviewImgs.map(function (src, i) {
+    return '<div class="rv-thumb"><img src="' + src + '"><span onclick="delRvImg(' + i + ')">×</span></div>';
+  }).join('')
+    + (reviewImgs.length < 6
+        ? '<label class="rv-thumb add">📷<input type="file" accept="image/*" multiple style="display:none" onchange="onRvPickImages(event)"></label>'
+        : '');
+}
+function delRvImg(i) { reviewImgs.splice(i, 1); renderRvImgs(); }
+function submitReview() {
+  if (!reviewCtx) return;
+  var stars = parseInt($('rvStars').value, 10) || 5;
+  var text = $('rvText').value.trim();
+  if (stars < 1) { toast('请先打分'); return; }
+  var uname = (me && me.name) ? me.name : '匿名食客';
+  ReviewStore.add({
+    gkey: reviewCtx.gkey,
+    pid: reviewCtx.gkey.indexOf('p') === 0 ? reviewCtx.gkey : '',
+    name: reviewCtx.name,
+    orderId: reviewCtx.orderId,
+    user: uname,
+    color: ReviewStore.avatarColor(uname),
+    initial: ReviewStore.initial(uname),
+    stars: stars,
+    text: text,
+    images: reviewImgs.slice()
+  });
+  closeReview();
+  toast('评价成功，感谢分享！');
+  if (myOrderId) renderOrderPage();
+}
 
 /* ================= 实时同步 ================= */
 var lastStatus = null;
