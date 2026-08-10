@@ -28,3 +28,6 @@ _*.txt
 _*.json
 _*.png
 _ghpages_tmp/
+_ghp*/
+_test/
+deploy_*/

@@ -718,10 +718,20 @@ body { background: var(--bg); }
 <script src="assets/sync.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/pca.js"></script>
+<script src="assets/product-extras.js"></script>
+<script src="assets/lightbox.js"></script>
+<script src="assets/cart-shared.js"></script>
 <script>
 /* ================= 状态 ================= */
 var D = null;
-var cart = [];              // {key, pid, name, emoji, color, price, base, spec, qty}
+var cart = (window.SCart ? SCart.load() : []);              // {key, pid, name, emoji, color, price, base, spec, qty, img}
+/* 监听 product.html 跨页面修改：收到变化后同步本地 cart 并重渲染 */
+if (window.SCart) {
+  SCart.onChange(function () {
+    cart = SCart.load();
+    try { renderCart(); } catch (e) {}
+  });
+}
 var curCat = 0;
 var mode = 'pickup';
 var couponId = null;
@@ -1366,7 +1376,7 @@ function renderHotItems() {
   hot.sort(function (a, b) { return b.sold - a.sold; });
   var items = hot.slice(0, 4);
   var html = items.map(function (p) {
-    return '<div class="hot-item" onclick="switchTab(\'order\');scrollToProduct(\'' + p.id + '\')">'
+    return '<div class="hot-item" onclick="openProduct(\'' + p.id + '\')">'
       + '<div class="hot-item-pic' + (p.img ? ' has-img' : '') + '" style="'
       + (p.img ? 'background-image:url(\'' + p.img + '\')' : 'background:' + p.color) + '">'
       + (p.img ? '' : p.emoji) + '</div>'
@@ -1388,6 +1398,20 @@ function scrollToProduct(pid) {
       if (ci >= 0) { curCat = ci; renderCats(); renderGoods(); }
     }
   }, 300);
+}
+
+/* 进入商品详情页（customer → product.html 跨页面跳转） */
+function openProduct(pid) {
+  location.href = 'product.html?id=' + encodeURIComponent(pid) + (table ? '&t=' + encodeURIComponent(table) : '');
+}
+
+/* 点餐页图片点击放大（轮播图全屏查看） */
+function zoomPic(pid) {
+  var p = D.products.find(function (x) { return x.id === pid; });
+  if (!p || !window.Lightbox) return;
+  var images = window.ProductExtras ? ProductExtras.getImages(p) : (p.img ? [p.img] : []);
+  if (!images.length) return;
+  Lightbox.open(images, { start: 0, title: p.name });
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -1453,9 +1477,9 @@ function renderGoods() {
   list.forEach(function (p, i) {
     var off = !p.on || p.stock <= 0;
     var needSpec = ['鲜果茶', '奶茶拿铁', '招牌推荐'].indexOf(p.cat) >= 0;
-    html += '<div class="item" style="animation-delay:' + (i * 0.03) + 's">'
+    html += '<div class="item" style="animation-delay:' + (i * 0.03) + 's;cursor:pointer" onclick="openProduct(\'' + p.id + '\')">'
       + '<div class="item-pic' + (p.img ? ' has-img' : '') + '" style="'
-      + (p.img ? ("background-image:url('" + p.img + "')") : ("background:" + p.color)) + '">' + (p.img ? '' : p.emoji)
+      + (p.img ? ("background-image:url('" + p.img + "')") : ("background:" + p.color)) + '" onclick="event.stopPropagation();zoomPic(\'' + p.id + '\')" title="点击放大图片">' + (p.img ? '' : p.emoji)
       + (off ? '<div class="soldout">已售罄</div>' : '') + '</div>'
       + '<div class="item-info">'
       + '<div class="item-name">' + esc(p.name) + (p.hot ? '<span class="tag tag-hot">热销</span>' : '') + '</div>'
@@ -1467,8 +1491,8 @@ function renderGoods() {
       + (off
         ? '<button class="add-btn dis" disabled>-</button>'
         : (needSpec
-          ? '<button class="add-btn spec" onclick="openSpec(\'' + p.id + '\')">选规格</button>'
-          : '<button class="add-btn" onclick="quickAdd(\'' + p.id + '\')">+</button>'))
+          ? '<button class="add-btn spec" onclick="event.stopPropagation();openSpec(\'' + p.id + '\')">选规格</button>'
+          : '<button class="add-btn" onclick="event.stopPropagation();quickAdd(\'' + p.id + '\')">+</button>'))
       + '</div></div></div>';
   });
   $('goods').innerHTML = html;
@@ -1550,6 +1574,7 @@ function addToCart(p, spec, unit, qty) {
   var line = cart.find(function (c) { return c.key === key; });
   if (line) line.qty += qty;
   else cart.push({ key: key, pid: p.id, name: p.name, emoji: p.emoji, color: p.color, img: p.img, price: unit, spec: spec, qty: qty });
+  if (window.SCart) SCart.save(cart);
   renderCart();
   var ic = $('cartIcon');
   ic.style.animation = 'none'; void ic.offsetWidth; ic.style.animation = 'pulse .35s';
@@ -1759,9 +1784,10 @@ function lineStep(i, d) {
   cart[i].qty += d;
   if (cart[i].qty <= 0) cart.splice(i, 1);
   if (!cart.length) closeMask('cartMask');
+  if (window.SCart) SCart.save(cart);
   renderCart();
 }
-function clearCart() { cart = []; couponId = null; closeMask('cartMask'); renderCart(); }
+function clearCart() { cart = []; couponId = null; if (window.SCart) SCart.save(cart); closeMask('cartMask'); renderCart(); }
 
 function openCoupon() {
   var g = goodsTotal();
@@ -1810,6 +1836,7 @@ function submitOrder() {
     myOrderId = order.id;
     localStorage.setItem('om_my_order', order.id);
     cart = []; couponId = null; window._remark = '';
+    if (window.SCart) SCart.save(cart);
     closeMask('cartMask');
     renderCart();
     renderOrderPage();
