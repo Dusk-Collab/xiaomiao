@@ -282,3 +282,12 @@ demo/
 - **顾客端**：订单详情（`viewOrder`）每个商品按是否已评价显示「评价」/「已评价」按钮 → 弹出半屏评价框（点星选择 + 文字 + 图片上传预览/删除，图片走 `Store.compressImage` 压成 jpeg base64）。`submitOrder` 订单项补 `pid`，保证评价能回关联到正确商品。
 - **商品详情页**：评价 Tab 改为读真实评价——好评率/条数/头像/星级/文字/图片全部真实；评价图点开走 `Lightbox` 放大；**无真实评价时显示空态引导**（"还没有评价，下单后来说两句~"）。
 - **测试**：puppeteer 真浏览器 E2E 17/17 全过、零 console 错误（下单→评价→详情页读真实评价→空态）。部署 `a8e0f0d`，gh-pages `7bac017`，CDN 已刷新。
+
+### 2026-08-10（四）后台数据云同步到 GitHub 仓库
+- **背景**：用户反馈"改好的商品被重置"——之前 Store 只存浏览器 localStorage（per 浏览器+域名隔离），换设备/清缓存数据就没了。用户要求把改动实时同步到 GitHub 仓库，跨设备不丢。
+- **方案**：GitHub Pages 是纯静态托管，浏览器不能直接写仓库。改用 **GitHub Contents API** 把整个店铺数据作为 `demo/assets/data.json` 提交进仓库（仓库即数据库），其他人打开页面从 raw 拉取最新 → 跨设备实时同步。
+- **新增**：`assets/data.json`（仓库内 canonical 数据）、`assets/cloud-config.js`（repo/branch/dataPath + token 占位符）、`assets/sync-github.js`（`CloudSync.pull` 从 raw 拉、`CloudSync.push` 经 api.github.com PUT 提交，GET sha→base64 PUT，last-write-wins，409 重试合并订单）。
+- **store.js**：`write()` 写 localStorage 后 `CloudSync.push(data)`；`initCloud()` 启动时 pull 覆盖本地并触发重渲染。
+- **后台设置面板**：侧边栏底部「☁ 云端同步设置」→ 粘贴 GitHub fine-grained token 存本机 localStorage（不进仓库，避免公开源码泄露），保存后自动启用同步。
+- **安全**：浏览器端调 GitHub API 必须带 token，但站点源码公开 → **绝不硬编码真实 PAT 进仓库**；token 只存商家本机浏览器。pull（读）公开无需 token，故顾客端跨设备看最新商品无需任何设置；只有设过 token 的浏览器（商家）能 push（写）。
+- **验证**：puppeteer 真浏览器 E2E 11/11 全过、零业务错误（改商品→push→全新浏览器拉到云端最新+订单；设置面板打开/填 token/保存）。部署 `833f5c4`，gh-pages `c5de4f5`，CDN 已刷新。
