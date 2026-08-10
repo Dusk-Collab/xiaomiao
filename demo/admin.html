@@ -849,7 +849,7 @@ function pgProducts() {
     + '<th style="width:40px"><input type="checkbox" class="sel-box" ' + (allChecked ? 'checked' : '') + ' onclick="toggleAll(this)"></th>'
     + '<th style="width:56px">图</th><th style="min-width:120px">名称</th><th style="width:96px">价格</th>'
     + '<th style="min-width:130px">描述</th><th style="width:76px">库存</th><th style="width:88px">月售</th>'
-    + '<th style="width:70px">上架</th><th style="width:44px">操作</th></tr></thead><tbody>';
+    + '<th style="width:70px">上架</th><th style="width:84px">操作</th></tr></thead><tbody>';
 
   products.forEach(function (p) {
     var thumb = '<div class="p-thumb' + (p.img ? ' has-img' : '') + '" style="'
@@ -867,7 +867,8 @@ function pgProducts() {
       + '<td><input class="inline-in mono" type="number" min="0" value="' + p.stock + '" onchange="upd(\'' + p.id + '\',\'stock\',+this.value)"></td>'
       + '<td><input class="inline-in mono w-sold" type="number" min="0" value="' + (p.sold || 0) + '" onchange="upd(\'' + p.id + '\',\'sold\',+this.value)" title="月售数量，可自由修改"></td>'
       + '<td><div class="switch' + (p.on ? ' on' : '') + '" style="transform:scale(.78);transform-origin:left" onclick="upd(\'' + p.id + '\',\'on\',!' + p.on + ')"></div></td>'
-      + '<td><div class="icon-btn" onclick="delProduct(\'' + p.id + '\')">🗑</div></td>'
+      + '<td style="white-space:nowrap"><div class="icon-btn" onclick="editProductDetail(\'' + p.id + '\')" title="编辑商品详情（顾客端详情页显示）">📋</div>'
+      + '<div class="icon-btn" onclick="delProduct(\'' + p.id + '\')" title="删除商品">🗑</div></td>'
       + '</tr>';
   });
   html += '</tbody></table></div>';
@@ -944,6 +945,56 @@ function delProduct(id) {
   save(function (d) { d.products = d.products.filter(function (p) { return p.id !== id; }); });
   delete selIds[id];
   toast('已删除'); render();
+}
+/* ---------- 商品详情编辑 ---------- */
+function detailRowInput(icon, label, key, val, placeholder) {
+  return '<div class="modal-row" style="display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;margin-bottom:12px">'
+    + '<span style="font-size:20px;padding-top:8px;line-height:1">' + icon + '</span>'
+    + '<div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;font-weight:600">' + label + '</div>'
+    + '<input class="modal-input" id="modalInput_' + key + '" value="' + val + '" placeholder="' + placeholder + '">'
+    + '</div></div>';
+}
+function editProductDetail(id) {
+  var p = D.products.find(function (x) { return x.id === id; });
+  if (!p) return;
+  var d = p.detail || {};
+  var v = function (k) { return esc(d[k] || ''); };
+  var body = ''
+    + '<div style="max-height:min(560px,68vh);overflow-y:auto;padding-right:4px">'
+    + '<div class="modal-row" style="margin-bottom:12px">'
+    + '<label style="font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px;display:block">📝 长描述（详情区顶部那段话）</label>'
+    + '<textarea class="modal-input" id="modalInput_dDesc" rows="3" style="resize:vertical;font-family:inherit;line-height:1.55" placeholder="比如：阿尔卑斯山脉的水熬制七七四十九个小时...">' + v('desc') + '</textarea>'
+    + '</div>'
+    + detailRowInput('🧂', '原料',    'dRaw',     v('raw'),     '比如：本地直供、源头可溯')
+    + detailRowInput('🍽️', '份量',    'dServing', v('serving'), '比如：1 人份（女生可吃饱）')
+    + detailRowInput('🥗', '类型',    'dType',    v('type'),    '比如：荤菜 / 素菜 / 荤素搭配')
+    + detailRowInput('👨‍🍳', '制作方法', 'dMethod',  v('method'),  '比如：现做现卖，立等可取')
+    + detailRowInput('⏰', '保质期',  'dShelf',   v('shelf'),   '比如：建议现做现吃')
+    + detailRowInput('💡', '小贴士',  'dTips',    v('tips'),    '比如：可备注辣度 / 忌口')
+    + '<div style="font-size:11.5px;color:var(--ink-3);padding:8px 4px 4px;line-height:1.6;background:#FAF7F4;border-radius:8px">'
+    + '💡 保存后顾客端 <code>商品详情</code> 页会立刻同步显示。没填的字段会保持空白（不再用系统模板凑）。'
+    + '</div>'
+    + '</div>';
+  showModal('📋 编辑商品详情 · ' + esc(p.name), body, function () {
+    save(function (data) {
+      var pp = data.products.find(function (x) { return x.id === id; }); if (!pp) return;
+      pp.detail = {
+        desc: modalInput('dDesc'),
+        raw: modalInput('dRaw'),
+        serving: modalInput('dServing'),
+        type: modalInput('dType'),
+        method: modalInput('dMethod'),
+        shelf: modalInput('dShelf'),
+        tips: modalInput('dTips')
+      };
+    });
+    closeModal();
+    toast('详情已更新，顾客端已同步');
+    render();
+  });
+  var card = $('modalCard');
+  if (card) card.style.maxWidth = '460px';
 }
 /* ---------- 批量选择 ---------- */
 function toggleSel(id, v) { if (v) selIds[id] = true; else delete selIds[id]; updateSelCount(); }

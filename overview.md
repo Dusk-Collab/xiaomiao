@@ -4,17 +4,21 @@
 
 ---
 
-## 🌐 立即访问
+## 🌐 立即访问（GitHub Pages，自动跟随每次 push 更新）
 
-**https://52bf659f700d4fee889700fed1f97b22.gz1.agentos-app.net**
+**https://dusk-collab.github.io/xiaomiao/**
 
 | 入口 | 地址 | 说明 |
 |---|---|---|
 | 演示导航页 | `/` | 使用说明、扫码入口、功能清单 |
 | 顾客点餐页 | `/customer.html` | 顾客扫码后看到的界面 |
+| 商品详情页 | `/product.html?id=p1` | 商品卡片点击进入，含图集/详情/评价 |
+| 地址页 | `/address.html` | 美团式地址搜索 + 自由选地图导航 |
 | 商家管理后台 | `/admin.html` | 订单看板、商品管理、营业设置 |
 
-托管在腾讯云沙箱，**与用户本机完全无关**——本地电脑关机、断网、重装系统，链接照常访问。手机扫首页二维码可直接在手机上体验。
+> 旧沙箱 `https://52bf659f700d4fee889700fed1f97b22.gz1.agentos-app.net` 为早期手动部署快照，不再自动更新，仅作对照，请以 GitHub Pages 链接为准。
+
+托管在 GitHub Pages，**与用户本机完全无关**——本地电脑关机、断网、重装系统，链接照常访问。手机扫首页二维码可直接在手机上体验。
 
 ---
 
@@ -32,6 +36,22 @@
 - 取餐码大字展示 + 4 步进度条，**商家改状态时顾客端自动跳变并震动提示**
 - 打烊时全屏遮罩拦截下单
 - 公告首次进入弹窗展示
+
+### 商品详情页（新增，commit `4b50c38`）
+
+顾客端「小淼推荐」、热销、菜单卡片均可点击进入独立商品详情页（美团式结构）：
+
+- **入口**：点餐页商品卡片 / 热销卡片点击 → `product.html?id=<pid>`，自动带上当前桌号 `&t=<table>`
+- **图集轮播**：3 图横滑轮播（自动 4 秒切换 + 圆点 + 手势滑动），**点任意图打开全屏灯箱**
+- **全屏灯箱（`lightbox.js`）**：左右滑动切换 / 点图 2× 缩放 / ESC 或点空白关闭 / 触屏滑动，**同时用于点餐页菜品图放大查看**
+- **价格区**：现价 ¥xx + 划线原价 + 折扣标 + 名称与「热销 / 招牌」标签 + 月售 / 好评率 / 库存
+- **商品详情**：仿美团 `商品详情` 区块——图文描述 + 结构化参数表（原料 / 份量 / 类型 / 制作方法 / 保质期 / 小贴士），按品类模板生成，内容哈希稳定（每次打开一致）
+- **商品评价**：`评价` Tab 带数量角标——好评率 + 星级 + 评价列表（头像首字与配色 / 昵称 / 星级 / 日期 / 文本），「查看更多评价」展开；评价由 14 人 + 20 文本池哈希采样，约 5% 低星，数量随销量增长
+- **规格选择**：需规格商品（鲜果茶 / 奶茶拿铁 / 招牌推荐）底部弹出规格面板，其余一键加购
+- **跨页购物车同步**：详情页与顾客端共用 `localStorage om_cart_v1` + `BroadcastChannel`，两端加购实时互相同步购物车角标
+- 无上传图的商品用 emoji SVG 占位图（径向渐变底 + emoji），保证图集始终满 3 张
+
+技术实现：`demo/product.html` + `demo/assets/{product-extras.js, lightbox.js, cart-shared.js}`（零外部依赖，纯原生）。验证：系统 Chrome + puppeteer-core 端到端 19 项断言全过（进详情 → 轮播 → 灯箱开关 → 评价 Tab → 加购 → 跨页角标同步）。
 
 ### 商家端
 - **订单看板**：待接单 / 制作中 / 待取餐 / 已完成 分栏，今日订单数与营业额统计
@@ -209,3 +229,49 @@ demo/
 **验证**：真浏览器（系统 Chrome + puppeteer）9 项断言全过：定位成功→自动填 北京市/北京市/东城区 + 街道"东华门街道" + 坐标与完整 pca 存入 localStorage；定位拒绝→<10ms 给出提示且不误填。
 
 **踩坑（测试桩）**：`page.evaluateOnNewDocument` 对 `navigator.geolocation` 的接管在 puppeteer 隐身上下文里不生效，真 Chrome 无头模式直接返回 `code=1` 拒绝，导致误判产品代码失败。改用 `Object.defineProperty(navigator,'geolocation',...)` 在 `page.goto` 后于页面上下文硬接管才稳定。
+
+### 2026-08-10 商品详情页 + 图片放大 + 评价（commit `4b50c38` → gh-pages `7d4816f`）
+
+**需求**：顾客端「小淼推荐」商品可点进去看详情，食物图可点击放大；详情页仿美团（含商品详情 + 商品评价 + 加购）。
+
+**新增文件**
+- `demo/product.html`（约 870 行）：独立详情页，`?id=<pid>&t=<table>` 进入；英雄区 / 图集轮播 / 价格信息 / 详情·评价 Tab / 底部加购栏。各区块初始 `style="display:none"` 占位，渲染函数内用 `show(el)` 解除隐藏（关键修复，否则元素存在但不可见）。
+- `demo/assets/product-extras.js`：哈希稳定 mock——`getImages`（1 真图 + 2 emoji SVG，或 3 emoji SVG）、`getEmojiImage`（径向渐变 + emoji 的 SVG data-URL）、`getDetail`（按品类模板，原料/份量/类型/制作方法/保质期/小贴士）、`getReviews`（14 人 + 20 文本池采样，5–15 条，约 5% 低星）、`getRating`（95–99% 好评，数量随销量）。
+- `demo/assets/lightbox.js`：全屏灯箱，键鼠 + 触屏，左/右切换、点图 2× 缩放、ESC/空白关闭。
+- `demo/assets/cart-shared.js`：`SCart` 封装 `localStorage om_cart_v1` + `BroadcastChannel('om_cart_sync')`，替代顾客端本地 `cart` 数组，实现详情页 ↔ 顾客端跨页同步。
+
+**改动文件**
+- `demo/customer.html`：引入 3 个新脚本；商品卡片 `onclick="openProduct('PID')"`；菜品图 `onclick="event.stopPropagation();zoomPic('PID')"`；`+`/选规格按钮 `event.stopPropagation()` 防误跳；热销卡片点击改为进详情页；加购/改量/清空/提交后 `SCart.save(cart)` 持久化；新增 `openProduct()` / `zoomPic()`。
+- `.gitignore`：新增 `_test/`、`_ghp*/`、`deploy_*/` 忽略临时目录。
+
+**验证**：系统 Chrome + puppeteer-core 端到端 **19 项断言全过**：点餐页渲染 → 点商品卡进详情 → 轮播 3 图 → 灯箱开关 → 评价 Tab → 加购 → `om_cart_v1` 写入 → 返回顾客端角标同步为 1 → 第二个商品加购角标为 2 → 点餐页菜品图放大。部署 gh-pages `7d4816f`，`/`、`customer.html`、`product.html`、`address.html`、`admin.html` 及 3 个新 assets 共 8 个 URL 全部 200。
+
+**修复的两个 E2E 坑（仅真浏览器暴露）**
+- 详情页区块 `display:none` 占位但渲染函数未解除隐藏 → 加 `show()` 助手逐一 `el.style.display=''`。
+- 测试里多余 `.prod-back` 点击在已返回顾客端后定位失败 → 改用 `page.evaluate(openProduct, pid)` 直接跳转，并在 `onAdd`/`confirmSpec` 后调 `renderFoot()` 让底部角标即时更新。
+
+### 2026-08-10 商品详情可在后台编辑
+
+**需求**：用户反馈详情页"原料/份量/类型/制作方法/保质期/小贴士"那几行是系统按品类模板生成的（hash 稳定但套路），需要让商家在后台自己改。`ProductExtras.getDetail` 早就有"商品上有 `p.detail` 就优先用"的口子，只是之前没有数据源 + 后台编辑入口。
+
+**改动**
+- `demo/assets/store.js`：12 个种子商品全部预填了 `detail: {desc, raw, serving, type, method, shelf, tips}`，每个商品的描述和文案都是该商品专属（如 p5 现磨豆浆 用"阿尔卑斯山脉的水熬制七七四十九个小时…"）。新商品无 detail → 自动回落模板，商家填了就有自定义内容。
+- `demo/admin.html`：商品列表操作列新增 📋 图标按钮，点击打开「编辑商品详情」弹窗：
+  - 长描述 textarea（3 行）
+  - 6 行可编辑字段（原料/份量/类型/制作方法/保质期/小贴士），每行 emoji 图标 + 标签 + 输入框
+  - 弹窗内可滚动；保存走 `Store.update` → 写回 `p.detail`，顾客端立即同步
+  - 操作列宽度 44px → 88px 以容纳 📋 + 🗑
+- `demo/assets/product-extras.js`：**无改动**，原本就支持 `p.detail` 优先级。
+- `demo/product.html`：**无改动**，原本就通过 `ProductExtras.getDetail(P)` 读取。
+
+**验证**：系统 Chrome + puppeteer-core 端到端 **15 项断言全过**：
+1. 操作列出现 📋 按钮 / 12 个种子商品均有 detail
+2. p5 详情含用户截图里的"阿尔卑斯山"文案 / 原料 = 本地直供、源头可溯
+3. 点击 📋 打开弹窗 / desc + 6 行输入框都有值（字数: 9/10/8/9/6/8）
+4. 修改原料后保存 → localStorage detail.raw = TEST_INGREDIENT_FROM_ADMIN / 其他字段保留
+5. product.html 详情面板 desc + 原料行 + 份量行均显示新值
+6. 新建商品（无 detail）→ 弹窗 7 个字段全空，可正常填写
+
+**截图**：admin 弹窗（460px 宽、纵向滚动）+ 商品详情面板（橙底长描述 + 6 行表格，与用户参考图结构一致）。
+
+**数据兼容性**：老用户 localStorage 里的旧商品数据（无 `detail` 字段）→ 依然走模板回落，不会丢数据；商家只需点一次 📋 填写真实内容后立即生效。
