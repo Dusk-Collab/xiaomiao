@@ -458,7 +458,11 @@ function modalInput(name, opts) {
 
 function renderSyncBadge(s) {
   var el = $('syncBadge'); if (!el) return;
-  if (s === 'online') { el.textContent = '☁ 云端已连'; el.className = 'sync-badge on'; }
+  var proxy = !!(window.CloudSync && CloudSync.proxyMode);
+  if (s === 'online') {
+    el.textContent = proxy ? '☁ 自动同步' : '☁ 云端已连';
+    el.className = 'sync-badge on';
+  }
   else if (s === 'connecting') { el.textContent = '☁ 连接中…'; el.className = 'sync-badge wait'; }
   else { el.textContent = '☁ 本机模式'; el.className = 'sync-badge off'; }
   var live = $('liveTag');
@@ -470,12 +474,20 @@ function openCloudSettings() {
   var cur = '';
   try { cur = localStorage.getItem('om_cloud_token') || ''; } catch (e) {}
   var on = !!(window.CloudSync && CloudSync.enabled);
+  var proxy = !!(window.CloudSync && CloudSync.proxyMode);
+  var head = proxy
+    ? '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
+      + '当前状态：<b style="color:var(--ok)">自动同步模式（已开启代理，改动实时同步到 GitHub 仓库，跨设备零粘贴）</b><br>'
+      + '此模式下浏览器无需令牌，下方留空即可。如需切回手动模式，清空 cloud-config.js 的 proxyBase。</div>'
+    : '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
+      + '当前状态：<b style="color:' + (on ? 'var(--ok)' : 'var(--warn)') + '">' + (on ? '已开启（改动实时同步到 GitHub 仓库，跨设备共享）' : '未开启（仅本机保存，换设备看不到）') + '</b><br>'
+      + '把 GitHub 令牌粘贴到下方即可开启。令牌只存在本浏览器，不会上传。</div>';
   $('cloudBody').innerHTML =
-    '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
-    + '当前状态：<b style="color:' + (on ? 'var(--ok)' : 'var(--warn)') + '">' + (on ? '已开启（改动实时同步到 GitHub 仓库，跨设备共享）' : '未开启（仅本机保存，换设备看不到）') + '</b><br>'
-    + '把 GitHub 令牌粘贴到下方即可开启。令牌只存在本浏览器，不会上传。</div>'
+    head
     + '<div class="modal-row"><label>GitHub 令牌（fine-grained）</label><input class="modal-input" id="cloudToken" placeholder="github_pat_..." value="' + esc(cur) + '"></div>'
-    + '<div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin:4px 0 14px">需仅授权本仓库 <code>Dusk-Collab/xiaomiao</code> 的 <b>Contents: Read and write</b>。创建步骤见 cloud-config.js 顶部注释。</div>'
+    + '<div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin:4px 0 14px">需仅授权本仓库 <code>Dusk-Collab/xiaomiao</code> 的 <b>Contents: Read and write</b>。创建步骤见 cloud-config.js 顶部注释。'
+    + (proxy ? '' : '想要“跨设备零粘贴”的全自动模式，请部署 worker/ 里的 Cloudflare Worker 并在 cloud-config.js 填 proxyBase。')
+    + '</div>'
     + '<div style="display:flex;gap:8px;justify-content:flex-end">'
     + (cur ? '<button class="btn-cancel" onclick="clearCloud()">清除</button>' : '')
     + '<button class="btn-confirm" onclick="saveCloud()">保存并启用</button>'

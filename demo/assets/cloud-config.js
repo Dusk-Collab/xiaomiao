@@ -12,14 +12,14 @@
  *   这样即使泄露，也最多改这一个早餐店仓库，动不了你 GitHub 账户下的其他仓库。
  * - 不要用你账号的「经典全局 PAT」来填这里（泄露后能看到你所有私有仓库）。
  *
- * 创建步骤（2 分钟）：
- * 1. GitHub → 右上角头像 → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token
- * 2. Token name 随意（如 xiaomiao-sync）；Expiration 选 90 天或 No expiration
- * 3. Repository access 选「Only select repositories」→ 选 Dusk-Collab/xiaomiao
- * 4. Repository permissions → Contents → 选 Read and write
- * 5. Generate token → 复制以 github_pat_ 开头的那串
- * 6. 【不要在此文件硬编码 token】请在前述后台设置面板粘贴；此处的占位符
- *    会被本机 localStorage 里粘贴过的 token 自动覆盖（见文件末尾逻辑）。
+ * 两种启用方式：
+ * A) 手动粘贴（当前默认）：后台「☁ 云端同步设置」粘贴 token，仅存本机 localStorage，不进源码。
+ * B) 全自动代理（零粘贴）：部署 worker/ 里的 Cloudflare Worker 后，把地址填到下面 proxyBase，
+ *    浏览器不再持有 token，跨设备自动同步。详见 worker/ 目录说明。
+ *
+ * 创建 token 步骤（fine-grained 卡 UI 时可改用 classic）：
+ * GitHub → Settings → Developer settings → Personal access tokens → 选 classic 或 fine-grained，
+ * 仅授权 Dusk-Collab/xiaomiao 的 repo / Contents 读写，Expiration 可选 No expiration（永久）。
  */
 window.CLOUD_CONFIG = {
   repo: 'Dusk-Collab/xiaomiao',
@@ -28,7 +28,12 @@ window.CLOUD_CONFIG = {
   // 默认用 github.com；如需指向 GitHub Enterprise，可改成内部域名
   apiBase: 'https://api.github.com',
   rawBase: 'https://raw.githubusercontent.com',
-  token: '__PASTE_TOKEN_HERE__'
+  token: '__PASTE_TOKEN_HERE__',
+  // 全自动模式：填 Cloudflare Worker 地址（如 https://xiaomiao-sync.xxx.workers.dev）
+  // 留空则走“手动粘贴 token”模式。代理模式下浏览器不再需要 token。
+  proxyBase: '',
+  // 与 Worker 的 ADMIN_KEY 对应（可选，公开 URL 不影响安全，只是加一道门）
+  proxyKey: ''
 };
 
 // 若本浏览器曾在后台「云端同步设置」里粘贴过令牌，则用它覆盖占位符。

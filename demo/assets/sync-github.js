@@ -2,17 +2,23 @@
  * 把整个店铺数据（商品/店铺/设置/订单…）作为 demo/assets/data.json 存进仓库，
  * 后台改动时提交到 main 分支，其他人打开页面时从仓库拉取最新。
  *
- * 设计要点：
- * - 读取：从 raw.githubusercontent.com 拉 data.json（带缓存击穿参数），无需等待 Pages 构建。
- * - 写入：GET 当前文件 sha → base64 PUT 提交（last-write-wins）。并发冲突时 409 重试一次（拉最新再推）。
- * - 失败时静默降级：本地 localStorage 仍可用，不阻塞业务。
+ * 两种写入模式（由 cloud-config.js 决定）：
+ *  - 手动模式：浏览器带 token 直连 GitHub API（token 来自本机 localStorage）。
+ *  - 代理模式：proxyBase 非空时，写入请求走 Cloudflare Worker 代理，
+ *    浏览器不持有 token，实现“零粘贴、跨设备自动同步”。
+ *
+ * 读取统一从 raw.githubusercontent.com 拉 data.json（公开、无需 token）。
+ * 写入：GET 当前文件 sha → base64 PUT 提交（last-write-wins）；并发冲突 409 重试一次。
+ * 失败时静默降级：本地 localStorage 仍可用，不阻塞业务。
  */
 (function (global) {
   'use strict';
 
   var cfg = global.CLOUD_CONFIG || {};
   var TOKEN = cfg.token;
-  var ENABLED = !!(cfg.repo && cfg.branch && cfg.dataPath && TOKEN && TOKEN.indexOf('__') !== 0);
+  var PROXY = (cfg.proxyBase && cfg.proxyBase.indexOf('http') === 0) ? cfg.proxyBase : '';
+  var ENABLED = !!(cfg.repo && cfg.branch && cfg.dataPath) &&
+    ((!!TOKEN && TOKEN.indexOf('__') !== 0) || !!PROXY);
   var API_BASE = cfg.apiBase || 'https://api.github.com';
   var RAW_BASE = cfg.rawBase || 'https://raw.githubusercontent.com';
   var API = API_BASE + '/repos/' + cfg.repo + '/contents/' + cfg.dataPath;
@@ -21,6 +27,29 @@
     var h = { Authorization: 'Bearer ' + TOKEN, Accept: 'application/vnd.github+json' };
     if (extra) for (var k in extra) h[k] = extra[k];
     return h;
+  }
+
+  function proxyHeaders(extra) {
+    var h = { 'Content-Type': 'application/json' };
+    if (cfg.proxyKey) h['x-admin-key'] = cfg.proxyKey;
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+
+  function reqHeaders(extra) {
+    return PROXY ? proxyHeaders(extra) : authHeaders(extra);
+  }
+
+  // 代理模式：所有请求走代理（路径通过 ?path= 传），代理内部已绑定仓库/分支/token
+  function apiUrlFor() {
+    if (PROXY) return PROXY + '/?path=' + encodeURIComponent(cfg.dataPath);
+    return API;
+  }
+
+  // 取 sha 用的地址：代理模式不带 ?ref（代理内部已绑定分支），直连模式需带
+  function shaUrlFor() {
+    if (PROXY) return PROXY + '/?path=' + encodeURIComponent(cfg.dataPath);
+    return API + '?ref=' + cfg.branch;
   }
 
   // 把 UTF-8 字符串转 base64（浏览器 btoa 只认 Latin1，需先 encodeURIComponent 转义）
@@ -48,9 +77,9 @@
         branch: cfg.branch
       };
       if (sha) body.sha = sha;
-      return fetch(API, {
+      return fetch(apiUrlFor(), {
         method: 'PUT',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        headers: reqHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body)
       }).then(function (res) {
         if (res.ok) return true;
@@ -61,7 +90,7 @@
   }
 
   function getSha() {
-    return fetch(API + '?ref=' + cfg.branch, { headers: authHeaders() })
+    return fetch(shaUrlFor(), { headers: reqHeaders() })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (j) { return j && j.sha ? j.sha : null; })
       .catch(function () { return null; });
@@ -85,9 +114,9 @@
           branch: cfg.branch
         };
         if (sha) body.sha = sha;
-        return fetch(API, {
+        return fetch(apiUrlFor(), {
           method: 'PUT',
-          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          headers: reqHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(body)
         }).then(function (res) { return res.ok; }).catch(function () { return false; });
       });
@@ -96,6 +125,7 @@
 
   global.CloudSync = {
     enabled: ENABLED,
+    proxyMode: !!PROXY,
     pull: pull,
     push: push
   };

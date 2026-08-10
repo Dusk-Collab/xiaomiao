@@ -1,0 +1,13 @@
+name = "xiaomiao-sync"
+main = "index.js"
+compatibility_date = "2024-09-23"
+
+# 部署后到 Cloudflare 后台（Workers → xiaomiao-sync → Settings → Variables）
+# 添加两个变量（建议用 Secret 类型）：
+#   GITHUB_TOKEN = 你的 classic PAT（ghp_...，仅授权本仓库 repo 权限）
+#   ADMIN_KEY    = 任意随机串，给代理加一道门（建议设置）
+#
+# 本地调试（可选）：
+#   wrangler secret put GITHUB_TOKEN
+#   wrangler secret put ADMIN_KEY
+#   wrangler dev
