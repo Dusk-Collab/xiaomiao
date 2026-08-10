@@ -340,6 +340,7 @@ canvas.qr { border-radius: 8px; }
         <span id="sideStatus">营业中</span>
         <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
       </div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="openCloudSettings()">☁ 云端同步设置</button>
     </div>
   </aside>
 
@@ -373,7 +374,17 @@ canvas.qr { border-radius: 8px; }
   </div>
 </div>
 
+<!-- 云端同步设置 -->
+<div class="modal-mask" id="cloudMask" onclick="if(event.target===this)hideCloud()">
+  <div class="modal-card" style="max-width:430px">
+    <h4>☁ 云端同步设置</h4>
+    <div id="cloudBody"></div>
+  </div>
+</div>
+
 <script src="assets/sync.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/sync-github.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/qrcode.js"></script>
 <script>
@@ -452,6 +463,40 @@ function renderSyncBadge(s) {
   else { el.textContent = '☁ 本机模式'; el.className = 'sync-badge off'; }
   var live = $('liveTag');
   if (live) live.style.display = (s === 'online') ? '' : 'none';
+}
+
+/* ================= 云端同步设置 ================= */
+function openCloudSettings() {
+  var cur = '';
+  try { cur = localStorage.getItem('om_cloud_token') || ''; } catch (e) {}
+  var on = !!(window.CloudSync && CloudSync.enabled);
+  $('cloudBody').innerHTML =
+    '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
+    + '当前状态：<b style="color:' + (on ? 'var(--ok)' : 'var(--warn)') + '">' + (on ? '已开启（改动实时同步到 GitHub 仓库，跨设备共享）' : '未开启（仅本机保存，换设备看不到）') + '</b><br>'
+    + '把 GitHub 令牌粘贴到下方即可开启。令牌只存在本浏览器，不会上传。</div>'
+    + '<div class="modal-row"><label>GitHub 令牌（fine-grained）</label><input class="modal-input" id="cloudToken" placeholder="github_pat_..." value="' + esc(cur) + '"></div>'
+    + '<div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin:4px 0 14px">需仅授权本仓库 <code>Dusk-Collab/xiaomiao</code> 的 <b>Contents: Read and write</b>。创建步骤见 cloud-config.js 顶部注释。</div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+    + (cur ? '<button class="btn-cancel" onclick="clearCloud()">清除</button>' : '')
+    + '<button class="btn-confirm" onclick="saveCloud()">保存并启用</button>'
+    + '</div>';
+  var m = $('cloudMask'); m.style.display = 'flex'; m.classList.add('show');
+}
+function hideCloud() {
+  var m = $('cloudMask'); m.classList.remove('show');
+  setTimeout(function () { m.style.display = 'none'; }, 180);
+}
+function saveCloud() {
+  var t = (($('cloudToken') || {}).value || '').trim();
+  if (!t) { toast('请输入令牌'); return; }
+  try { localStorage.setItem('om_cloud_token', t); } catch (e) {}
+  toast('已保存，正在重新连接云端…'); hideCloud();
+  setTimeout(function () { location.reload(); }, 400);
+}
+function clearCloud() {
+  try { localStorage.removeItem('om_cloud_token'); } catch (e) {}
+  toast('已清除，将回到本机模式'); hideCloud();
+  setTimeout(function () { location.reload(); }, 400);
 }
 
 /* ================= 声音 ================= */
@@ -1514,6 +1559,9 @@ function checkNew(data) {
 
 Store.onChange(function (data) { D = data; checkNew(data); render(); });
 
+Store.initCloud();   // 启动时从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
+if (window.CloudSync && CloudSync.enabled) toast('☁️ 云端同步已开启，改动将保存到 GitHub 仓库');
+else toast('⚠️ 云端同步未开启（在 assets/cloud-config.js 填入 token 即可）');
 Store.initSync();
 Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 

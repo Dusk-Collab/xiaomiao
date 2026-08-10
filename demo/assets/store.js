@@ -148,6 +148,23 @@
       emit(data);
       publishRemote(data);
     }
+    // 云同步：把整个店铺数据提交到 GitHub 仓库（后台即数据库）。失败静默降级，不阻塞业务。
+    if (global.CloudSync && global.CloudSync.enabled) {
+      global.CloudSync.push(data).catch(function (e) { console.warn('CloudSync.push fail', e); });
+    }
+  }
+
+  /* 启动时从云端拉取最新数据：若云端更新（或本地为空/更旧）则覆盖本地缓存并触发重渲染 */
+  function initCloud() {
+    if (!global.CloudSync || !global.CloudSync.enabled) return;
+    global.CloudSync.pull().then(function (cloud) {
+      if (!cloud) return;
+      var local = read();
+      if (!local || !local._ts || (cloud._ts && cloud._ts >= local._ts)) {
+        try { localStorage.setItem(KEY, JSON.stringify(cloud)); } catch (e) {}
+        emit(cloud);
+      }
+    }).catch(function (e) { console.warn('CloudSync.pull fail', e); });
   }
 
   function publishRemote(data) {
@@ -333,6 +350,7 @@
 
   global.Store = {
     read: read, write: write, update: update, reset: reset, seed: seed,
+    initCloud: initCloud,
     onChange: onChange,
     initSync: initSync, onSyncStatus: onSyncStatus,
     isOpenNow: isOpenNow,

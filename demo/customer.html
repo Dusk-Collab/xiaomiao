@@ -716,6 +716,8 @@ body { background: var(--bg); }
 <div id="toast"></div>
 
 <script src="assets/sync.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/sync-github.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/pca.js"></script>
 <script src="assets/product-extras.js"></script>
@@ -1312,6 +1314,7 @@ function boot() {
     setTimeout(function () { $('noticePop').textContent = D.shop.notice; openMask('noticeMask'); sessionStorage.setItem('om_notice_seen', '1'); }, 400);
   }
   Store.initSync();
+  Store.initCloud();   // 从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
   Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 
   /* 登录检查 */

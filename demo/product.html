@@ -326,6 +326,8 @@
 <div id="toast"></div>
 
 <script src="assets/sync.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/sync-github.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/product-extras.js"></script>
 <script src="assets/lightbox.js"></script>
@@ -380,6 +382,15 @@ window.addEventListener('DOMContentLoaded', function () {
   renderFoot();
   bindFoot();
   SCart.onChange(function () { renderFoot(); });
+
+  /* 云端同步：启动拉取最新；云端数据到达后若当前商品仍在，局部刷新 */
+  Store.initCloud();
+  Store.onChange(function (data) {
+    if (!data || !data.products) return;
+    D = data;
+    var np = D.products.find(function (x) { return x.id === pid; });
+    if (np) { P = np; renderInfo(); renderDetail(); renderReviews(); renderFoot(); }
+  });
 });
 
 function showEmpty() {
