@@ -4,6 +4,9 @@
  * ⚠️ 安全须知（务必读完）：
  * - 浏览器端调用 GitHub API 必须带 token，而本文件会随站点公开部署，
  *   所以任何查看源码的人都能拿到这把 token。
+ * - 【请勿在此文件硬编码真实 token】正确做法：打开商家后台左下角
+ *   「☁ 云端同步设置」粘贴，token 仅存你本机浏览器 localStorage，不进源码、
+ *   不公开，从而只有你自己能改数据。
  * - 请使用「Fine-grained token（细粒度令牌）」，且只授权本仓库
  *   Dusk-Collab/xiaomiao 的 Contents: Read and write。
  *   这样即使泄露，也最多改这一个早餐店仓库，动不了你 GitHub 账户下的其他仓库。
@@ -15,7 +18,8 @@
  * 3. Repository access 选「Only select repositories」→ 选 Dusk-Collab/xiaomiao
  * 4. Repository permissions → Contents → 选 Read and write
  * 5. Generate token → 复制以 github_pat_ 开头的那串
- * 6. 粘贴到下面 token 的值（替换 '__PASTE_TOKEN_HERE__'）
+ * 6. 【不要在此文件硬编码 token】请在前述后台设置面板粘贴；此处的占位符
+ *    会被本机 localStorage 里粘贴过的 token 自动覆盖（见文件末尾逻辑）。
  */
 window.CLOUD_CONFIG = {
   repo: 'Dusk-Collab/xiaomiao',
