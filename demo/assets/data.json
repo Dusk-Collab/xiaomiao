@@ -34,7 +34,7 @@
   "products": [
     {
       "id": "p1",
-      "name": "【云端同步】豆浆油条套餐",
+      "name": "豆浆油条套餐",
       "price": 6,
       "old": 8,
       "cat": "招牌套餐",
@@ -512,7 +512,7 @@
       "customerName": "",
       "items": [
         {
-          "name": "【云端同步】豆浆油条套餐",
+          "name": "豆浆油条套餐",
           "spec": "",
           "price": 6,
           "qty": 2,
