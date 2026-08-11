@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%AC%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-body { background: var(--bg); }
+body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
 #app {
   max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg);
   position: relative; overflow-x: hidden; box-shadow: 0 0 60px rgba(80,60,50,.12);
@@ -449,10 +449,10 @@ body { background: var(--bg); }
 .hot-item-pic {
   width: 52px; height: 52px; border-radius: 12px; flex: none;
   display: grid; place-items: center; font-size: 24px;
-  background-size: cover; background-position: center;
+  background-size: cover; background-position: center; overflow: hidden;
 }
-.hot-item-info { flex: 1; min-width: 0; }
-.hot-item-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+.hot-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.hot-item-name { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hot-item-sold { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
 .hot-item-price { font-size: 15px; font-weight: 800; color: var(--brand); margin-top: 4px; }
 .hot-item-price small { font-size: 10px; font-weight: 700; }
@@ -1451,7 +1451,7 @@ function renderHotItems() {
       + (p.img ? 'background-image:url(\'' + p.img + '\')' : 'background:' + p.color) + '">'
       + (p.img ? '' : p.emoji) + '</div>'
       + '<div class="hot-item-info">'
-      + '<div class="hot-item-name ell">' + esc(p.name) + '</div>'
+      + '<div class="hot-item-name">' + esc(p.name) + '</div>'
       + '<div class="hot-item-sold">月售 ' + p.sold + '</div>'
       + '<div class="hot-item-price"><small>¥</small>' + p.price + '</div>'
       + '</div></div>';
