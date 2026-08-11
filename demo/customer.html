@@ -440,7 +440,7 @@ body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
 }
 
 /* 热销推荐网格 */
-.hot-grid { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.hot-grid { padding: 0 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .hot-item {
   background: #fff; border-radius: var(--r-m); padding: 12px; box-shadow: var(--sh-s);
   display: flex; align-items: center; gap: 10px;
