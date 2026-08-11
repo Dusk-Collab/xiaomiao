@@ -154,15 +154,17 @@
     }
   }
 
-  /* 启动时从云端拉取最新数据：若云端更新（或本地为空/更旧）则覆盖本地缓存并触发重渲染 */
+  /* 从云端拉取最新数据：云端为唯一真源，只要云端有数据就无条件覆盖本机缓存（避免旧本机数据反污染云端）。
+   * 仅在云端与本机内容不一致时才写入并触发重渲染，避免无谓重绘。 */
   function initCloud() {
     if (!global.CloudSync || !global.CloudSync.enabled) return;
     global.CloudSync.pull().then(function (cloud) {
       if (!cloud) return;
       var local = read();
-      if (!local || !local._ts || (cloud._ts && cloud._ts >= local._ts)) {
+      var changed = !local || JSON.stringify(local) !== JSON.stringify(cloud);
+      if (changed) {
         try { localStorage.setItem(KEY, JSON.stringify(cloud)); } catch (e) {}
-        emit(cloud);
+        emit(cloud);   // 通知 UI 用云端干净数据重渲染
       }
     }).catch(function (e) { console.warn('CloudSync.pull fail', e); });
   }

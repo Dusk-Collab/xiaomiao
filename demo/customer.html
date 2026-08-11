@@ -2205,7 +2205,8 @@ Store.onChange(function (data) {
   }
 });
 
-setInterval(function () { renderShop(); if (curTab === 'home') renderHomePage(); }, 30000);
+// 每 30 秒从云端重新拉取一次（云端为唯一真源）：自动用干净数据覆盖本机，页面自愈，无需手动清缓存/刷新
+setInterval(function () { Store.initCloud(); renderShop(); if (curTab === 'home') renderHomePage(); }, 30000);
 
 boot();
 if (myOrderId) { var o0 = Store.getOrder(myOrderId); if (o0) lastStatus = o0.status; }
