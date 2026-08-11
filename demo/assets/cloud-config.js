@@ -31,9 +31,9 @@ window.CLOUD_CONFIG = {
   token: '__PASTE_TOKEN_HERE__',
   // 全自动模式：填 Cloudflare Worker 地址（如 https://xiaomiao-sync.xxx.workers.dev）
   // 留空则走“手动粘贴 token”模式。代理模式下浏览器不再需要 token。
-  proxyBase: '',
+  proxyBase: 'https://xiaomiao-sync.xiaomiao-sync.workers.dev',
   // 与 Worker 的 ADMIN_KEY 对应（可选，公开 URL 不影响安全，只是加一道门）
-  proxyKey: ''
+  proxyKey: '4448029d4d0358ca33d1aec49d38bd53f57c083db5210cc2'
 };
 
 // 若本浏览器曾在后台「云端同步设置」里粘贴过令牌，则用它覆盖占位符。
