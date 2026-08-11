@@ -7,7 +7,7 @@
     "notice": "今天豆浆油条套餐 6.8 折，欢迎到店自取～ 取餐时请报取餐码。",
     "noticeOn": true,
     "isOpen": true,
-    "manualClose": false,
+    "manualClose": true,
     "hours": {
       "start": "06:00",
       "end": "13:00"
@@ -34,7 +34,7 @@
   "products": [
     {
       "id": "p1",
-      "name": "豆浆油条套餐",
+      "name": "【云端同步】豆浆油条套餐",
       "price": 6,
       "old": 8,
       "cat": "招牌套餐",
@@ -457,8 +457,284 @@
       "on": true
     }
   ],
-  "orders": [],
-  "codeSeq": 0,
+  "orders": [
+    {
+      "id": "o1786351470660802",
+      "code": "A007",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "金枪鱼三明治",
+          "spec": "中杯 / 去冰 / 三分糖 / 珍珠",
+          "price": 11,
+          "qty": 2,
+          "emoji": "🥙",
+          "color": "#FFE0D6"
+        },
+        {
+          "name": "葱油饼",
+          "spec": "中杯 / 去冰 / 三分糖 / 珍珠",
+          "price": 5,
+          "qty": 2,
+          "emoji": "🥞",
+          "color": "#FFEABF"
+        }
+      ],
+      "goodsTotal": 32,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 32,
+      "mode": "delivery",
+      "remark": "打包，放门口",
+      "phone": "",
+      "address": "张三 13800138001 幸福小区 3 栋 202",
+      "table": "",
+      "status": "canceled",
+      "createdAt": 1786351470660,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786351470660
+        },
+        {
+          "s": "canceled",
+          "t": 1786351619138
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786351470401569",
+      "code": "A006",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "【云端同步】豆浆油条套餐",
+          "spec": "",
+          "price": 6,
+          "qty": 2,
+          "emoji": "🥢",
+          "color": "#FFF1DD"
+        }
+      ],
+      "goodsTotal": 12,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 12,
+      "mode": "delivery",
+      "remark": "",
+      "phone": "",
+      "address": "李四 13900139002 阳光花园 5 单元 101",
+      "table": "",
+      "status": "canceled",
+      "createdAt": 1786351470401,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786351470401
+        },
+        {
+          "s": "canceled",
+          "t": 1786351620363
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786351470041228",
+      "code": "A005",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "茶叶蛋",
+          "spec": "中杯 / 去冰 / 三分糖 / 珍珠",
+          "price": 2,
+          "qty": 2,
+          "emoji": "🥚",
+          "color": "#F8E2C5"
+        }
+      ],
+      "goodsTotal": 4,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 4,
+      "mode": "delivery",
+      "remark": "",
+      "phone": "",
+      "address": "李四 13900139002 阳光花园 5 单元 101",
+      "table": "",
+      "status": "canceled",
+      "createdAt": 1786351470041,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786351470041
+        },
+        {
+          "s": "canceled",
+          "t": 1786351620956
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786351468433148",
+      "code": "A004",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "葱油饼",
+          "spec": "大杯 / 热饮 / 全糖",
+          "price": 5,
+          "qty": 1,
+          "emoji": "🥞",
+          "color": "#FFEABF"
+        }
+      ],
+      "goodsTotal": 5,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 5,
+      "mode": "delivery",
+      "remark": "",
+      "phone": "",
+      "address": "张三 13800138001 幸福小区 3 栋 202",
+      "table": "",
+      "status": "canceled",
+      "createdAt": 1786351468433,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786351468433
+        },
+        {
+          "s": "canceled",
+          "t": 1786351621432
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786344790301539",
+      "code": "A003",
+      "customerId": "t1",
+      "customerName": "云端测试",
+      "items": [
+        {
+          "name": "茶叶蛋",
+          "price": 2,
+          "qty": 1,
+          "emoji": "🥚"
+        }
+      ],
+      "goodsTotal": 2,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 2,
+      "mode": "pickup",
+      "remark": "",
+      "phone": "",
+      "address": "",
+      "table": "8",
+      "status": "canceled",
+      "createdAt": 1786344790301,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786344790301
+        },
+        {
+          "s": "canceled",
+          "t": 1786351622817
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786344743701331",
+      "code": "A002",
+      "customerId": "t1",
+      "customerName": "云端测试",
+      "items": [
+        {
+          "name": "茶叶蛋",
+          "price": 2,
+          "qty": 1,
+          "emoji": "🥚"
+        }
+      ],
+      "goodsTotal": 2,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 2,
+      "mode": "pickup",
+      "remark": "",
+      "phone": "",
+      "address": "",
+      "table": "8",
+      "status": "canceled",
+      "createdAt": 1786344743701,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786344743701
+        },
+        {
+          "s": "canceled",
+          "t": 1786351625662
+        }
+      ],
+      "isNew": false
+    },
+    {
+      "id": "o1786344398527517",
+      "code": "A001",
+      "customerId": "t1",
+      "customerName": "云端测试",
+      "items": [
+        {
+          "name": "茶叶蛋",
+          "price": 2,
+          "qty": 1,
+          "emoji": "🥚"
+        }
+      ],
+      "goodsTotal": 2,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 2,
+      "mode": "pickup",
+      "remark": "",
+      "phone": "",
+      "address": "",
+      "table": "8",
+      "status": "canceled",
+      "createdAt": 1786344398527,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1786344398527
+        },
+        {
+          "s": "canceled",
+          "t": 1786351626707
+        }
+      ],
+      "isNew": false
+    }
+  ],
+  "codeSeq": 7,
   "codeDate": "2026-08-10",
-  "_ts": 1786342536918
+  "_ts": 1786437018537
 }
