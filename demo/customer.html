@@ -444,6 +444,7 @@ body { background: var(--bg); }
 .hot-item {
   background: #fff; border-radius: var(--r-m); padding: 12px; box-shadow: var(--sh-s);
   display: flex; align-items: center; gap: 10px;
+  min-height: 76px;
 }
 .hot-item-pic {
   width: 52px; height: 52px; border-radius: 12px; flex: none;
@@ -1418,16 +1419,8 @@ function renderBanner() {
   startBannerAuto();
 }
 function startBannerAuto() {
+  // 自动轮播已关闭，只响应手动点击
   clearInterval(bannerTimer);
-  if (bannerSlidesLen <= 1) return;
-  bannerTimer = setInterval(function () {
-    bannerIdx = (bannerIdx + 1) % bannerSlidesLen;
-    if (curTab === 'home') {
-      $('bannerTrack').style.transform = 'translateX(-' + (bannerIdx * 100) + '%)';
-      var dots = $('bannerDots').children;
-      for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('active', i === bannerIdx);
-    }
-  }, 3500);
 }
 function bannerPrev() {
   if (bannerSlidesLen <= 1) return;
