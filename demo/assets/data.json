@@ -7,7 +7,7 @@
     "notice": "今天豆浆油条套餐 6.8 折，欢迎到店自取～ 取餐时请报取餐码。",
     "noticeOn": true,
     "isOpen": true,
-    "manualClose": true,
+    "manualClose": false,
     "hours": {
       "start": "06:00",
       "end": "13:00"
@@ -736,5 +736,5 @@
   ],
   "codeSeq": 7,
   "codeDate": "2026-08-10",
-  "_ts": 1786437018537
+  "_ts": 1786437019332
 }
