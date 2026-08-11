@@ -26,17 +26,6 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; padding: 0; }
 
-/* 跨设备同步状态小标识 */
-.sync-badge {
-  position: relative; z-index: 1; margin-left: auto; font-size: 10.5px; font-weight: 700;
-  padding: 3px 9px; border-radius: 999px; flex: none; white-space: nowrap;
-  background: rgba(255,255,255,.9); transition: background .25s, color .25s;
-}
-.sync-badge.on { background: rgba(255,255,255,.95); color: #0E7B3D; }
-.sync-badge.wait { background: rgba(255,255,255,.9); color: #A0610B; }
-.sync-badge.off { background: rgba(255,255,255,.85); color: #8E7A6C; }
-/* 商家后台顶部条用的同名元素（深色底） */
-.admin-top .sync-badge { margin-left: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
                "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;

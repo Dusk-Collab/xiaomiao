@@ -588,7 +588,6 @@ body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
           <div class="hero-sub ell" id="shopSub"></div>
         </div>
         <div class="hero-badge" id="openBadge">营业中</div>
-        <div class="sync-badge" id="syncBadge">☁ 连接中…</div>
       </div>
       <div class="notice-bar" id="noticeBar" style="display:none">
         <span style="flex:none">📢</span><span id="noticeText"></span>
@@ -1335,7 +1334,7 @@ function boot() {
   }
   Store.initSync();
   Store.initCloud();   // 从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
-  Store.onSyncStatus(function (s) { renderSyncBadge(s); });
+  Store.onSyncStatus(function (s) { /* 同步后台运行，UI 不展示 */ });
 
   /* 登录检查 */
   if (!me) { }
@@ -1485,13 +1484,6 @@ function zoomPic(pid) {
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-
-function renderSyncBadge(s) {
-  var el = $('syncBadge'); if (!el) return;
-  if (s === 'online') { el.textContent = '☁ 已同步'; el.className = 'sync-badge on'; }
-  else if (s === 'connecting') { el.textContent = '☁ 连接中…'; el.className = 'sync-badge wait'; }
-  else { el.textContent = '☁ 本机模式'; el.className = 'sync-badge off'; }
-}
 
 function renderShop() {
   var logo = $('shopLogo'), inner = $('shopLogoInner');
