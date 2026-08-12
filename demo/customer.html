@@ -2066,7 +2066,7 @@ function renderOrderPage() {
   o.items.forEach(function (it) {
     var gkey = it.pid || it.name;
     var reviewed = (window.ReviewStore && ReviewStore.hasReviewed(o.id, gkey));
-    var rvBtn = (o.status !== 'canceled')
+    var rvBtn = (o.status === 'done')
       ? (reviewed
           ? '<div style="text-align:right;margin-top:2px;font-size:11px;color:var(--ink-3)">✓ 已评价</div>'
           : '<div style="text-align:right;margin-top:4px"><button style="padding:5px 14px;font-size:12px;border-radius:14px;border:1px solid var(--brand);color:var(--brand);background:#fff;font-weight:700;cursor:pointer" onclick="openReview(\'' + o.id + '\',\'' + gkey + '\',\'' + esc(it.name).replace(/'/g, "\\'") + '\')">评价</button></div>')
