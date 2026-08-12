@@ -1,0 +1,32 @@
+<!-- pages/product/product.wxml -->
+<view class="page" wx:if="{{p}}">
+  <view class="hero" style="background:{{p.color}}">
+    <view class="hero-emoji">{{p.emoji}}</view>
+  </view>
+  <view class="info card">
+    <view class="name">{{p.name}}</view>
+    <view class="price-row">
+      <text class="price">{{p.priceText}}</text>
+      <text wx:if="{{p.oldText}}" class="old">{{p.oldText}}</text>
+      <text wx:if="{{p.oldText}}" class="tag">省{{p.oldText}}</text>
+    </view>
+    <view class="desc muted">{{p.desc}}</view>
+    <view class="sold muted">已售 {{p.sold}}</view>
+  </view>
+
+  <view class="detail card" wx:if="{{p.detail}}">
+    <view class="d-row"><text class="d-k">简介</text><text class="d-v">{{p.detail.desc}}</text></view>
+    <view class="d-row"><text class="d-k">配料</text><text class="d-v">{{p.detail.raw}}</text></view>
+    <view class="d-row"><text class="d-k">分量</text><text class="d-v">{{p.detail.serving}}</text></view>
+    <view class="d-row"><text class="d-k">做法</text><text class="d-v">{{p.detail.method}}</text></view>
+    <view class="d-row"><text class="d-k">保存</text><text class="d-v">{{p.detail.shelf}}</text></view>
+    <view class="d-row"><text class="d-k">贴士</text><text class="d-v">{{p.detail.tips}}</text></view>
+  </view>
+
+  <view style="height:140rpx"></view>
+  <view class="bar">
+    <view class="bar-total">合计 <text class="price">{{p.priceText}}</text></view>
+    <view class="bar-add btn-primary" bindtap="addCart">加入购物车</view>
+  </view>
+</view>
+<view wx:else class="empty">商品不存在</view>

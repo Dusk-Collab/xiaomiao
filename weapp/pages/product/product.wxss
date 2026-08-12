@@ -1,0 +1,19 @@
+/* pages/product/product.wxss */
+.page { padding: 20rpx; }
+.hero { height: 360rpx; border-radius: 24rpx; display: flex; align-items: center; justify-content: center; }
+.hero-emoji { font-size: 180rpx; }
+.info { padding: 24rpx; margin: 16rpx 0; }
+.name { font-size: 36rpx; font-weight: 700; }
+.price-row { display: flex; align-items: center; margin: 12rpx 0; }
+.old { color: #b4b2a9; text-decoration: line-through; font-size: 24rpx; margin-left: 12rpx; }
+.tag { background: #fff1ea; color: #ff5b1e; font-size: 22rpx; padding: 4rpx 12rpx; border-radius: 999rpx; margin-left: 12rpx; }
+.desc { font-size: 26rpx; margin: 8rpx 0; }
+.sold { font-size: 22rpx; }
+.detail { padding: 24rpx; }
+.d-row { display: flex; padding: 12rpx 0; border-bottom: 1rpx solid #f3f3f3; }
+.d-k { width: 110rpx; color: #8a929c; font-size: 26rpx; flex: none; }
+.d-v { flex: 1; font-size: 26rpx; color: #3a4150; }
+.bar { position: fixed; left: 20rpx; right: 20rpx; bottom: 24rpx; height: 96rpx; background: #2c2c2a; border-radius: 999rpx; display: flex; align-items: center; padding: 0 24rpx; color: #fff; }
+.bar-total { flex: 1; font-size: 28rpx; }
+.bar-add { padding: 16rpx 40rpx; font-size: 28rpx; }
+.empty { text-align: center; color: #9aa2ac; margin-top: 200rpx; }

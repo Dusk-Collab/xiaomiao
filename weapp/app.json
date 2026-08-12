@@ -1,0 +1,27 @@
+{
+  "pages": [
+    "pages/customer/customer",
+    "pages/order/order",
+    "pages/admin/admin",
+    "pages/product/product"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ff5b1e",
+    "navigationBarTitleText": "小淼饭店",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f6f7f9"
+  },
+  "tabBar": {
+    "color": "#9aa2ac",
+    "selectedColor": "#ff5b1e",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/customer/customer", "text": "点餐" },
+      { "pagePath": "pages/order/order", "text": "订单" },
+      { "pagePath": "pages/admin/admin", "text": "后台" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

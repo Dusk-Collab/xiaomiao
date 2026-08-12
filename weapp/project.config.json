@@ -1,0 +1,17 @@
+{
+  "miniprogramRoot": "./",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "appid": "wxYOUR_APPID_HERE",
+  "projectname": "xiaomiao",
+  "description": "小淼饭店点餐小程序（云开发版）",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "latest"
+}

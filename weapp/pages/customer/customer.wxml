@@ -1,0 +1,123 @@
+<!-- pages/customer/customer.wxml -->
+<view class="page">
+
+  <!-- 店铺头部 -->
+  <view class="shop">
+    <view class="logo">{{shop.logo || '🍴'}}</view>
+    <view class="shop-info">
+      <view class="shop-name">{{shop.name || '小淼饭店'}}</view>
+      <view class="shop-slogan muted">{{shop.slogan || ''}}</view>
+    </view>
+    <view class="status {{isOpen ? 'on' : 'off'}}">{{isOpen ? '营业中' : '已打烊'}}</view>
+  </view>
+
+  <view wx:if="{{noticeOn && shop.notice}}" class="notice">📢 {{shop.notice}}</view>
+
+  <!-- 轮播 banner -->
+  <swiper wx:if="{{banner.length}}" class="banner" indicator-dots circular autoplay="{{false}}" previous-margin="20rpx" next-margin="20rpx">
+    <swiper-item wx:for="{{banner}}" wx:key="id">
+      <view class="banner-card" style="background:{{item.color}}" bindtap="goProduct" data-id="{{item.id}}">
+        <view class="banner-emoji">{{item.emoji}}</view>
+        <view class="banner-meta">
+          <view class="banner-tag" wx:if="{{item.bannerTag}}">{{item.bannerTag}}</view>
+          <view class="banner-name">{{item.name}}</view>
+          <view class="banner-price">{{item.priceText}}</view>
+        </view>
+      </view>
+    </swiper-item>
+  </swiper>
+
+  <!-- 分类导航 -->
+  <scroll-view scroll-x class="cats">
+    <view wx:for="{{categories}}" wx:key="*this" class="cat {{activeCat===item ? 'on' : ''}}" bindtap="switchCat" data-cat="{{item}}">{{item}}</view>
+  </scroll-view>
+
+  <!-- 热销推荐（仅在「全部」时显示） -->
+  <view wx:if="{{activeCat==='全部' && hot.length}}" class="sec-title">🔥 热销推荐</view>
+  <scroll-view wx:if="{{activeCat==='全部' && hot.length}}" scroll-x class="hot-row">
+    <view wx:for="{{hot}}" wx:key="id" class="hot-item" bindtap="goProduct" data-id="{{item.id}}">
+      <view class="hot-emoji" style="background:{{item.color}}">{{item.emoji}}</view>
+      <view class="hot-name ell">{{item.name}}</view>
+      <view class="hot-foot">
+        <text class="price">{{item.priceText}}</text>
+        <view class="add" catchtap="addCart" data-id="{{item.id}}">＋</view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 商品列表 -->
+  <view class="sec-title" wx:if="{{activeCat!=='全部'}}">{{activeCat}}</view>
+  <view class="plist">
+    <view wx:for="{{products}}" wx:key="id" class="pitem card" bindtap="goProduct" data-id="{{item.id}}">
+      <view class="p-emoji" style="background:{{item.color}}">{{item.emoji}}</view>
+      <view class="p-info">
+        <view class="p-name">{{item.name}}</view>
+        <view class="p-desc muted ell">{{item.desc}}</view>
+        <view class="p-foot">
+          <view>
+            <text class="price">{{item.priceText}}</text>
+            <text wx:if="{{item.oldText}}" class="old">¥{{item.old}}</text>
+          </view>
+          <view class="add" catchtap="addCart" data-id="{{item.id}}">＋</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view style="height:140rpx"></view>
+</view>
+
+<!-- 底部购物车条 -->
+<view wx:if="{{cartCount>0}}" class="cartbar" bindtap="openCart">
+  <view class="cart-ico">🛒<text class="badge">{{cartCount}}</text></view>
+  <view class="cart-total">{{'总价 ' + cartTotal}}</view>
+  <view class="cart-go btn-primary" catchtap="goCheckout">去结算</view>
+</view>
+
+<!-- 购物车弹层 -->
+<view wx:if="{{cartOpen}}" class="mask" bindtap="closeCart">
+  <view class="sheet" catchtap="stop">
+    <view class="sheet-h">购物车</view>
+    <view wx:for="{{cartList}}" wx:key="id" class="citem">
+      <view class="c-emoji" style="background:{{item.color}}">{{item.emoji}}</view>
+      <view class="c-info">
+        <view class="c-name">{{item.name}}</view>
+        <view class="price">{{item.sub}}</view>
+      </view>
+      <view class="stepper">
+        <view class="step" catchtap="decCart" data-id="{{item.id}}">－</view>
+        <text>{{item.qty}}</text>
+        <view class="step" catchtap="addCart" data-id="{{item.id}}">＋</view>
+      </view>
+    </view>
+    <view class="sheet-go btn-primary" bindtap="goCheckout">去结算（共 {{cartTotal}}）</view>
+  </view>
+</view>
+
+<!-- 结算弹层 -->
+<view wx:if="{{checkoutOpen}}" class="mask">
+  <view class="sheet">
+    <view class="sheet-h">确认订单</view>
+    <view class="seg">
+      <view class="seg-item {{mode==='pickup'?'on':''}}" bindtap="setMode" data-mode="pickup">到店自取</view>
+      <view class="seg-item {{mode==='delivery'?'on':''}}" bindtap="setMode" data-mode="delivery">外卖配送</view>
+    </view>
+    <view wx:if="{{mode==='delivery'}}" class="field">
+      <text class="label">收货地址</text>
+      <input class="input" placeholder="请输入收货地址" value="{{table}}" bindinput="inputTable" />
+    </view>
+    <view class="field">
+      <text class="label">手机号</text>
+      <input class="input" type="number" placeholder="请输入手机号" value="{{phone}}" bindinput="inputPhone" />
+    </view>
+    <view class="field">
+      <text class="label">备注</text>
+      <input class="input" placeholder="如：不要葱 / 少糖" value="{{remark}}" bindinput="inputRemark" />
+    </view>
+    <view class="sheet-total">合计：<text class="price">{{cartTotal}}</text>（含配送费见结算）</view>
+    <view class="sheet-btns">
+      <view class="b-cancel" bindtap="closeCheckout">再看看</view>
+      <view class="b-ok btn-primary" bindtap="submitOrder">提交订单</view>
+    </view>
+  </view>
+</view>

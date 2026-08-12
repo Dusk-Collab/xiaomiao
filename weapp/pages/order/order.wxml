@@ -1,0 +1,42 @@
+<!-- pages/order/order.wxml -->
+<view class="page">
+  <view class="tabs">
+    <view class="tab {{tab==='all'?'on':''}}" bindtap="switchTab" data-tab="all">全部</view>
+    <view class="tab {{tab==='active'?'on':''}}" bindtap="switchTab" data-tab="active">进行中</view>
+    <view class="tab {{tab==='done'?'on':''}}" bindtap="switchTab" data-tab="done">已完成</view>
+  </view>
+
+  <view wx:if="{{!view.length}}" class="empty">还没有订单，去点餐吧～</view>
+
+  <view wx:for="{{view}}" wx:key="_id" class="order card">
+    <view class="o-top">
+      <text class="o-code">取餐码 {{item.code}}</text>
+      <text class="o-status s-{{item.status}}">{{item.statusText}}</text>
+    </view>
+    <view wx:for="{{item.items}}" wx:for-item="it" wx:key="id" class="o-item">
+      <text class="o-name">{{it.name}} ×{{it.qty}}</text>
+      <text class="muted">{{it.price * it.qty}}</text>
+    </view>
+    <view class="o-foot">
+      <text class="muted">{{item.timeText}} · {{item.mode==='pickup'?'自取':'配送'}}</text>
+      <text class="price">{{item.totalText}}</text>
+    </view>
+    <view wx:if="{{item.canReview}}" class="o-review btn-primary" bindtap="openReview" data-id="{{item._id}}">写评价</view>
+    <view wx:if="{{item.reviewedAt}}" class="o-reviewed muted">已评价 {{item.rating}}★</view>
+  </view>
+</view>
+
+<!-- 评价弹层 -->
+<view wx:if="{{reviewOpen}}" class="mask">
+  <view class="sheet">
+    <view class="sheet-h">写评价</view>
+    <view class="stars">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="star {{rating>=item?'on':''}}" bindtap="setRating" data-r="{{item}}">{{rating>=item?'★':'☆'}}</text>
+    </view>
+    <textarea class="ta" placeholder="说点什么…" value="{{comment}}" bindinput="inputComment" />
+    <view class="sheet-btns">
+      <view class="b-cancel" bindtap="closeReview">取消</view>
+      <view class="b-ok btn-primary" bindtap="submitReview">提交</view>
+    </view>
+  </view>
+</view>

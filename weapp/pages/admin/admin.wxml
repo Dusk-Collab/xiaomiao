@@ -1,0 +1,62 @@
+<!-- pages/admin/admin.wxml -->
+<view class="page">
+  <view class="sec-tabs">
+    <view class="sec {{sec==='orders'?'on':''}}" bindtap="switchSec" data-sec="orders">订单管理</view>
+    <view class="sec {{sec==='settings'?'on':''}}" bindtap="switchSec" data-sec="settings">店铺设置</view>
+  </view>
+
+  <!-- 订单管理 -->
+  <block wx:if="{{sec==='orders'}}">
+    <scroll-view scroll-x class="otabs">
+      <view class="otab {{tab==='all'?'on':''}}" bindtap="switchTab" data-tab="all">全部</view>
+      <view class="otab {{tab==='pending'?'on':''}}" bindtap="switchTab" data-tab="pending">待接单</view>
+      <view class="otab {{tab==='making'?'on':''}}" bindtap="switchTab" data-tab="making">制作中</view>
+      <view class="otab {{tab==='ready'?'on':''}}" bindtap="switchTab" data-tab="ready">待取餐</view>
+      <view class="otab {{tab==='done'?'on':''}}" bindtap="switchTab" data-tab="done">已完成</view>
+      <view class="otab {{tab==='canceled'?'on':''}}" bindtap="switchTab" data-tab="canceled">已取消</view>
+    </scroll-view>
+
+    <view wx:if="{{!view.length}}" class="empty">暂无订单</view>
+
+    <view wx:for="{{view}}" wx:key="_id" class="order card">
+      <view class="o-top">
+        <text class="o-code">取餐码 {{item.code}}</text>
+        <text class="o-status s-{{item.status}}">{{item.statusText}}</text>
+      </view>
+      <view wx:for="{{item.items}}" wx:for-item="it" wx:key="id" class="o-item">
+        <text>{{it.name}} ×{{it.qty}}</text>
+        <text class="muted">{{it.price * it.qty}}</text>
+      </view>
+      <view class="o-foot">
+        <text class="muted">{{item.timeText}} · {{item.mode==='pickup'?'自取':'配送'}} · {{item.phone}}</text>
+        <text class="price">{{item.totalText}}</text>
+      </view>
+      <view wx:if="{{item.remark}}" class="o-remark muted">备注：{{item.remark}}</view>
+      <view class="o-ops">
+        <view wx:if="{{item.next}}" class="op btn-primary" bindtap="advance" data-id="{{item._id}}" data-status="{{item.next}}">{{item.next==='making'?'接单':(item.next==='ready'?'完成制作':'出餐')}}</view>
+        <view wx:if="{{item.status!=='done' && item.status!=='canceled'}}" class="op op-cancel" bindtap="advance" data-id="{{item._id}}" data-status="canceled">取消</view>
+      </view>
+    </view>
+  </block>
+
+  <!-- 店铺设置 -->
+  <block wx:if="{{sec==='settings'}}">
+    <view class="card set">
+      <view class="set-h">店铺信息</view>
+      <view class="field"><text class="label">店名</text><input class="input" value="{{shop.name}}" bindinput="inputName" /></view>
+      <view class="field"><text class="label">公告</text><input class="input" value="{{shop.notice}}" bindinput="inputNotice" /></view>
+      <view class="field"><text class="label">营业中</text><switch checked="{{shop.isOpen}}" bindchange="toggleOpen" /></view>
+      <view class="save btn-primary" bindtap="saveShop">保存并同步</view>
+    </view>
+
+    <view class="set-h">商品上下架</view>
+    <view wx:for="{{products}}" wx:key="id" class="prow card">
+      <view class="p-emoji" style="background:{{item.color}}">{{item.emoji}}</view>
+      <view class="p-info">
+        <view class="p-name">{{item.name}}</view>
+        <view class="price">{{item.priceText}}</view>
+      </view>
+      <switch checked="{{item.on}}" bindchange="toggleProduct" data-id="{{item.id}}" />
+    </view>
+  </block>
+</view>

@@ -1,0 +1,35 @@
+/* app.wxss —— 全局样式（与演示版 style.css 同源） */
+page {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --ink: #1c1c1e;
+  --muted: #8a929c;
+  --brand: #ff5b1e;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-size: 28rpx;
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999rpx;
+  font-weight: 700;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,.05);
+}
+
+.row { display: flex; align-items: center; }
+.between { justify-content: space-between; }
+.muted { color: var(--muted); }
+.price { color: var(--brand); font-weight: 700; }
+.ell {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
