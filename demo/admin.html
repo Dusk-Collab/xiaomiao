@@ -324,6 +324,38 @@ canvas.qr { border-radius: 8px; }
 </head>
 <body>
 
+<!-- 管理员登录门 -->
+<div id="adminLock" class="admin-lock">
+  <div class="admin-lock-box">
+    <div style="font-size:34px">🔐</div>
+    <div id="alTitle" class="al-title">管理员登录</div>
+    <div id="alSub" class="al-sub">请输入后台密码</div>
+    <input id="alPwd" class="inp" type="password" placeholder="请输入密码" autocomplete="off">
+    <div id="alSetRow" style="display:none">
+      <input id="alPwd2" class="inp" type="password" placeholder="再输一次" autocomplete="off" style="margin-top:8px">
+    </div>
+    <button id="alBtn" class="btn-primary" style="width:100%;margin-top:12px">进入后台</button>
+    <div id="alErr" class="al-err"></div>
+  </div>
+</div>
+
+<!-- 云端同步设置面板 -->
+<div id="cloudModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">☁ 云端实时同步</div>
+      <button id="cloudClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p class="hint" style="margin:8px 0 12px">填一个「云环境 ID」即可让所有电脑/手机实时同步。环境 ID 在微信云开发控制台获取（见激活指引）。</p>
+    <label class="lbl">云环境 ID</label>
+    <input id="envInput" class="inp" placeholder="例如 xiaomiao-7gabc123">
+    <button id="btnSaveEnv" class="btn-primary" style="width:100%;margin-top:10px">保存并连接</button>
+    <hr style="margin:14px 0;border:none;border-top:1px solid var(--line)">
+    <button id="btnSetPwd" class="btn-soft" style="width:100%;justify-content:center">修改管理员密码</button>
+    <div id="envStatus" class="hint" style="margin-top:10px"></div>
+  </div>
+</div>
+
 <div id="shell">
   <aside class="side">
     <div class="side-brand">
@@ -340,7 +372,8 @@ canvas.qr { border-radius: 8px; }
         <span id="sideStatus">营业中</span>
         <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
       </div>
-      </div>
+      <button id="btnCloudSettings" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">☁ 云端同步设置</button>
+    </div>
   </aside>
 
   <main class="content">
@@ -374,7 +407,10 @@ canvas.qr { border-radius: 8px; }
 <script src="assets/sync.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/sync-github.js"></script>
+<script src="https://static.cloudbase.com/cloudbase/js-sdk/1.6.4/cloudbase.full.js"></script>
+<script src="assets/cloud-core.js"></script>
 <script src="assets/store.js"></script>
+<script src="assets/admin-login.js"></script>
 <script src="assets/qrcode.js"></script>
 <script>
 /* ================= 基础 ================= */
@@ -1505,8 +1541,7 @@ function checkNew(data) {
 
 Store.onChange(function (data) { D = data; checkNew(data); render(); });
 
-Store.initCloud();   // 后台自动从仓库拉取/推送数据，前端不展示状态
-Store.onSyncStatus(function (s) { /* 后台同步运行，UI 不展示 */ });
+Store.initCloud();   // 后台自动从云端/本地拉取数据并实时同步
 
 document.addEventListener('click', function once() {
   if (!soundReady) { initSound(); }

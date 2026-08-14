@@ -1,19 +1,16 @@
-/* 共享数据层
- * 演示版用 localStorage 模拟云数据库，用 storage 事件 + BroadcastChannel 模拟实时监听（onSnapshot）。
- * 上线时把 Store.read/write 换成微信云开发 db.collection(...).watch() 即可，业务代码不用动。
+/* 共享数据层（云端版）
+ * 默认 localStorage 兜底；配置云环境(CloudCore)后，店铺数据存云端 store/main，
+ * 用 watch() 实现多设备实时同步（谁改了，所有打开的页面秒级更新）。
+ * 小程序版(weapp)用同一套云数据库，两套前端共享同一份数据。
  */
 (function (global) {
   'use strict';
 
   var KEY = 'ordermate_v2';
   var CHANNEL = 'ordermate_sync_v1';
-  var SYNC_TOPIC = 'scanorder/demo_v1';
   var bc = ('BroadcastChannel' in global) ? new BroadcastChannel(CHANNEL) : null;
   var listeners = [];
-  var syncListeners = [];
-  var SYNC_ONLINE = false;
-  var enc = ('TextEncoder' in global) ? new TextEncoder() : null;
-  var dec = ('TextDecoder' in global) ? new TextDecoder() : null;
+  var storeWatcher = null;
 
   /* ---------- 种子数据 ---------- */
   function seed() {
@@ -127,6 +124,8 @@
   }
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
 
+  function stripMeta(d) { var c = Object.assign({}, d); delete c._id; delete c._openid; return c; }
+
   /* ---------- 读写 ---------- */
   function read() {
     try {
@@ -146,81 +145,52 @@
     if (!silent) {
       if (bc) bc.postMessage({ t: data._ts });
       emit(data);
-      publishRemote(data);
     }
-    // 云同步：把整个店铺数据提交到 GitHub 仓库（后台即数据库）。失败静默降级，不阻塞业务。
-    if (global.CloudSync && global.CloudSync.enabled) {
-      global.CloudSync.push(data).catch(function (e) { console.warn('CloudSync.push fail', e); });
+    // 云端实时同步：配置云环境后，把整份店铺数据推到 store/main，所有设备 watch 秒级收到
+    if (global.CloudCore && global.CloudCore.ready() && global.CloudCore.db) {
+      var db = global.CloudCore.db;
+      db.collection('store').doc('main').set(stripMeta(data))
+        .catch(function (e) { console.warn('cloud push fail', e); });
     }
   }
 
-  /* 从云端拉取最新数据。
-   * 旧逻辑「云端无条件覆盖本机」有个坑：当写通道（Cloudflare Worker）挂掉时，
-   * 本机的删除/修改推不上去，但读通道还能用，于是每次刷新都把云端旧数据拉回来覆盖本机，
-   * 表现就是「删了商品一刷新又回来」。
-   * 改为「仅当云端比本机更新（_ts 更大）时才覆盖本机」：
-   *   - 本机刚改过（_ts 更新）→ 本机优先，删除/修改生效，不会被旧云端冲掉；
-   *   - 别人在别处真推了新数据（云端 _ts 更新）→ 仍会同步下来。
-   * 这样删改一定生效，同时保留跨设备实时同步能力。 */
+  /* 初始化云端：拉取 store/main 作为当前真源，并 watch 实时变更。
+   * 没配置云环境时走本地模式（现有行为，演示照常可用）。 */
   function initCloud() {
-    if (!global.CloudSync || !global.CloudSync.enabled) return;
-    global.CloudSync.pull().then(function (cloud) {
-      if (!cloud) return;
-      var local = read();
-      var cloudNewer;
-      if (!local) cloudNewer = true;                                  // 本机无数据，直接用云端
-      else if (local._ts === undefined && cloud._ts !== undefined) cloudNewer = true; // 本机是种子(无_ts)但云端有，云端优先
-      else if (cloud._ts === undefined) cloudNewer = false;            // 云端无时间戳，不覆盖本机
-      else cloudNewer = cloud._ts > local._ts;                        // 云端比本机新才覆盖
-      if (cloudNewer) {
-        try { localStorage.setItem(KEY, JSON.stringify(cloud)); } catch (e) {}
-        emit(cloud);   // 通知 UI 用云端干净数据重渲染
+    if (!(global.CloudCore && global.CloudCore.ready() && global.CloudCore.db)) {
+      emit(read());   // 本地模式：直接发当前数据
+      return;
+    }
+    var db = global.CloudCore.db;
+    db.collection('store').doc('main').get().then(function (res) {
+      var cloud = (res.data && res.data[0]) || null;
+      if (cloud && cloud.shop) {
+        var c = stripMeta(cloud);
+        localStorage.setItem(KEY, JSON.stringify(c));
+        emit(c);
+      } else {
+        // 云端还没有数据 → 用本地（或种子）初始化云端
+        var s = read();
+        db.collection('store').doc('main').set(stripMeta(s)).catch(function () {});
+        emit(s);
       }
-    }).catch(function (e) { console.warn('CloudSync.pull fail', e); });
-  }
+    }).catch(function (e) { console.warn('cloud pull fail', e); emit(read()); });
 
-  function publishRemote(data) {
-    if (!SYNC_ONLINE || !global.Sync || !global.Sync.publish || !enc) return;
+    // 实时监听：别人/其他设备一改，这里秒级重渲染
     try {
-      var payload = enc.encode(JSON.stringify({ sender: global.Sync.id, state: data }));
-      global.Sync.publish(SYNC_TOPIC, payload);
-    } catch (e) { /* 离线或编码失败，静默忽略 */ }
-  }
-
-  function applyRemote(wrapper) {
-    try {
-      if (!wrapper || !wrapper.state) return;
-      if (wrapper.sender && global.Sync && wrapper.sender === global.Sync.id) return; // 忽略自己的回声
-      var remote = wrapper.state;
-      var local = read();
-      if (remote._ts && local._ts && remote._ts < local._ts) return; // 只接受更新的状态，防旧数据覆盖
-      localStorage.setItem(KEY, JSON.stringify(remote));
-      emit(remote); // 通知 UI 重渲染（不触发 publish，避免回环）
-    } catch (e) { console.warn('applyRemote fail', e); }
-  }
-
-  function notifySyncStatus(s) {
-    SYNC_ONLINE = (s === 'online');
-    if (global) global.__SYNC__ = s;
-    syncListeners.forEach(function (f) { try { f(s); } catch (e) {} });
-  }
-
-  function initSync() {
-    if (!global.Sync) return;
-    global.Sync.init({
-      topic: SYNC_TOPIC,
-      onStatus: notifySyncStatus,
-      onMessage: function (t, bytes) {
-        if (t !== SYNC_TOPIC || !dec) return;
-        try { applyRemote(JSON.parse(dec.decode(bytes))); }
-        catch (e) { console.warn('sync msg parse fail', e); }
-      }
-    });
-  }
-
-  function onSyncStatus(fn) {
-    syncListeners.push(fn);
-    return function () { syncListeners = syncListeners.filter(function (f) { return f !== fn; }); };
+      if (storeWatcher && storeWatcher.close) { try { storeWatcher.close(); } catch (e) {} }
+      storeWatcher = db.collection('store').doc('main').watch({
+        onChange: function (snap) {
+          var d = (snap.docs && snap.docs[0]) || null;
+          if (d && d.shop) {
+            var c = stripMeta(d);
+            localStorage.setItem(KEY, JSON.stringify(c));
+            emit(c);
+          }
+        },
+        onError: function (err) { console.warn('store watch error', err); }
+      });
+    } catch (e) { console.warn('store watch start fail', e); }
   }
 
   function update(fn) {
@@ -364,7 +334,7 @@
     read: read, write: write, update: update, reset: reset, seed: seed,
     initCloud: initCloud,
     onChange: onChange,
-    initSync: initSync, onSyncStatus: onSyncStatus,
+    cloudMode: function () { return !!(global.CloudCore && global.CloudCore.ready()); },
     isOpenNow: isOpenNow,
     createOrder: createOrder, setOrderStatus: setOrderStatus, markSeen: markSeen, getOrder: getOrder,
     STATUS_TEXT: STATUS_TEXT, STATUS_NEXT: STATUS_NEXT,
