@@ -154,15 +154,25 @@
     }
   }
 
-  /* 从云端拉取最新数据：云端为唯一真源，只要云端有数据就无条件覆盖本机缓存（避免旧本机数据反污染云端）。
-   * 仅在云端与本机内容不一致时才写入并触发重渲染，避免无谓重绘。 */
+  /* 从云端拉取最新数据。
+   * 旧逻辑「云端无条件覆盖本机」有个坑：当写通道（Cloudflare Worker）挂掉时，
+   * 本机的删除/修改推不上去，但读通道还能用，于是每次刷新都把云端旧数据拉回来覆盖本机，
+   * 表现就是「删了商品一刷新又回来」。
+   * 改为「仅当云端比本机更新（_ts 更大）时才覆盖本机」：
+   *   - 本机刚改过（_ts 更新）→ 本机优先，删除/修改生效，不会被旧云端冲掉；
+   *   - 别人在别处真推了新数据（云端 _ts 更新）→ 仍会同步下来。
+   * 这样删改一定生效，同时保留跨设备实时同步能力。 */
   function initCloud() {
     if (!global.CloudSync || !global.CloudSync.enabled) return;
     global.CloudSync.pull().then(function (cloud) {
       if (!cloud) return;
       var local = read();
-      var changed = !local || JSON.stringify(local) !== JSON.stringify(cloud);
-      if (changed) {
+      var cloudNewer;
+      if (!local) cloudNewer = true;                                  // 本机无数据，直接用云端
+      else if (local._ts === undefined && cloud._ts !== undefined) cloudNewer = true; // 本机是种子(无_ts)但云端有，云端优先
+      else if (cloud._ts === undefined) cloudNewer = false;            // 云端无时间戳，不覆盖本机
+      else cloudNewer = cloud._ts > local._ts;                        // 云端比本机新才覆盖
+      if (cloudNewer) {
         try { localStorage.setItem(KEY, JSON.stringify(cloud)); } catch (e) {}
         emit(cloud);   // 通知 UI 用云端干净数据重渲染
       }
