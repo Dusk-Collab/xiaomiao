@@ -38,6 +38,11 @@
       var r = await Account.status();
       var hasAcc = r && r.data && r.data.hasAccount;
       showWarn(Account.cloudReady() ? '' : '当前为本地模式：账户仅保存在本设备。配置云端后可在任意电脑/手机共用同一账户。');
+      // 本地模式隐藏"验证码登录"标签（本地没有真实短信通道，验证码只在页面上演示，不会发短信）
+      if (!Account.cloudReady()) {
+        var tc = $('tabCode'); if (tc) tc.style.display = 'none';
+        var tabs = document.querySelector('.al-tabs'); if (tabs) tabs.classList.add('single');
+      }
       if (!hasAcc) {
         $('alTitle').textContent = '创建商家账户';
         $('alSub').textContent = '用手机号注册一个商家账户，换设备也能登录';
@@ -343,4 +348,23 @@
   if (btnLogout) btnLogout.onclick = async function () {
     await Account.logout(); location.reload();
   };
+
+  /* ---- 密码框小眼睛（点一下显示/隐藏密码，再点关闭） ---- */
+  function attachEyeToggle(id) {
+    var inp = $(id); if (!inp || inp.dataset.eye) return;
+    inp.dataset.eye = '1';
+    var wrap = document.createElement('div'); wrap.className = 'pwd-wrap';
+    inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+    inp.style.paddingRight = '40px';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'pwd-eye'; btn.textContent = '👁';
+    btn.setAttribute('aria-label', '显示密码');
+    wrap.appendChild(btn);
+    btn.onclick = function (e) {
+      e.preventDefault();
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; btn.setAttribute('aria-label', '隐藏密码'); }
+      else { inp.type = 'password'; btn.textContent = '👁'; btn.setAttribute('aria-label', '显示密码'); }
+    };
+  }
+  ['regPwd', 'regPwd2', 'alPwd', 'rsPwd', 'chPwdOld', 'chPwdNew', 'chPwdNew2'].forEach(attachEyeToggle);
 })();
