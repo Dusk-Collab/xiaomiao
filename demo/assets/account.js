@@ -79,7 +79,8 @@
 
   function localStatus() {
     var a = lkGet(LK_ACC, null);
-    return { ok: true, data: { hasAccount: !!(a && a.pwdHash), phone: a && a.phone ? maskPhone(a.phone) : '', email: a && a.email ? maskEmail(a.email) : '', hasPhone: !!(a && a.phone), hasEmail: !!(a && a.email), smsReady: false, emailReady: false, pwdUpdatedAt: (a && a.pwdUpdatedAt) || 0, mode: 'local' } };
+    var hasP = !!(a && a.phone);
+    return { ok: true, data: { hasAccount: !!(a && a.pwdHash), phone: hasP ? maskPhone(a.phone) : '', email: a && a.email ? maskEmail(a.email) : '', hasPhone: false, hasEmail: false, smsReady: false, emailReady: false, pwdUpdatedAt: (a && a.pwdUpdatedAt) || 0, mode: 'local' } };
   }
   function localRegister(e) {
     var a = lkGet(LK_ACC, null);
@@ -137,16 +138,11 @@
   function localChangePwd(e) {
     var a = lkGet(LK_ACC, null); if (!a || !a.pwdHash) return Promise.resolve({ ok: false, code: 'NO_ACCOUNT', msg: '还没有账户' });
     var newPwd = String(e.newPwd || ''); if (newPwd.length < 6) return Promise.resolve({ ok: false, code: 'WEAK_PWD', msg: '新密码至少 6 位' });
-    if (a.phone) {
-      var r = consumeLocalCode(a.phone, 'changePwd', e.code); if (!r.ok) return Promise.resolve(r);
-    } else {
-      // 未绑定手机：用原密码校验
-      return hashPwd(String(e.oldPwd || '')).then(function (h) {
-        if (h !== a.pwdHash) return { ok: false, code: 'BAD_OLD_PWD', msg: '原密码不正确' };
-        return finishLocalPwd(a, newPwd);
-      });
-    }
-    return finishLocalPwd(a, newPwd);
+    // 本地模式无短信网关：统一用原密码校验（配置云端短信后，云端分支才走手机验证码）
+    return hashPwd(String(e.oldPwd || '')).then(function (h) {
+      if (h !== a.pwdHash) return { ok: false, code: 'BAD_OLD_PWD', msg: '原密码不正确' };
+      return finishLocalPwd(a, newPwd);
+    });
   }
   function finishLocalPwd(a, newPwd) {
     return hashPwd(newPwd).then(function (h) {
@@ -175,6 +171,93 @@
   }
   function localLogout() { lkDel(LK_TOKEN); return Promise.resolve({ ok: true }); }
 
+  /* ---- 账户迁移（用于无云端时把账户"搬到"另一台设备） ----
+     原理：把账户关键字段编码+签名成 token；有效期 10 分钟；导出/导入均只本地。
+     注意：二维码里看到的是账户核心字段（含密码哈希），请仅在可信场合短时间使用。
+  */
+  // 简单的字符串 -> base64url（兼容中英文与中文）
+  function b64urlEncode(s) {
+    try { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+    catch (e) { return ''; }
+  }
+  function b64urlDecode(s) {
+    try {
+      s = String(s || '').replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      return decodeURIComponent(escape(atob(s)));
+    } catch (e) { return ''; }
+  }
+  // 密码哈希在迁移码里做 base64 压缩（64 hex -> 43 base64url 字符），让二维码更易装下
+  function hashToB64url(hexHash) {
+    var hex = String(hexHash || '').replace(/^sha256:/, '');
+    var bin = '';
+    for (var i = 0; i + 1 < hex.length; i += 2) bin += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    try { return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch (e) { return ''; }
+  }
+  function b64urlToHash(b64) {
+    var s = String(b64 || '').replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    try {
+      var bin = atob(s); var hex = '';
+      for (var i = 0; i < bin.length; i++) hex += ('0' + bin.charCodeAt(i).toString(16)).slice(-2);
+      return 'sha256:' + hex;
+    } catch (e) { return ''; }
+  }
+  // 轻量签名（环境无关：file:// 与 https 结果一致，避免迁移码在两端算法不同导致验签失败）
+  // 迁移码本身是低风险本地操作且有 10 分钟过期，普通哈希即可防误传/篡改。
+  async function hmacSign(msg) {
+    var key = 'xm-shop-admin-transfer-v1';
+    function fnv(s) { var h = 0x811c9dc5; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return ('0000000' + (h >>> 0).toString(16)).slice(-8); }
+    return (fnv(msg + '|' + key) + fnv(key + '|' + msg));
+  }
+
+  function localExportTransfer() {
+    var a = lkGet(LK_ACC, null);
+    if (!a || !a.pwdHash) return Promise.resolve({ ok: false, code: 'NO_ACCOUNT', msg: '本机还没有账户，无法导出' });
+    var payload = {
+      v: 1,
+      // 仅保留必要字段并压缩哈希，确保迁移码能装进二维码（Version 10 上限 213 字节）
+      p: a.phone || '',
+      e: a.email || '',
+      h: hashToB64url(a.pwdHash),          // 压缩后的密码哈希（43 字符）
+      x: Date.now() + 10 * 60 * 1000       // 过期时间（10 分钟）
+    };
+    var body = b64urlEncode(JSON.stringify(payload));
+    return hmacSign(body).then(function (sig) {
+      var shortSig = sig.slice(0, 12);
+      var token = body + '.' + shortSig;
+      var fitsQr = token.length + ('xiaomiao://transfer#'.length) <= 200;
+      var qrText = fitsQr ? ('xiaomiao://transfer#' + token) : '';
+      return { ok: true, data: { token: token, qrText: qrText, expiresAt: payload.x, fitsQr: fitsQr, preview: { phone: maskPhone(a.phone), email: maskEmail(a.email) } } };
+    });
+  }
+  function localImportTransfer(e) {
+    var raw = String((e && e.token) || '').trim();
+    var p = raw.indexOf('#'); if (p >= 0) raw = raw.slice(p + 1);
+    var dot = raw.lastIndexOf('.');
+    if (dot < 0) return Promise.resolve({ ok: false, code: 'BAD_TOKEN', msg: '迁移码格式不对' });
+    var body = raw.slice(0, dot); var sig = raw.slice(dot + 1);
+    if (!body || !sig) return Promise.resolve({ ok: false, code: 'BAD_TOKEN', msg: '迁移码格式不对' });
+    var json = b64urlDecode(body);
+    if (!json) return Promise.resolve({ ok: false, code: 'BAD_TOKEN', msg: '迁移码解析失败' });
+    var payload; try { payload = JSON.parse(json); } catch (err) { return Promise.resolve({ ok: false, code: 'BAD_TOKEN', msg: '迁移码格式错误' }); }
+    if (!payload || payload.v !== 1) return Promise.resolve({ ok: false, code: 'BAD_TOKEN', msg: '不兼容的迁移码版本' });
+    if (!payload.x || payload.x < Date.now()) return Promise.resolve({ ok: false, code: 'TOKEN_EXPIRED', msg: '迁移码已过期（10分钟有效），请让原设备重新生成' });
+    return hmacSign(body).then(function (expect) {
+      if (expect.slice(0, 12) !== sig) return { ok: false, code: 'BAD_SIG', msg: '迁移码校验失败，请确认来源' };
+      if (!payload.h) return { ok: false, code: 'BAD_TOKEN', msg: '迁移码缺少账号信息' };
+      var exist = lkGet(LK_ACC, null);
+      if (exist && exist.pwdHash && payload.p && exist.phone !== payload.p) {
+        return { ok: false, code: 'CONFLICT', msg: '本设备已有另一账户，请先退出登录再迁移' };
+      }
+      lkSet(LK_ACC, { phone: payload.p || '', email: payload.e || '', salt: 'local', pwdHash: b64urlToHash(payload.h), createdAt: Date.now(), pwdUpdatedAt: Date.now() });
+      var now = Date.now();
+      var tok = 'local_' + now + '_' + Math.random().toString(36).slice(2);
+      lkSet(LK_TOKEN, { token: tok, expireAt: now + 7 * 24 * 3600 * 1000 });
+      return { ok: true, data: { token: tok, phone: maskPhone(payload.p), email: maskEmail(payload.e) } };
+    });
+  }
+
   /* ---- token 管理 ---- */
   function getToken() { var t = lkGet(LK_TOKEN, null); if (!t) return ''; if (t.expireAt < Date.now()) { lkDel(LK_TOKEN); return ''; } return t.token; }
   function setToken() {}
@@ -200,6 +283,9 @@
     resetPwd: function (e) { return route('resetPwd', e, localResetPwd); },
     bindPhone: function (e) { return route('bindPhone', e, localBindPhone); },
     bindEmail: function (e) { return route('bindEmail', e, localBindEmail); },
-    logout: function () { return route('logout', {}, localLogout); }
+    logout: function () { return route('logout', {}, localLogout); },
+    /* 账户迁移：本地模式专用，把账户搬到另一台设备 */
+    exportTransfer: function () { return localExportTransfer(); },
+    importTransfer: function (e) { return localImportTransfer(e); }
   };
 })(window);

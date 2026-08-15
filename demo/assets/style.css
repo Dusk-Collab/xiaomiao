@@ -145,6 +145,8 @@ a { color: inherit; text-decoration: none; }
 .acc-row span { color: var(--ink-3); }
 .acc-row b { font-weight: 700; }
 .cloud-modal { position: fixed; inset: 0; background: rgba(40, 30, 25, .6); z-index: 9998; display: none; align-items: center; justify-content: center; }
+/* 迁移面板需浮在登录门之上：未登录设备也能导入账户 */
+#transferModal { z-index: 10001; background: rgba(40, 30, 25, .82); }
 .cloud-card { width: 340px; max-width: 90vw; background: #fff; border-radius: 16px; padding: 20px; animation: pop .2s ease; }
 .lbl { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
 .hint { font-size: 12.5px; color: #888; line-height: 1.5; }

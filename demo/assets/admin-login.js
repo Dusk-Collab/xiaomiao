@@ -174,31 +174,142 @@
     $('accPhone').textContent = d.phone || '未绑定';
     $('accEmail').textContent = d.email || '未绑定';
     var hint = $('accHint');
-    if (hint) hint.textContent = Account.cloudReady() ? '云端模式：账户在所有设备通用' : '本地模式：仅本设备有效，配置云端后跨设备通用';
+    if (hint) hint.textContent = Account.cloudReady() ? '云端模式：账户在所有设备通用' : '本地模式：仅本设备有效，可"📲 迁移账户"搬到别的电脑';
   }
 
-  // 修改密码
-  var btnChPwd = $('btnAccChangePwd');
-  if (btnChPwd) btnChPwd.onclick = async function () {
-    var r0 = await Account.status();
-    var needCode = r0 && r0.data && r0.data.hasPhone;
-    var np = prompt('输入新密码（至少 6 位）：');
-    if (!np || np.length < 6) { if (np !== null) alert('密码至少 6 位'); return; }
-    if (needCode) {
-      var code = prompt('已绑定手机，请输入手机验证码（点"获取验证码"可得，本地模式为演示码）：');
-      if (!code) return;
-      var r = await Account.changePwd({ channel: 'sms', code: code, newPwd: np });
-      if (r.ok) { alert('密码已修改，请重新登录'); await Account.logout(); location.reload(); }
-      else alert(r.msg || '修改失败');
-    } else {
-      var old = prompt('未绑定手机，请输入原密码：');
-      if (!old) return;
-      var r2 = await Account.changePwd({ oldPwd: old, newPwd: np });
-      if (r2.ok) { alert('密码已修改，请重新登录'); await Account.logout(); location.reload(); }
-      else alert(r2.msg || '修改失败');
-    }
+  /* ================= 修改密码面板（顶栏 / 账户面板都能打开） ================= */
+  var chPwdModal = $('chPwdModal');
+  var btnChPwdTop = $('btnChangePwdTop');
+  if (btnChPwdTop) btnChPwdTop.onclick = function () { if (chPwdModal) chPwdModal.style.display = 'flex'; refreshChPwd(); };
+  var chPwdClose = $('chPwdClose');
+  if (chPwdClose) chPwdClose.onclick = function () { if (chPwdModal) chPwdModal.style.display = 'none'; };
+
+  async function refreshChPwd() {
+    var errEl = $('chPwdErr'); if (errEl) errEl.textContent = '';
+    var r = await Account.status();
+    var d = (r && r.data) || {};
+    var hint = $('chPwdHint');
+    // 本地模式（未配置云端短信）一律用原密码；仅云端且已绑手机才用验证码
+    var needCode = !!d.hasPhone && Account.cloudReady();
+    var stepOld = $('chPwdStepOld'); if (stepOld) stepOld.style.display = needCode ? 'none' : 'block';
+    var stepCode = $('chPwdStepCode'); if (stepCode) stepCode.style.display = needCode ? 'block' : 'none';
+    if (hint) hint.textContent = needCode
+      ? '已绑定手机号，请用手机验证码修改密码'
+      : '请输入原密码以修改（本地模式无短信，用原密码即可）';
+  }
+  window.openChangePwdModal = function () { if (chPwdModal) chPwdModal.style.display = 'flex'; refreshChPwd(); };
+  // 旧"账户面板"里的"🔒 修改密码"按钮也跳到同一个面板（保持原 id 仍能工作）
+  var btnAccChangePwd = $('btnAccChangePwd');
+  if (btnAccChangePwd) btnAccChangePwd.onclick = function () {
+    if (accModal) accModal.style.display = 'none';
+    if (chPwdModal) chPwdModal.style.display = 'flex';
+    refreshChPwd();
   };
 
+  window.getChPwdCode = async function () {
+    var btn = $('btnChPwdGetCode');
+    var r = await Account.sendCode({ purpose: 'changePwd', channel: 'sms' });
+    if (r.ok) {
+      toast('验证码已发送' + (r.data.devCode ? '（演示码：' + r.data.devCode + '）' : ''));
+      startCountdown(btn, 60);
+    } else { var errEl = $('chPwdErr'); if (errEl) errEl.textContent = r.msg || '获取失败'; }
+  };
+
+  var btnChPwdSubmit = $('btnChPwdSubmit');
+  if (btnChPwdSubmit) btnChPwdSubmit.onclick = async function () {
+    var errEl = $('chPwdErr'); if (errEl) errEl.textContent = '';
+    var np = ($('chPwdNew').value || ''); var np2 = ($('chPwdNew2').value || '');
+    if (np.length < 6) { if (errEl) errEl.textContent = '新密码至少 6 位'; return; }
+    if (np !== np2) { if (errEl) errEl.textContent = '两次新密码不一致'; return; }
+    var s = await Account.status(); var needCode = !!(s && s.data && s.data.hasPhone && Account.cloudReady());
+    var opts = { newPwd: np };
+    if (needCode) {
+      var code = ($('chPwdCode').value || '').trim();
+      if (!code) { if (errEl) errEl.textContent = '请输入手机验证码'; return; }
+      opts.channel = 'sms'; opts.code = code;
+    } else {
+      var old = ($('chPwdOld').value || '');
+      if (!old) { if (errEl) errEl.textContent = '请输入原密码'; return; }
+      opts.oldPwd = old;
+    }
+    var r = await Account.changePwd(opts);
+    if (r.ok) { if (errEl) errEl.textContent = ''; toast('密码已修改，请重新登录'); await Account.logout(); location.reload(); }
+    else { if (errEl) errEl.textContent = r.msg || '修改失败'; }
+  };
+
+  /* ================= 迁移账户面板 ================= */
+  var transferModal = $('transferModal');
+  var transferClose = $('transferClose');
+  if (transferClose) transferClose.onclick = function () { if (transferModal) transferModal.style.display = 'none'; };
+  var btnAccTransfer = $('btnAccTransfer');
+  if (btnAccTransfer) btnAccTransfer.onclick = function () {
+    if (accModal) accModal.style.display = 'none';
+    if (transferModal) transferModal.style.display = 'flex';
+    switchTransferTab('export');
+    regenTransfer();
+  };
+
+  window.openTransferModal = function () {
+    if (transferModal) transferModal.style.display = 'flex';
+    switchTransferTab('export');
+    regenTransfer();
+  };
+
+  window.switchTransferTab = function (t) {
+    $('tabExport').classList.toggle('on', t === 'export');
+    $('tabImport').classList.toggle('on', t === 'import');
+    $('transferExportBox').style.display = (t === 'export') ? 'block' : 'none';
+    $('transferImportBox').style.display = (t === 'import') ? 'block' : 'none';
+  };
+
+  async function regenTransferInner() {
+    var qrBox = $('transferQrBox'); var codeEl = $('transferCode'); var hintEl = $('transferExpHint');
+    if (!qrBox) return;
+    qrBox.innerHTML = ''; if (codeEl) codeEl.value = ''; if (hintEl) hintEl.textContent = '正在生成…';
+    var r = await Account.exportTransfer();
+    if (!r.ok) { if (hintEl) hintEl.textContent = '生成失败：' + (r.msg || '未知错误'); return; }
+    var data = r.data || {};
+    if (codeEl) codeEl.value = data.token;
+    if (data.fitsQr && data.qrText) {
+      var canvas = document.createElement('canvas');
+      canvas.style.background = '#fff'; canvas.style.borderRadius = '6px';
+      qrBox.appendChild(canvas);
+      try { if (window.QR && QR.render) QR.render(canvas, data.qrText, 240); }
+      catch (e) { qrBox.innerHTML = '<div style="color:#a93;font-size:12.5px;padding:8px">二维码渲染失败，请用下方"迁移码"手动复制</div>'; }
+    } else {
+      qrBox.innerHTML = '<div style="color:var(--ink-3);font-size:12.5px;padding:14px 8px;line-height:1.5">迁移信息太长，无法显示二维码。<br>请用下方"复制迁移码"按钮，把代码发给另一台设备。</div>';
+    }
+    var left = Math.max(0, Math.floor(((data.expiresAt || 0) - Date.now()) / 1000));
+    var leftMin = Math.floor(left / 60); var leftSec = left % 60;
+    if (hintEl) hintEl.textContent = '迁移码 10 分钟内有效，剩余 ' + leftMin + ' 分 ' + leftSec + ' 秒。账号：' + (data.preview && data.preview.phone || '') + (data.preview && data.preview.email ? ' / ' + data.preview.email : '');
+    if (left > 0) {
+      var tick = setInterval(function () {
+        var l = Math.max(0, Math.floor(((data.expiresAt || 0) - Date.now()) / 1000));
+        if (hintEl) hintEl.textContent = '迁移码 10 分钟内有效，剩余 ' + Math.floor(l / 60) + ' 分 ' + (l % 60) + ' 秒';
+        if (l <= 0) clearInterval(tick);
+      }, 1000);
+    }
+  }
+  window.regenTransfer = regenTransferInner;
+
+  window.copyTransferCode = function () {
+    var codeEl = $('transferCode'); if (!codeEl) return;
+    codeEl.select(); codeEl.setSelectionRange(0, 99999);
+    try { document.execCommand('copy'); toast('迁移码已复制，粘贴到另一台设备即可'); }
+    catch (e) { toast('复制失败，请手动选择复制'); }
+  };
+
+  var btnTransferImport = $('btnTransferImport');
+  if (btnTransferImport) btnTransferImport.onclick = async function () {
+    var errEl = $('transferImportErr'); if (errEl) errEl.textContent = '';
+    var tok = ($('transferInput').value || '').trim();
+    if (!tok) { if (errEl) errEl.textContent = '请先粘贴迁移码'; return; }
+    var r = await Account.importTransfer({ token: tok });
+    if (r.ok) { if (errEl) errEl.textContent = ''; toast('账户已迁移并登录'); if (transferModal) transferModal.style.display = 'none'; location.reload(); }
+    else { if (errEl) errEl.textContent = r.msg || '导入失败'; }
+  };
+
+  /* ================= 兼容旧提示式入口（不再弹 prompt） ================= */
   // 绑定手机
   var btnBindPhone = $('btnAccBindPhone');
   if (btnBindPhone) btnBindPhone.onclick = async function () {
