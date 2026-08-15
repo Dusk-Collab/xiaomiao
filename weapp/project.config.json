@@ -1,7 +1,7 @@
 {
   "miniprogramRoot": "./",
   "cloudfunctionRoot": "cloudfunctions/",
-  "appid": "wxYOUR_APPID_HERE",
+  "appid": "",
   "projectname": "xiaomiao",
   "description": "小淼饭店点餐小程序（云开发版）",
   "setting": {

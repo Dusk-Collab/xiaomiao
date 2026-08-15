@@ -10,11 +10,19 @@
  *
  * 统一返回：{ ok: true, data } 或 { ok: false, code, msg }
  */
-const cloud = require('wx-server-sdk');
+// 双 SDK 兜底：微信云开发环境用 wx-server-sdk；独立 CloudBase 环境用 @cloudbase/node-sdk。
+// 这样无论 tcb 命令行建的是哪种环境，函数都能跑起来。
+let cloud;
+try { cloud = require('wx-server-sdk'); }
+catch (e) { cloud = require('@cloudbase/node-sdk'); }
+
 const crypto = require('crypto');
 const https = require('https');
 
-cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
+const _initEnv = (cloud.DYNAMIC_CURRENT_ENV !== undefined)
+  ? { env: cloud.DYNAMIC_CURRENT_ENV }
+  : (process.env.TCB_ENV ? { env: process.env.TCB_ENV } : {});
+cloud.init(_initEnv);
 const db = cloud.database();
 const _ = db.command;
 
