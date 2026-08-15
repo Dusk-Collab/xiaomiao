@@ -324,18 +324,61 @@ canvas.qr { border-radius: 8px; }
 </head>
 <body>
 
-<!-- 管理员登录门 -->
+<!-- 商家账户登录门 -->
 <div id="adminLock" class="admin-lock">
   <div class="admin-lock-box">
-    <div style="font-size:34px">🔐</div>
-    <div id="alTitle" class="al-title">管理员登录</div>
-    <div id="alSub" class="al-sub">请输入后台密码</div>
-    <input id="alPwd" class="inp" type="password" placeholder="请输入密码" autocomplete="off">
-    <div id="alSetRow" style="display:none">
-      <input id="alPwd2" class="inp" type="password" placeholder="再输一次" autocomplete="off" style="margin-top:8px">
+    <div style="font-size:34px">🛡️</div>
+    <div id="alTitle" class="al-title">商家登录</div>
+    <div id="alSub" class="al-sub">用手机号登录商家后台</div>
+
+    <!-- 注册（首次开号） -->
+    <div id="regBox">
+      <input id="regPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号（11 位）">
+      <input id="regPwd" class="inp" type="password" placeholder="设置登录密码（至少 6 位）" style="margin-top:8px">
+      <input id="regPwd2" class="inp" type="password" placeholder="再输一次密码" style="margin-top:8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
+        <input id="regRemember" type="checkbox" checked> 本设备 7 天内免登录
+      </label>
+      <button id="regBtn" class="btn-primary" style="width:100%;margin-top:12px">创建商家账户</button>
+      <div class="al-link"><span onclick="switchToLogin()">已有账户？去登录</span></div>
     </div>
-    <button id="alBtn" class="btn-primary" style="width:100%;margin-top:12px">进入后台</button>
+
+    <!-- 登录 -->
+    <div id="loginBox" style="display:none">
+      <div class="al-tabs">
+        <div class="al-tab on" id="tabPwd" onclick="switchTab('pwd')">密码登录</div>
+        <div class="al-tab" id="tabCode" onclick="switchTab('code')">验证码登录</div>
+      </div>
+      <input id="alPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号">
+      <input id="alPwd" class="inp" type="password" placeholder="登录密码" autocomplete="off" style="margin-top:8px">
+      <div id="codeRow" style="display:none;margin-top:8px">
+        <div style="display:flex;gap:8px">
+          <input id="alCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
+          <button id="btnGetCode" class="btn-soft" style="white-space:nowrap" onclick="getLoginCode()">获取验证码</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
+        <input id="alRemember" type="checkbox" checked> 本设备 7 天内免登录
+      </label>
+      <button id="alBtn" class="btn-primary" style="width:100%;margin-top:12px">登录</button>
+      <div class="al-link"><span onclick="toReset()">忘记密码？</span></div>
+    </div>
+
+    <!-- 找回密码 -->
+    <div id="resetBox" style="display:none">
+      <div class="al-sub" style="margin-bottom:8px">通过手机号或邮箱验证码重置</div>
+      <input id="rsTarget" class="inp" placeholder="手机号 或 邮箱">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="rsCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="验证码">
+        <button id="btnRsCode" class="btn-soft" style="white-space:nowrap" onclick="getResetCode()">获取验证码</button>
+      </div>
+      <input id="rsPwd" class="inp" type="password" placeholder="设置新密码（至少 6 位）" style="margin-top:8px">
+      <button id="rsBtn" class="btn-primary" style="width:100%;margin-top:12px">重置并登录</button>
+      <div class="al-link"><span onclick="switchToLogin()">返回登录</span></div>
+    </div>
+
     <div id="alErr" class="al-err"></div>
+    <div id="alWarn" class="al-warn"></div>
   </div>
 </div>
 
@@ -372,6 +415,7 @@ canvas.qr { border-radius: 8px; }
         <span id="sideStatus">营业中</span>
         <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
       </div>
+      <button id="btnAccount" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">👤 账户与安全</button>
       <button id="btnCloudSettings" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">☁ 云端同步设置</button>
     </div>
   </aside>
@@ -390,6 +434,24 @@ canvas.qr { border-radius: 8px; }
 
 <div class="mobile-nav" id="mobileNav"></div>
 <div id="newOrderFlash"></div>
+<!-- 账户与安全面板 -->
+<div id="accModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">👤 账户与安全</div>
+      <button id="accClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p id="accHint" class="hint" style="margin:8px 0 12px"></p>
+    <div class="acc-row"><span>手机号</span><b id="accPhone">未绑定</b></div>
+    <div class="acc-row"><span>邮箱</span><b id="accEmail">未绑定</b></div>
+    <hr style="margin:12px 0;border:none;border-top:1px solid var(--line)">
+    <button id="btnAccChangePwd" class="btn-soft" style="width:100%;justify-content:center">修改密码</button>
+    <button id="btnAccBindPhone" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定 / 换绑手机号</button>
+    <button id="btnAccBindEmail" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定邮箱（用于找回）</button>
+    <button id="btnAccLogout" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px;color:#e23">退出登录</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <!-- 小型模态弹窗（自定义 prompt） -->
@@ -409,6 +471,7 @@ canvas.qr { border-radius: 8px; }
 <script src="assets/sync-github.js"></script>
 <script src="https://static.cloudbase.com/cloudbase/js-sdk/1.6.4/cloudbase.full.js"></script>
 <script src="assets/cloud-core.js"></script>
+<script src="assets/account.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/admin-login.js"></script>
 <script src="assets/qrcode.js"></script>

@@ -69,6 +69,7 @@
     init: init,
     ready: function () { return readyFlag; },
     get db() { return db; },
+    get app() { return app; },        // 供 account.js 复用同一实例调用云函数（只读）
     get envId() { return localStorage.getItem(ENV_KEY) || ''; },
     setEnv: function (id) {
       localStorage.setItem(ENV_KEY, id || '');

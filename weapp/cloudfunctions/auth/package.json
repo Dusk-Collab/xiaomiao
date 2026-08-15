@@ -1,0 +1,10 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "商家账户中心云函数（登录/验证码/绑定/改密）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "nodemailer": "^6.9.14"
+  }
+}
