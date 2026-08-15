@@ -31,3 +31,6 @@ _ghpages_tmp/
 _ghp*/
 _test/
 deploy_*/
+_devtools_drive/node_modules/
+_devtools_drive/cloudbase_config/
+_devtools_drive/envid.txt
