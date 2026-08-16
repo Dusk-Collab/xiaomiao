@@ -146,12 +146,59 @@
   /* ================= 云端同步设置面板 ================= */
   var cloudModal = $('cloudModal');
   var btnCs = $('btnCloudSettings');
+  // 把已存的 GitHub token 脱敏显示（prefix + … + 后 4 位）。
+  // 用户可在输入框覆盖重写；空串则当未配置。
+  function maskToken(t) {
+    if (!t) return '';
+    if (t.length <= 12) return '••••••';
+    return t.substring(0, 8) + '…' + t.substring(t.length - 4);
+  }
   if (btnCs) btnCs.onclick = function () {
     if (cloudModal) cloudModal.style.display = 'flex';
     var ei = $('envInput'); if (ei && window.CloudCore) ei.value = CloudCore.envId || '';
+    // 回填 git token 状态（仅展示占位，不直接填入 input 防误改）
+    var gti = $('gitTokenInput');
+    var gts = $('gitTokenStatus');
+    var tk = '';
+    try { tk = localStorage.getItem('om_cloud_token') || ''; } catch (e) {}
+    if (gti) gti.value = '';   // input 始终清空，让用户主动粘
+    if (gts) gts.textContent = tk
+      ? ('已配置：' + maskToken(tk) + '（输入新 token 可覆盖；清空保存可清除）')
+      : '尚未配置 token';
   };
   var cloudClose = $('cloudClose');
   if (cloudClose) cloudClose.onclick = function () { if (cloudModal) cloudModal.style.display = 'none'; };
+
+  /* ---- GitHub token 保存 ---- */
+  // token 形式：classic `ghp_xxx`（≥36 字符）/ fine-grained `github_pat_xxx` / server-to-server `ghs_xxx`
+  var TOKEN_RE = /^(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|ghs_[A-Za-z0-9]{20,})$/;
+  var btnSaveGitToken = $('btnSaveGitToken');
+  if (btnSaveGitToken) btnSaveGitToken.onclick = function () {
+    var v = ($('gitTokenInput').value || '').trim();
+    var st = $('gitTokenStatus');
+    var existing = '';
+    try { existing = localStorage.getItem('om_cloud_token') || ''; } catch (e) {}
+    // 空值 → 视作清除（用户主动清空后保存）
+    if (!v) {
+      try { localStorage.removeItem('om_cloud_token'); } catch (e) {}
+      if (window.CLOUD_CONFIG) window.CLOUD_CONFIG.token = '__PASTE_TOKEN_HERE__';
+      if (st) { st.style.color = '#1f7a1f'; st.textContent = '已清除 GitHub token，云端同步已停用。'; }
+      return;
+    }
+    if (!TOKEN_RE.test(v)) {
+      if (st) { st.style.color = '#b00'; st.textContent = 'token 格式不对（应以 ghp_ / ghs_ / github_pat_ 开头，长度 ≥ 24）'; }
+      return;
+    }
+    try { localStorage.setItem('om_cloud_token', v); } catch (e) {}
+    // 立即让当前页生效
+    if (window.CLOUD_CONFIG) window.CLOUD_CONFIG.token = v;
+    if (st) { st.style.color = '#1f7a1f'; st.textContent = '已启用 GitHub 同步，3 秒后刷新…'; }
+    setTimeout(function () {
+      // 刷新以重新拉远端 data.json
+      location.reload();
+    }, 1500);
+  };
+
   var btnSaveEnv = $('btnSaveEnv');
   if (btnSaveEnv) btnSaveEnv.onclick = function () {
     var v = ($('envInput').value || '').trim();
@@ -159,8 +206,13 @@
     if (!v) { st.textContent = '请输入环境 ID'; return; }
     if (!window.CloudCore) { st.textContent = '云 SDK 未加载，请刷新重试'; return; }
     var ok = CloudCore.setEnv(v);
-    if (ok) { st.textContent = '已连接云端，正在刷新…'; setTimeout(function () { location.reload(); }, 700); }
-    else { st.textContent = '连接失败：检查环境 ID 或网络/CDN'; }
+    if (ok) {
+      st.textContent = '已连接云端，正在刷新…';
+      setTimeout(function () { location.reload(); }, 700);
+    } else {
+      st.textContent = '连接失败：体验版 CloudBase 不支持网页端调用（官方锁定），请改用上方 A. GitHub Token。';
+      st.style.color = '#b00';
+    }
   };
 
   /* ================= 账户与安全面板 ================= */

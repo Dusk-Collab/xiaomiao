@@ -388,16 +388,47 @@ canvas.qr { border-radius: 8px; }
 <div id="cloudModal" class="cloud-modal">
   <div class="cloud-card">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">☁ 云端实时同步</div>
+      <div style="font-weight:800;font-size:16px">☁ 云端同步</div>
       <button id="cloudClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
     </div>
-    <p class="hint" style="margin:8px 0 12px">填一个「云环境 ID」即可让所有电脑/手机实时同步。环境 ID 在微信云开发控制台获取（见激活指引）。</p>
-    <label class="lbl">云环境 ID</label>
-    <input id="envInput" class="inp" placeholder="例如 xiaomiao-7gabc123">
-    <button id="btnSaveEnv" class="btn-primary" style="width:100%;margin-top:10px">保存并连接</button>
+    <p class="hint" style="margin:8px 0 12px;line-height:1.6">
+      数据存在云端，多设备自动同步。<b>推荐 GitHub 通道</b>（免费、永久、免实名）；
+      CloudBase 通道体验版已被官方锁死，仅作为升级 ¥19.9/月 个人版后的备选。
+    </p>
+
+    <!-- A. GitHub 同步（主推） -->
+    <div style="padding:10px;background:#f5f8ff;border-radius:8px;border:1px solid #dde6f7">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <b style="font-size:14px">A. GitHub Token（推荐·免费）</b>
+        <span style="font-size:11px;color:#1f7a1f;background:#e6f6e6;padding:2px 8px;border-radius:10px">免费永久</span>
+      </div>
+      <input id="gitTokenInput" class="inp" placeholder="ghp_xxx / github_pat_xxx" autocomplete="off" spellcheck="false">
+      <button id="btnSaveGitToken" class="btn-primary" style="width:100%;margin-top:10px">保存并启用</button>
+      <div id="gitTokenStatus" class="hint" style="margin-top:8px;min-height:1em"></div>
+      <details style="margin-top:6px;font-size:12px;color:var(--ink-3)">
+        <summary>怎么生成 GitHub token？</summary>
+        <ol style="margin:6px 0 0 18px;line-height:1.7;padding:0">
+          <li>GitHub → 右上角头像 → <b>Settings</b></li>
+          <li>左侧底部 <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Tokens (classic)</b></li>
+          <li><b>Generate new token</b> → 勾 <code>repo</code> → Generate</li>
+          <li>复制 <code>ghp_</code> 开头的整串粘贴到上面</li>
+        </ol>
+        <p style="margin:6px 0 0">也支持 fine-grained token（仅授权本仓库 Contents 读写即可）。</p>
+      </details>
+    </div>
+
+    <!-- B. CloudBase（次选，体验版不支持） -->
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;color:var(--ink-3);font-size:13px">B. CloudBase 环境 ID（需 ¥19.9/月个人版）</summary>
+      <div style="margin-top:10px">
+        <input id="envInput" class="inp" placeholder="例如 xiaomiao-7gabc123">
+        <button id="btnSaveEnv" class="btn-soft" style="width:100%;margin-top:8px">保存并连接</button>
+        <div id="envStatus" class="hint" style="margin-top:8px;min-height:1em;color:var(--ink-3)">体验版不支持网页调用，建议改用上方 GitHub 通道。</div>
+      </div>
+    </details>
+
     <hr style="margin:14px 0;border:none;border-top:1px solid var(--line)">
     <button id="btnSetPwd" class="btn-soft" style="width:100%;justify-content:center">修改管理员密码</button>
-    <div id="envStatus" class="hint" style="margin-top:10px"></div>
   </div>
 </div>
 
