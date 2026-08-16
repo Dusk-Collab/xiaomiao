@@ -1,0 +1,14 @@
+{
+  "envId": "xiaomiao-d9grd064qe4237400",
+  "functionRoot": "cloudfunctions",
+  "functions": [
+    {
+      "name": "auth",
+      "runtime": "Nodejs20.19",
+      "handler": "index.main",
+      "timeout": 30,
+      "memorySize": 256,
+      "installDependency": false
+    }
+  ]
+}

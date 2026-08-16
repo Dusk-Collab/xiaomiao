@@ -18,6 +18,8 @@ Thumbs.db
 
 # ===== 依赖（本项目为纯静态前端，暂不需要，防御性保留） =====
 node_modules/
+# 云函数依赖随包上传（部署用 --install-dependency false），锁文件不入库
+weapp/**/package-lock.json
 
 # ===== 本地工具（不提交） =====
 cloudflared.exe

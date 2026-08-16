@@ -4,8 +4,8 @@
   "description": "商家账户中心云函数（登录/验证码/绑定/改密）",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3",
-    "@cloudbase/node-sdk": "^2.7.0",
-    "nodemailer": "^6.9.14"
+    "@cloudbase/node-sdk": "^2.11.0",
+    "nodemailer": "^6.10.1",
+    "wx-server-sdk": "~2.6.3"
   }
 }

@@ -10,21 +10,29 @@
  *
  * 统一返回：{ ok: true, data } 或 { ok: false, code, msg }
  */
-// 双 SDK 兜底：微信云开发环境用 wx-server-sdk；独立 CloudBase 环境用 @cloudbase/node-sdk。
-// 这样无论 tcb 命令行建的是哪种环境，函数都能跑起来。
-let cloud;
-try { cloud = require('wx-server-sdk'); }
-catch (e) { cloud = require('@cloudbase/node-sdk'); }
-
 const crypto = require('crypto');
 const https = require('https');
 
-const _initEnv = (cloud.DYNAMIC_CURRENT_ENV !== undefined)
-  ? { env: cloud.DYNAMIC_CURRENT_ENV }
-  : (process.env.TCB_ENV ? { env: process.env.TCB_ENV } : {});
-cloud.init(_initEnv);
-const db = cloud.database();
-const _ = db.command;
+// 延迟初始化：模块加载阶段不碰 cloud SDK，避免云端环境差异导致进程启动即崩溃。
+// 首次调用 ensureCloud() 时再 require + init，便于捕获错误返回而非进程退出。
+let cloud = null, db = null, _ = null;
+async function ensureCloud() {
+  if (cloud) return;
+  const ENV = process.env.TCB_ENV || '';
+  let app;
+  try {
+    const c = require('@cloudbase/node-sdk');   // 独立 CloudBase：init() 返回 app 实例
+    app = c.init(ENV ? { env: ENV } : {});
+  } catch (e) {
+    const c = require('wx-server-sdk');          // 微信云开发兜底：init 不返回实例，用全局 cloud
+    c.init(ENV ? { env: ENV } : {});
+    app = c;
+  }
+  cloud = app;
+  db = app.database();
+  _ = db.command;
+  console.log('[auth] cloud ready');
+}
 
 const COL_ACC = 'accounts';
 const COL_CODE = 'authcodes';
@@ -493,10 +501,10 @@ async function actSetChannel(e) {
 }
 
 /* ================= 入口 ================= */
-exports.main = async function (event) {
-  var e = event || {};
-  var action = String(e.action || '');
+async function dispatch(e) {
+  var action = String((e && e.action) || '');
   try {
+    await ensureCloud();
     switch (action) {
       case 'status': return await actStatus();
       case 'register': return await actRegister(e);
@@ -516,4 +524,54 @@ exports.main = async function (event) {
     console.error('auth error', action, ex);
     return err('SERVER_ERROR', (ex && ex.message) ? ex.message : '服务异常');
   }
+}
+
+exports.main = async function (event) {
+  // 兼容事件触发：Web SDK callFunction（event={action,...}）或 HTTP 函数包装（event.httpMethod+body）
+  var isHttp = !!(event && event.httpMethod);
+  var e;
+  if (isHttp) {
+    if (event.httpMethod === 'OPTIONS') {   // 浏览器跨域预检
+      return { statusCode: 204, headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST,OPTIONS',
+        'Access-Control-Allow-Headers': '*'
+      }, body: '' };
+    }
+    var raw = event.body;
+    try { e = (typeof raw === 'string') ? JSON.parse(raw || '{}') : (raw || {}); }
+    catch (_) { e = {}; }
+  } else {
+    e = event || {};
+  }
+  var result = await dispatch(e);
+  if (isHttp) {
+    return { statusCode: 200, headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(result) };
+  }
+  return result;
 };
+
+/* Web 函数模式：scf_bootstrap 以 `node index.js` 启动（已 export PORT=9000），
+ * 必须自行监听端口，否则函数无法对外提供服务。
+ * 网页端直接 fetch 云函数 URL 即可调用，自带 CORS 头，绕过 Web 安全域名白名单限制（体验版不支持）。 */
+if (require.main === module || process.env.PORT) {
+  var httpMod = require('http');
+  var PORT = process.env.PORT || 9000;
+  var server = httpMod.createServer(function (req, res) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') { res.statusCode = 204; res.end(); return; }
+    var body = '';
+    req.on('data', function (c) { body += c; });
+    req.on('end', async function () {
+      var e = {};
+      try { e = body ? JSON.parse(body) : {}; } catch (_) { e = {}; }
+      var result = await dispatch(e);
+      res.setHeader('Content-Type', 'application/json');
+      res.statusCode = 200;
+      res.end(JSON.stringify(result));
+    });
+  });
+  server.listen(PORT, function () { console.log('[auth] http server listening on ' + PORT); });
+}
