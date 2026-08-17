@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%AC%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
+body { background: var(--bg); }
 #app {
   max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg);
   position: relative; overflow-x: hidden; box-shadow: 0 0 60px rgba(80,60,50,.12);
@@ -440,19 +440,18 @@ body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
 }
 
 /* 热销推荐网格 */
-.hot-grid { padding: 0 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.hot-grid { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
 .hot-item {
   background: #fff; border-radius: var(--r-m); padding: 12px; box-shadow: var(--sh-s);
   display: flex; align-items: center; gap: 10px;
-  min-height: 76px;
 }
 .hot-item-pic {
   width: 52px; height: 52px; border-radius: 12px; flex: none;
   display: grid; place-items: center; font-size: 24px;
-  background-size: cover; background-position: center; overflow: hidden;
+  background-size: cover; background-position: center;
 }
-.hot-item-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-.hot-item-name { font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hot-item-info { flex: 1; min-width: 0; }
+.hot-item-name { font-size: 13px; font-weight: 700; color: var(--ink); }
 .hot-item-sold { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
 .hot-item-price { font-size: 15px; font-weight: 800; color: var(--brand); margin-top: 4px; }
 .hot-item-price small { font-size: 10px; font-weight: 700; }
@@ -588,6 +587,7 @@ body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
           <div class="hero-sub ell" id="shopSub"></div>
         </div>
         <div class="hero-badge" id="openBadge">营业中</div>
+        <div class="sync-badge" id="syncBadge">☁ 连接中…</div>
       </div>
       <div class="notice-bar" id="noticeBar" style="display:none">
         <span style="flex:none">📢</span><span id="noticeText"></span>
@@ -736,8 +736,6 @@ body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
 <script src="assets/sync.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/sync-github.js"></script>
-<script src="https://static.cloudbase.com/cloudbase/js-sdk/1.6.4/cloudbase.full.js"></script>
-<script src="assets/cloud-core.js"></script>
 <script src="assets/store.js"></script>
 <script src="assets/pca.js"></script>
 <script src="assets/product-extras.js"></script>
@@ -1334,7 +1332,9 @@ function boot() {
   if (D.shop.noticeOn && D.shop.notice && !sessionStorage.getItem('om_notice_seen')) {
     setTimeout(function () { $('noticePop').textContent = D.shop.notice; openMask('noticeMask'); sessionStorage.setItem('om_notice_seen', '1'); }, 400);
   }
-  Store.initCloud();   // 从云端/本地拉取最新数据并实时同步（已配置云环境则跨设备秒级同步）
+  Store.initSync();
+  Store.initCloud();   // 从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
+  Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 
   /* 登录检查 */
   if (!me) { }
@@ -1418,8 +1418,16 @@ function renderBanner() {
   startBannerAuto();
 }
 function startBannerAuto() {
-  // 自动轮播已关闭，只响应手动点击
   clearInterval(bannerTimer);
+  if (bannerSlidesLen <= 1) return;
+  bannerTimer = setInterval(function () {
+    bannerIdx = (bannerIdx + 1) % bannerSlidesLen;
+    if (curTab === 'home') {
+      $('bannerTrack').style.transform = 'translateX(-' + (bannerIdx * 100) + '%)';
+      var dots = $('bannerDots').children;
+      for (var i = 0; i < dots.length; i++) dots[i].classList.toggle('active', i === bannerIdx);
+    }
+  }, 3500);
 }
 function bannerPrev() {
   if (bannerSlidesLen <= 1) return;
@@ -1450,7 +1458,7 @@ function renderHotItems() {
       + (p.img ? 'background-image:url(\'' + p.img + '\')' : 'background:' + p.color) + '">'
       + (p.img ? '' : p.emoji) + '</div>'
       + '<div class="hot-item-info">'
-      + '<div class="hot-item-name">' + esc(p.name) + '</div>'
+      + '<div class="hot-item-name ell">' + esc(p.name) + '</div>'
       + '<div class="hot-item-sold">月售 ' + p.sold + '</div>'
       + '<div class="hot-item-price"><small>¥</small>' + p.price + '</div>'
       + '</div></div>';
@@ -1484,6 +1492,13 @@ function zoomPic(pid) {
 }
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+function renderSyncBadge(s) {
+  var el = $('syncBadge'); if (!el) return;
+  if (s === 'online') { el.textContent = '☁ 已同步'; el.className = 'sync-badge on'; }
+  else if (s === 'connecting') { el.textContent = '☁ 连接中…'; el.className = 'sync-badge wait'; }
+  else { el.textContent = '☁ 本机模式'; el.className = 'sync-badge off'; }
+}
 
 function renderShop() {
   var logo = $('shopLogo'), inner = $('shopLogoInner');
@@ -2066,7 +2081,7 @@ function renderOrderPage() {
   o.items.forEach(function (it) {
     var gkey = it.pid || it.name;
     var reviewed = (window.ReviewStore && ReviewStore.hasReviewed(o.id, gkey));
-    var rvBtn = (o.status === 'done')
+    var rvBtn = (o.status !== 'canceled')
       ? (reviewed
           ? '<div style="text-align:right;margin-top:2px;font-size:11px;color:var(--ink-3)">✓ 已评价</div>'
           : '<div style="text-align:right;margin-top:4px"><button style="padding:5px 14px;font-size:12px;border-radius:14px;border:1px solid var(--brand);color:var(--brand);background:#fff;font-weight:700;cursor:pointer" onclick="openReview(\'' + o.id + '\',\'' + gkey + '\',\'' + esc(it.name).replace(/'/g, "\\'") + '\')">评价</button></div>')
@@ -2205,8 +2220,7 @@ Store.onChange(function (data) {
   }
 });
 
-// 每 30 秒从云端重新拉取一次（云端为唯一真源）：自动用干净数据覆盖本机，页面自愈，无需手动清缓存/刷新
-setInterval(function () { Store.initCloud(); renderShop(); if (curTab === 'home') renderHomePage(); }, 30000);  // 自愈：30s 重新拉取云端最新数据
+setInterval(function () { renderShop(); if (curTab === 'home') renderHomePage(); }, 30000);
 
 boot();
 if (myOrderId) { var o0 = Store.getOrder(myOrderId); if (o0) lastStatus = o0.status; }
