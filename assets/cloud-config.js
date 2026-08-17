@@ -29,13 +29,11 @@ window.CLOUD_CONFIG = {
   apiBase: 'https://api.github.com',
   rawBase: 'https://raw.githubusercontent.com',
   token: '__PASTE_TOKEN_HERE__',
-  // 手动粘贴 token 模式（当前默认、免费可用）：把 GitHub fine-grained token 粘进商家后台
-  // 「☁ 云端同步设置」，令牌仅存本机浏览器 localStorage，不进源码。
-  // 全自动代理模式（零粘贴）需另行部署 worker/ 里的 Cloudflare Worker 后，再把地址填到这里；
-  // 未部署 worker 时务必留空，否则同步会强制走代理而忽略你填的 token、导致推送失败。
-  proxyBase: '',
-  // 与 Worker 的 ADMIN_KEY 对应（仅在 proxyBase 启用时生效）
-  proxyKey: ''
+  // 全自动模式：填 Cloudflare Worker 地址（如 https://xiaomiao-sync.xxx.workers.dev）
+  // 留空则走“手动粘贴 token”模式。代理模式下浏览器不再需要 token。
+  proxyBase: 'https://xiaomiao-sync.xiaomiao-sync.workers.dev',
+  // 与 Worker 的 ADMIN_KEY 对应（可选，公开 URL 不影响安全，只是加一道门）
+  proxyKey: '4448029d4d0358ca33d1aec49d38bd53f57c083db5210cc2'
 };
 
 // 若本浏览器曾在后台「云端同步设置」里粘贴过令牌，则用它覆盖占位符。
