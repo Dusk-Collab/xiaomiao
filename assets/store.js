@@ -178,6 +178,7 @@
     var useGithub = !!(global.CloudSync && global.CloudSync.enabled);
     var useCloudBase = !!(global.CloudCore && global.CloudCore.ready() && global.CloudCore.db);
 
+    if (global.CloudSync && global.CloudSync.enabled) emitSyncStatus('connecting');
     if (useCloudBase) {
       var db = global.CloudCore.db;
       db.collection('store').doc('main').get().then(function (res) {
@@ -216,6 +217,7 @@
       // GitHub 同步模式：拉取远端最新 data.json。
       // 以 _ts 时间戳做 last-write-wins：云端较新→采用云端；本地较新→保留本地并回推。
       // 这样“刚改完就刷新”不会把新内容覆盖回旧云端（修复“改完一刷新就归零”）。
+      emitSyncStatus('connecting');
       CloudSync.pull().then(function (cloud) {
         var local = read();
         if (cloud && cloud.shop) {
@@ -236,7 +238,8 @@
           CloudSync.push(stripMeta(s));
           emit(s);
         }
-      }).catch(function (e) { console.warn('github pull fail', e); emit(read()); });
+        emitSyncStatus('online');
+      }).catch(function (e) { console.warn('github pull fail', e); emit(read()); emitSyncStatus('offline'); });
       return;
     }
 
@@ -255,6 +258,11 @@
   /* ---------- 订阅 ---------- */
   function emit(data) { listeners.forEach(function (f) { try { f(data); } catch (e) { console.error(e); } }); }
   function onChange(fn) { listeners.push(fn); return function () { listeners = listeners.filter(function (f) { return f !== fn; }); }; }
+
+  /* 同步状态订阅（connecting / online / offline），admin/customer 用它更新顶部状态徽标 */
+  var syncStatusListeners = [];
+  function emitSyncStatus(s) { syncStatusListeners.forEach(function (f) { try { f(s); } catch (e) {} }); }
+  function onSyncStatus(fn) { syncStatusListeners.push(fn); return function () { syncStatusListeners = syncStatusListeners.filter(function (f) { return f !== fn; }); }; }
 
   global.addEventListener('storage', function (e) { if (e.key === KEY) emit(read()); });
   if (bc) bc.onmessage = function () { emit(read()); };
@@ -398,6 +406,7 @@
     read: read, write: write, update: update, reset: reset, seed: seed,
     initCloud: initCloud,
     onChange: onChange,
+    onSyncStatus: onSyncStatus,
     cloudMode: function () { return !!(global.CloudCore && global.CloudCore.ready()); },
     isOpenNow: isOpenNow,
     createOrder: createOrder, setOrderStatus: setOrderStatus, markSeen: markSeen, getOrder: getOrder,
