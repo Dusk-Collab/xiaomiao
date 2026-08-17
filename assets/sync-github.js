@@ -16,6 +16,12 @@
 
   var cfg = global.CLOUD_CONFIG || {};
   var TOKEN = cfg.token;
+  // 关键修复：后台「☁ 云端同步设置」粘的 token 只存本机 localStorage，刷新后
+  // CLOUD_CONFIG.token 会回到占位符，必须从 localStorage 读回，否则同步永远不启用。
+  try {
+    var _lsTok = global.localStorage && global.localStorage.getItem('om_cloud_token');
+    if (_lsTok && _lsTok.indexOf('__') !== 0) TOKEN = _lsTok;
+  } catch (e) {}
   var PROXY = (cfg.proxyBase && cfg.proxyBase.indexOf('http') === 0) ? cfg.proxyBase : '';
   var ENABLED = !!(cfg.repo && cfg.branch && cfg.dataPath) &&
     ((!!TOKEN && TOKEN.indexOf('__') !== 0) || !!PROXY);
