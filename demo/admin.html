@@ -53,6 +53,42 @@ body { background: #F7EFE3; }
 .stat-v { font-size: 25px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .stat-l { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
 
+/* ---- 管理员登录（干净版：仅密码登录，无创建账户/扫码迁移/本地模式/验证码） ---- */
+.login-mask { position: fixed; inset: 0; background: rgba(20,14,8,.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; z-index: 9999; animation: lFade .25s ease; }
+@keyframes lFade { from { opacity: 0; } to { opacity: 1; } }
+.login-card { background: #fff; border-radius: 22px; padding: 34px 28px 26px; width: 360px; max-width: calc(100vw - 36px); box-shadow: 0 24px 64px rgba(0,0,0,.22); text-align: center; animation: lPop .35s cubic-bezier(.22,1,.36,1); }
+@keyframes lPop { from { transform: translateY(20px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+.login-logo { font-size: 52px; line-height: 1; margin-bottom: 6px; }
+.login-name { font-size: 19px; font-weight: 800; color: #1a1a1a; letter-spacing: .3px; }
+.login-title { font-size: 13px; color: #888; margin: 4px 0 22px; font-weight: 500; }
+.login-pwd-wrap { position: relative; margin-bottom: 14px; }
+.login-pwd { width: 100%; height: 48px; border: 1.5px solid #ececec; border-radius: 12px; padding: 0 46px 0 16px; font-size: 15px; outline: none; transition: border-color .15s, box-shadow .15s; box-sizing: border-box; background: #fafafa; color: #1a1a1a; }
+.login-pwd:focus { border-color: #E8352E; background: #fff; box-shadow: 0 0 0 3px rgba(232,53,46,.1); }
+.login-pwd.err { border-color: #E8352E; animation: lShake .35s; }
+@keyframes lShake { 20%,60%{transform:translateX(-4px)} 40%,80%{transform:translateX(4px)} }
+.login-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; padding: 8px; color: #aaa; line-height: 1; border-radius: 8px; transition: color .15s, background .15s; }
+.login-eye:hover { color: #555; background: #f5f5f5; }
+.login-btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: linear-gradient(135deg,#E8352E 0%,#F47867 100%); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 22px rgba(232,53,46,.3); transition: transform .1s, box-shadow .15s; letter-spacing: 1px; }
+.login-btn:hover { box-shadow: 0 10px 26px rgba(232,53,46,.4); }
+.login-btn:active { transform: scale(.98); }
+.login-btn:disabled { opacity: .6; cursor: wait; }
+.login-foot { font-size: 12px; color: #b0b0b0; margin-top: 16px; }
+.login-foot b { color: #888; font-weight: 600; }
+
+/* ---- 顶部同步状态徽标 ---- */
+.sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
+.sync-badge.connecting { background: #FFF7EA; color: #C58A1A; }
+.sync-badge.online { background: #E8F8EE; color: #1B9E5B; }
+.sync-badge.offline { background: #FEE; color: #C0392B; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sync-badge.connecting .sync-dot { animation: sPulse 1.2s infinite; }
+@keyframes sPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+@media (max-width: 520px) {
+  .login-card { padding: 28px 22px 22px; border-radius: 18px; }
+  .login-logo { font-size: 44px; }
+  .login-name { font-size: 17px; }
+}
 /* ---- 订单看板 ---- */
 .kb-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 .kb-tab {
@@ -324,114 +360,6 @@ canvas.qr { border-radius: 8px; }
 </head>
 <body>
 
-<!-- 商家账户登录门 -->
-<div id="adminLock" class="admin-lock">
-  <div class="admin-lock-box">
-    <div style="font-size:34px">🛡️</div>
-    <div id="alTitle" class="al-title">商家登录</div>
-    <div id="alSub" class="al-sub">用手机号登录商家后台</div>
-
-    <!-- 注册（首次开号） -->
-    <div id="regBox">
-      <input id="regPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号（11 位）">
-      <input id="regPwd" class="inp" type="password" placeholder="设置登录密码（至少 6 位）" style="margin-top:8px">
-      <input id="regPwd2" class="inp" type="password" placeholder="再输一次密码" style="margin-top:8px">
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
-        <input id="regRemember" type="checkbox" checked> 本设备 7 天内免登录
-      </label>
-      <button id="regBtn" class="btn-primary" style="width:100%;margin-top:12px">创建商家账户</button>
-      <div class="al-link"><span onclick="switchToLogin()">已有账户？去登录</span></div>
-      <div class="al-link"><span onclick="openTransferModal()">📲 已在另一台设备注册？扫码迁移</span></div>
-    </div>
-
-    <!-- 登录 -->
-    <div id="loginBox" style="display:none">
-      <div class="al-tabs">
-        <div class="al-tab on" id="tabPwd" onclick="switchTab('pwd')">密码登录</div>
-        <div class="al-tab" id="tabCode" onclick="switchTab('code')">验证码登录</div>
-      </div>
-      <input id="alPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号">
-      <input id="alPwd" class="inp" type="password" placeholder="登录密码" autocomplete="off" style="margin-top:8px">
-      <div id="codeRow" style="display:none;margin-top:8px">
-        <div style="display:flex;gap:8px">
-          <input id="alCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
-          <button id="btnGetCode" class="btn-soft" style="white-space:nowrap" onclick="getLoginCode()">获取验证码</button>
-        </div>
-      </div>
-      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
-        <input id="alRemember" type="checkbox" checked> 本设备 7 天内免登录
-      </label>
-      <button id="alBtn" class="btn-primary" style="width:100%;margin-top:12px">登录</button>
-      <div class="al-link"><span onclick="toReset()">忘记密码？</span></div>
-      <div class="al-link"><span onclick="openTransferModal()">📲 已在另一台设备注册？扫码迁移</span></div>
-    </div>
-
-    <!-- 找回密码 -->
-    <div id="resetBox" style="display:none">
-      <div class="al-sub" style="margin-bottom:8px">通过手机号或邮箱验证码重置</div>
-      <input id="rsTarget" class="inp" placeholder="手机号 或 邮箱">
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <input id="rsCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="验证码">
-        <button id="btnRsCode" class="btn-soft" style="white-space:nowrap" onclick="getResetCode()">获取验证码</button>
-      </div>
-      <input id="rsPwd" class="inp" type="password" placeholder="设置新密码（至少 6 位）" style="margin-top:8px">
-      <button id="rsBtn" class="btn-primary" style="width:100%;margin-top:12px">重置并登录</button>
-      <div class="al-link"><span onclick="switchToLogin()">返回登录</span></div>
-    </div>
-
-    <div id="alErr" class="al-err"></div>
-    <div id="alWarn" class="al-warn"></div>
-  </div>
-</div>
-
-<!-- 云端同步设置面板 -->
-<div id="cloudModal" class="cloud-modal">
-  <div class="cloud-card">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">☁ 云端同步</div>
-      <button id="cloudClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
-    </div>
-    <p class="hint" style="margin:8px 0 12px;line-height:1.6">
-      数据存在云端，多设备自动同步。<b>推荐 GitHub 通道</b>（免费、永久、免实名）；
-      CloudBase 通道体验版已被官方锁死，仅作为升级 ¥19.9/月 个人版后的备选。
-    </p>
-
-    <!-- A. GitHub 同步（主推） -->
-    <div style="padding:10px;background:#f5f8ff;border-radius:8px;border:1px solid #dde6f7">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <b style="font-size:14px">A. GitHub Token（推荐·免费）</b>
-        <span style="font-size:11px;color:#1f7a1f;background:#e6f6e6;padding:2px 8px;border-radius:10px">免费永久</span>
-      </div>
-      <input id="gitTokenInput" class="inp" placeholder="ghp_xxx / github_pat_xxx" autocomplete="off" spellcheck="false">
-      <button id="btnSaveGitToken" class="btn-primary" style="width:100%;margin-top:10px">保存并启用</button>
-      <div id="gitTokenStatus" class="hint" style="margin-top:8px;min-height:1em"></div>
-      <details style="margin-top:6px;font-size:12px;color:var(--ink-3)">
-        <summary>怎么生成 GitHub token？</summary>
-        <ol style="margin:6px 0 0 18px;line-height:1.7;padding:0">
-          <li>GitHub → 右上角头像 → <b>Settings</b></li>
-          <li>左侧底部 <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Tokens (classic)</b></li>
-          <li><b>Generate new token</b> → 勾 <code>repo</code> → Generate</li>
-          <li>复制 <code>ghp_</code> 开头的整串粘贴到上面</li>
-        </ol>
-        <p style="margin:6px 0 0">也支持 fine-grained token（仅授权本仓库 Contents 读写即可）。</p>
-      </details>
-    </div>
-
-    <!-- B. CloudBase（次选，体验版不支持） -->
-    <details style="margin-top:14px">
-      <summary style="cursor:pointer;color:var(--ink-3);font-size:13px">B. CloudBase 环境 ID（需 ¥19.9/月个人版）</summary>
-      <div style="margin-top:10px">
-        <input id="envInput" class="inp" placeholder="例如 xiaomiao-7gabc123">
-        <button id="btnSaveEnv" class="btn-soft" style="width:100%;margin-top:8px">保存并连接</button>
-        <div id="envStatus" class="hint" style="margin-top:8px;min-height:1em;color:var(--ink-3)">体验版不支持网页调用，建议改用上方 GitHub 通道。</div>
-      </div>
-    </details>
-
-    <hr style="margin:14px 0;border:none;border-top:1px solid var(--line)">
-    <button id="btnSetPwd" class="btn-soft" style="width:100%;justify-content:center">修改管理员密码</button>
-  </div>
-</div>
-
 <div id="shell">
   <aside class="side">
     <div class="side-brand">
@@ -448,8 +376,8 @@ canvas.qr { border-radius: 8px; }
         <span id="sideStatus">营业中</span>
         <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
       </div>
-      <button id="btnAccount" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">👤 账户与安全</button>
-      <button id="btnCloudSettings" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">☁ 云端同步设置</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="openCloudSettings()">☁ 云端同步设置</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px;font-size:11.5px;color:#999" onclick="doLogout()">↪ 退出登录</button>
     </div>
   </aside>
 
@@ -457,9 +385,10 @@ canvas.qr { border-radius: 8px; }
     <div class="topbar">
       <div class="page-title" id="pageTitle">订单看板</div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="tag" id="liveTag" style="background:#E7F6EC;color:var(--ok)">● 实时同步中</span>
+        <span class="sync-badge" id="syncBadge">☁ 连接中…</span>
         <button class="btn btn-ghost btn-sm" onclick="openCustomer()">👀 顾客视角</button>
         <button class="btn btn-ghost btn-sm" onclick="testOrder()">🧪 模拟来单</button>
-        <button id="btnChangePwdTop" class="btn btn-ghost btn-sm" onclick="openChangePwdModal()" style="font-weight:700">🔒 修改密码</button>
       </div>
     </div>
     <div class="body" id="body"></div>
@@ -468,85 +397,6 @@ canvas.qr { border-radius: 8px; }
 
 <div class="mobile-nav" id="mobileNav"></div>
 <div id="newOrderFlash"></div>
-<!-- 账户与安全面板 -->
-<div id="accModal" class="cloud-modal">
-  <div class="cloud-card">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">👤 账户与安全</div>
-      <button id="accClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
-    </div>
-    <p id="accHint" class="hint" style="margin:8px 0 12px"></p>
-    <div class="acc-row"><span>手机号</span><b id="accPhone">未绑定</b></div>
-    <div class="acc-row"><span>邮箱</span><b id="accEmail">未绑定</b></div>
-    <hr style="margin:12px 0;border:none;border-top:1px solid var(--line)">
-    <button id="btnAccChangePwd" class="btn-soft" style="width:100%;justify-content:center">🔒 修改密码</button>
-    <button id="btnAccTransfer" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">📲 把账户搬到另一台设备</button>
-    <button id="btnAccBindPhone" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定 / 换绑手机号</button>
-    <button id="btnAccBindEmail" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定邮箱（用于找回）</button>
-    <button id="btnAccLogout" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px;color:#e23">退出登录</button>
-  </div>
-</div>
-
-<!-- 修改密码面板（顶栏入口） -->
-<div id="chPwdModal" class="cloud-modal">
-  <div class="cloud-card">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">🔒 修改密码</div>
-      <button id="chPwdClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
-    </div>
-    <p id="chPwdHint" class="hint" style="margin:8px 0 12px"></p>
-    <div id="chPwdStepOld">
-      <label class="lbl">原密码</label>
-      <input id="chPwdOld" class="inp" type="password" placeholder="输入当前密码">
-    </div>
-    <div id="chPwdStepCode" style="display:none">
-      <label class="lbl">手机验证码（已发送）</label>
-      <div style="display:flex;gap:8px">
-        <input id="chPwdCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
-        <button id="btnChPwdGetCode" class="btn-soft" style="white-space:nowrap" onclick="getChPwdCode()">获取验证码</button>
-      </div>
-    </div>
-    <label class="lbl" style="margin-top:10px">新密码</label>
-    <input id="chPwdNew" class="inp" type="password" placeholder="至少 6 位">
-    <label class="lbl" style="margin-top:8px">再输一次新密码</label>
-    <input id="chPwdNew2" class="inp" type="password" placeholder="再次输入新密码">
-    <button id="btnChPwdSubmit" class="btn-primary" style="width:100%;margin-top:14px">确认修改</button>
-    <div id="chPwdErr" class="al-err"></div>
-  </div>
-</div>
-
-<!-- 账户迁移面板（扫码把账户搬到另一台设备） -->
-<div id="transferModal" class="cloud-modal">
-  <div class="cloud-card">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:800;font-size:16px">📲 迁移账户到另一台设备</div>
-      <button id="transferClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
-    </div>
-    <p class="hint" style="margin:8px 0 12px">当前是本地模式，本账户只在本设备。用下方二维码 / 迁移码，搬到另一台设备（10 分钟内有效）。</p>
-    <div class="al-tabs">
-      <div class="al-tab on" id="tabExport" onclick="switchTransferTab('export')">我是原设备（生成二维码）</div>
-      <div class="al-tab" id="tabImport" onclick="switchTransferTab('import')">我是新设备（扫码 / 输入迁移码）</div>
-    </div>
-    <div id="transferExportBox" style="margin-top:12px">
-      <div style="text-align:center;font-size:13px;color:var(--ink-3)">用另一台设备的相机 / 浏览器扫描下方二维码</div>
-      <div id="transferQrBox" style="display:flex;justify-content:center;margin:10px 0"></div>
-      <label class="lbl">迁移码（也可手动复制粘贴）</label>
-      <textarea id="transferCode" class="inp" readonly style="height:90px;font-size:11px;line-height:1.4;word-break:break-all;font-family:ui-monospace,Consolas,monospace"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn-soft" style="flex:1;justify-content:center" onclick="copyTransferCode()">复制迁移码</button>
-        <button class="btn-soft" style="flex:1;justify-content:center" onclick="regenTransfer()">刷新二维码</button>
-      </div>
-      <div id="transferExpHint" class="hint" style="margin-top:8px;text-align:center"></div>
-    </div>
-    <div id="transferImportBox" style="display:none;margin-top:12px">
-      <label class="lbl">迁移码（从另一台设备复制过来）</label>
-      <textarea id="transferInput" class="inp" placeholder="把另一台设备显示的迁移码粘贴到这里" style="height:100px;font-size:12px;line-height:1.4;word-break:break-all;font-family:ui-monospace,Consolas,monospace"></textarea>
-      <button id="btnTransferImport" class="btn-primary" style="width:100%;margin-top:10px">导入并登录</button>
-      <div id="transferImportErr" class="al-err"></div>
-    </div>
-  </div>
-</div>
-
 <div id="toast"></div>
 
 <!-- 小型模态弹窗（自定义 prompt） -->
@@ -561,15 +411,18 @@ canvas.qr { border-radius: 8px; }
   </div>
 </div>
 
+<!-- 云端同步设置 -->
+<div class="modal-mask" id="cloudMask" onclick="if(event.target===this)hideCloud()">
+  <div class="modal-card" style="max-width:430px">
+    <h4>☁ 云端同步设置</h4>
+    <div id="cloudBody"></div>
+  </div>
+</div>
+
 <script src="assets/sync.js"></script>
 <script src="assets/cloud-config.js"></script>
 <script src="assets/sync-github.js"></script>
-<script src="https://static.cloudbase.com/cloudbase/js-sdk/1.6.4/cloudbase.full.js"></script>
-<script src="assets/cloud-core.js"></script>
-<script src="assets/account.js"></script>
-<script src="assets/qrcode.js"></script>
 <script src="assets/store.js"></script>
-<script src="assets/admin-login.js"></script>
 <script src="assets/qrcode.js"></script>
 <script>
 /* ================= 基础 ================= */
@@ -638,6 +491,61 @@ function modalInput(name, opts) {
   if (opts.trim !== false) val = val.trim();
   if (opts.number) val = parseFloat(val) || 0;
   return val;
+}
+
+function renderSyncBadge(s) {
+  var el = $('syncBadge'); if (!el) return;
+  var proxy = !!(window.CloudSync && CloudSync.proxyMode);
+  if (s === 'online') {
+    el.textContent = proxy ? '☁ 自动同步' : '☁ 云端已连';
+    el.className = 'sync-badge on';
+  }
+  else if (s === 'connecting') { el.textContent = '☁ 连接中…'; el.className = 'sync-badge wait'; }
+  else { el.textContent = '☁ 本机模式'; el.className = 'sync-badge off'; }
+  var live = $('liveTag');
+  if (live) live.style.display = (s === 'online') ? '' : 'none';
+}
+
+/* ================= 云端同步设置 ================= */
+function openCloudSettings() {
+  var cur = '';
+  try { cur = localStorage.getItem('om_cloud_token') || ''; } catch (e) {}
+  var on = !!(window.CloudSync && CloudSync.enabled);
+  var proxy = !!(window.CloudSync && CloudSync.proxyMode);
+  var head = proxy
+    ? '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
+      + '当前状态：<b style="color:var(--ok)">自动同步模式（已开启代理，改动实时同步到 GitHub 仓库，跨设备零粘贴）</b><br>'
+      + '此模式下浏览器无需令牌，下方留空即可。如需切回手动模式，清空 cloud-config.js 的 proxyBase。</div>'
+    : '<div style="font-size:13px;line-height:1.7;color:var(--ink-2);margin-bottom:12px">'
+      + '当前状态：<b style="color:' + (on ? 'var(--ok)' : 'var(--warn)') + '">' + (on ? '已开启（改动实时同步到 GitHub 仓库，跨设备共享）' : '未开启（仅本机保存，换设备看不到）') + '</b><br>'
+      + '把 GitHub 令牌粘贴到下方即可开启。令牌只存在本浏览器，不会上传。</div>';
+  $('cloudBody').innerHTML =
+    head
+    + '<div class="modal-row"><label>GitHub 令牌（fine-grained）</label><input class="modal-input" id="cloudToken" placeholder="github_pat_..." value="' + esc(cur) + '"></div>'
+    + '<div style="font-size:11.5px;color:var(--ink-3);line-height:1.6;margin:4px 0 14px">需仅授权本仓库 <code>Dusk-Collab/xiaomiao</code> 的 <b>Contents: Read and write</b>。创建步骤见 cloud-config.js 顶部注释。'
+    + (proxy ? '' : '想要“跨设备零粘贴”的全自动模式，请部署 worker/ 里的 Cloudflare Worker 并在 cloud-config.js 填 proxyBase。')
+    + '</div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end">'
+    + (cur ? '<button class="btn-cancel" onclick="clearCloud()">清除</button>' : '')
+    + '<button class="btn-confirm" onclick="saveCloud()">保存并启用</button>'
+    + '</div>';
+  var m = $('cloudMask'); m.style.display = 'flex'; m.classList.add('show');
+}
+function hideCloud() {
+  var m = $('cloudMask'); m.classList.remove('show');
+  setTimeout(function () { m.style.display = 'none'; }, 180);
+}
+function saveCloud() {
+  var t = (($('cloudToken') || {}).value || '').trim();
+  if (!t) { toast('请输入令牌'); return; }
+  try { localStorage.setItem('om_cloud_token', t); } catch (e) {}
+  toast('已保存，正在重新连接云端…'); hideCloud();
+  setTimeout(function () { location.reload(); }, 400);
+}
+function clearCloud() {
+  try { localStorage.removeItem('om_cloud_token'); } catch (e) {}
+  toast('已清除，将回到本机模式'); hideCloud();
+  setTimeout(function () { location.reload(); }, 400);
 }
 
 /* ================= 声音 ================= */
@@ -1700,7 +1608,10 @@ function checkNew(data) {
 
 Store.onChange(function (data) { D = data; checkNew(data); render(); });
 
-Store.initCloud();   // 后台自动从云端/本地拉取数据并实时同步
+Store.initCloud();   // 启动时从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
+if (window.CloudSync && CloudSync.enabled) toast('☁️ 云端同步已开启，改动将保存到 GitHub 仓库');
+else toast('⚠️ 云端同步未开启（点左下角「☁ 云端同步设置」填 GitHub 令牌）');
+Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 
 document.addEventListener('click', function once() {
   if (!soundReady) { initSound(); }
@@ -1713,6 +1624,114 @@ render();
 showSoundBar();
 setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 </script>
+<!-- 管理员登录（干净版：仅密码登录，去掉创建账户/扫码迁移/本地模式/验证码/忘记密码） -->
+<div id="loginMask" class="login-mask">
+  <div class="login-card">
+    <div class="login-logo" id="loginLogo">🥐</div>
+    <div class="login-name" id="loginShopName">小淼饭店</div>
+    <div class="login-title">管理员登录</div>
+    <div class="login-pwd-wrap">
+      <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
+      <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+    </div>
+    <button id="loginBtn" class="login-btn">登 录</button>
+    <div class="login-foot">默认密码 <b>店铺手机号</b> · 在「店铺设置」修改</div>
+  </div>
+</div>
+
+<script>
+/* 管理员登录逻辑（干净版·仅密码）
+ * 密码取自 data.json.settings.adminPwd；首次未设置时默认 = 店铺手机号。
+ * 两人（A、B）都可以用同一密码登录，A 改保存后 B 每 3 秒自动看到（store.js 轮询）。
+ * 登录态仅存本机 sessionStorage，关浏览器即失效，下次需重新输入。 */
+(function () {
+  var AUTH_KEY = 'admin_auth';
+  function getPwd() {
+    try {
+      var d = (window.Store && Store.read) ? Store.read() : null;
+      var p = d && d.settings && d.settings.adminPwd;
+      if (p) return String(p);
+      // 默认：店铺手机号（去非数字）
+      var phone = (d && d.shop && d.shop.phone) || '13800138000';
+      return String(phone).replace(/\D/g, '');
+    } catch (e) { return '13800138000'; }
+  }
+  function showLogin() {
+    var mask = document.getElementById('loginMask');
+    if (!mask) return;
+    // 同步店铺 logo + 名称
+    try {
+      var d = Store.read();
+      var logo = document.getElementById('loginLogo');
+      var name = document.getElementById('loginShopName');
+      if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
+      if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+    } catch (e) {}
+    mask.style.display = 'grid';
+    var p = document.getElementById('loginPwd');
+    if (p) { p.value = ''; setTimeout(function () { try { p.focus(); } catch (e) {} }, 120); }
+  }
+  function hideLogin() {
+    var m = document.getElementById('loginMask'); if (m) m.style.display = 'none';
+  }
+  function bind() {
+    var btn = document.getElementById('loginBtn');
+    var pwd = document.getElementById('loginPwd');
+    var eye = document.getElementById('loginEye');
+    if (btn) btn.addEventListener('click', tryLogin);
+    if (pwd) pwd.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
+    if (eye && pwd) eye.addEventListener('click', function () {
+      if (pwd.type === 'password') { pwd.type = 'text'; eye.textContent = '🙈'; }
+      else { pwd.type = 'password'; eye.textContent = '👁'; }
+    });
+  }
+  function tryLogin() {
+    var pwd = document.getElementById('loginPwd');
+    var entered = (pwd.value || '').trim();
+    var stored = getPwd();
+    if (entered === stored) {
+      try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
+      hideLogin();
+      if (typeof toast === 'function') toast('✓ 登录成功');
+    } else {
+      pwd.classList.remove('err'); void pwd.offsetWidth; pwd.classList.add('err');
+      pwd.value = ''; setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 50);
+      if (typeof toast === 'function') toast('密码错误');
+    }
+  }
+  function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
+  window.doLogout = function () {
+    try { sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+    showLogin();
+    if (typeof toast === 'function') toast('已退出登录');
+  };
+
+  // 监听 Store 数据变化，店铺 logo/名称改了同步刷新登录卡
+  if (window.Store && Store.onChange) Store.onChange(function () {
+    if (!isAuthed()) {
+      try {
+        var d = Store.read();
+        var logo = document.getElementById('loginLogo');
+        var name = document.getElementById('loginShopName');
+        if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
+        if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+      } catch (e) {}
+    }
+  });
+
+  // 启动：等 Store 就绪后判断
+  function boot() {
+    bind();
+    if (!isAuthed()) showLogin();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
 <footer style="text-align:center;color:#999;font-size:12px;padding:16px 0 24px;">
   小淼饭店点餐系统 · 永久访问地址：<a href="https://dusk-collab.github.io/xiaomiao/" target="_blank" style="color:#ff5b4a;">github.io/xiaomiao</a>
 </footer>
