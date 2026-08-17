@@ -139,7 +139,7 @@
     }
   }
 
-  // GitHub 同步节流推送：把多次写操作合并为一次（3 秒窗口），降低 API 频率并防抖。
+  // GitHub 同步节流推送：把多次写操作合并为一次（1 秒窗口），降低 API 频率并防抖。
   var _pushTimer = null;
   function schedulePush() {
     if (_pushTimer) clearTimeout(_pushTimer);
@@ -148,7 +148,7 @@
       if (global.CloudSync && global.CloudSync.enabled) {
         global.CloudSync.push(stripMeta(read()));
       }
-    }, 3000);
+    }, 1000);
   }
 
   function write(data, silent) {
@@ -174,6 +174,33 @@
    * - 配置 CloudBase（个人版及以上）：拉取 store/main 作真源并 watch 实时变更。
    * - 配置 GitHub Token（当前主推·免费永久）：拉取仓库 data.json 作真源。
    * - 都没配置：走本地模式（演示照常可用）。 */
+  /* 实时同步轮询（GitHub 通道）
+   * B 端每 3 秒自动拉一次远端 data.json。若 _ts 比本地新则采用并触发 emit（页面自动重渲染），
+   * 实现"A 改了 B 不用刷新也能看到"。正在输入框里敲字时跳过本次轮询，避免抢光标。 */
+  var _pollTimer = null;
+  function startPolling() {
+    if (_pollTimer) return;
+    _pollTimer = setInterval(function () {
+      if (!(global.CloudSync && global.CloudSync.enabled)) return;
+      // 若用户正在输入，跳过本次（不打断编辑）
+      var ae = (typeof document !== 'undefined') && document.activeElement;
+      if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+      CloudSync.pull().then(function (cloud) {
+        if (!cloud || !cloud.shop) return;
+        var local = read();
+        if ((cloud._ts || 0) > (local._ts || 0)) {
+          var c = stripMeta(cloud);
+          localStorage.setItem(KEY, JSON.stringify(c));
+          emit(c);
+          emitSyncStatus('online');
+        }
+      }).catch(function () {});
+    }, 3000);
+  }
+  function stopPolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
   function initCloud() {
     var useGithub = !!(global.CloudSync && global.CloudSync.enabled);
     var useCloudBase = !!(global.CloudCore && global.CloudCore.ready() && global.CloudCore.db);
@@ -239,6 +266,7 @@
           emit(s);
         }
         emitSyncStatus('online');
+        startPolling();
       }).catch(function (e) { console.warn('github pull fail', e); emit(read()); emitSyncStatus('offline'); });
       return;
     }
