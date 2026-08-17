@@ -53,6 +53,42 @@ body { background: #F7EFE3; }
 .stat-v { font-size: 25px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .stat-l { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
 
+/* ---- 管理员登录（干净版：仅密码登录，无创建账户/扫码迁移/本地模式/验证码） ---- */
+.login-mask { position: fixed; inset: 0; background: rgba(20,14,8,.42); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; z-index: 9999; animation: lFade .25s ease; }
+@keyframes lFade { from { opacity: 0; } to { opacity: 1; } }
+.login-card { background: #fff; border-radius: 22px; padding: 34px 28px 26px; width: 360px; max-width: calc(100vw - 36px); box-shadow: 0 24px 64px rgba(0,0,0,.22); text-align: center; animation: lPop .35s cubic-bezier(.22,1,.36,1); }
+@keyframes lPop { from { transform: translateY(20px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+.login-logo { font-size: 52px; line-height: 1; margin-bottom: 6px; }
+.login-name { font-size: 19px; font-weight: 800; color: #1a1a1a; letter-spacing: .3px; }
+.login-title { font-size: 13px; color: #888; margin: 4px 0 22px; font-weight: 500; }
+.login-pwd-wrap { position: relative; margin-bottom: 14px; }
+.login-pwd { width: 100%; height: 48px; border: 1.5px solid #ececec; border-radius: 12px; padding: 0 46px 0 16px; font-size: 15px; outline: none; transition: border-color .15s, box-shadow .15s; box-sizing: border-box; background: #fafafa; color: #1a1a1a; }
+.login-pwd:focus { border-color: #E8352E; background: #fff; box-shadow: 0 0 0 3px rgba(232,53,46,.1); }
+.login-pwd.err { border-color: #E8352E; animation: lShake .35s; }
+@keyframes lShake { 20%,60%{transform:translateX(-4px)} 40%,80%{transform:translateX(4px)} }
+.login-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; padding: 8px; color: #aaa; line-height: 1; border-radius: 8px; transition: color .15s, background .15s; }
+.login-eye:hover { color: #555; background: #f5f5f5; }
+.login-btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: linear-gradient(135deg,#E8352E 0%,#F47867 100%); color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 22px rgba(232,53,46,.3); transition: transform .1s, box-shadow .15s; letter-spacing: 1px; }
+.login-btn:hover { box-shadow: 0 10px 26px rgba(232,53,46,.4); }
+.login-btn:active { transform: scale(.98); }
+.login-btn:disabled { opacity: .6; cursor: wait; }
+.login-foot { font-size: 12px; color: #b0b0b0; margin-top: 16px; }
+.login-foot b { color: #888; font-weight: 600; }
+
+/* ---- 顶部同步状态徽标 ---- */
+.sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
+.sync-badge.connecting { background: #FFF7EA; color: #C58A1A; }
+.sync-badge.online { background: #E8F8EE; color: #1B9E5B; }
+.sync-badge.offline { background: #FEE; color: #C0392B; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.sync-badge.connecting .sync-dot { animation: sPulse 1.2s infinite; }
+@keyframes sPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+@media (max-width: 520px) {
+  .login-card { padding: 28px 22px 22px; border-radius: 18px; }
+  .login-logo { font-size: 44px; }
+  .login-name { font-size: 17px; }
+}
 /* ---- 订单看板 ---- */
 .kb-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
 .kb-tab {
@@ -341,6 +377,7 @@ canvas.qr { border-radius: 8px; }
         <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
       </div>
       <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:10px" onclick="openCloudSettings()">☁ 云端同步设置</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px;font-size:11.5px;color:#999" onclick="doLogout()">↪ 退出登录</button>
     </div>
   </aside>
 
@@ -1587,6 +1624,114 @@ render();
 showSoundBar();
 setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 </script>
+<!-- 管理员登录（干净版：仅密码登录，去掉创建账户/扫码迁移/本地模式/验证码/忘记密码） -->
+<div id="loginMask" class="login-mask">
+  <div class="login-card">
+    <div class="login-logo" id="loginLogo">🥐</div>
+    <div class="login-name" id="loginShopName">小淼饭店</div>
+    <div class="login-title">管理员登录</div>
+    <div class="login-pwd-wrap">
+      <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
+      <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+    </div>
+    <button id="loginBtn" class="login-btn">登 录</button>
+    <div class="login-foot">默认密码 <b>店铺手机号</b> · 在「店铺设置」修改</div>
+  </div>
+</div>
+
+<script>
+/* 管理员登录逻辑（干净版·仅密码）
+ * 密码取自 data.json.settings.adminPwd；首次未设置时默认 = 店铺手机号。
+ * 两人（A、B）都可以用同一密码登录，A 改保存后 B 每 3 秒自动看到（store.js 轮询）。
+ * 登录态仅存本机 sessionStorage，关浏览器即失效，下次需重新输入。 */
+(function () {
+  var AUTH_KEY = 'admin_auth';
+  function getPwd() {
+    try {
+      var d = (window.Store && Store.read) ? Store.read() : null;
+      var p = d && d.settings && d.settings.adminPwd;
+      if (p) return String(p);
+      // 默认：店铺手机号（去非数字）
+      var phone = (d && d.shop && d.shop.phone) || '13800138000';
+      return String(phone).replace(/\D/g, '');
+    } catch (e) { return '13800138000'; }
+  }
+  function showLogin() {
+    var mask = document.getElementById('loginMask');
+    if (!mask) return;
+    // 同步店铺 logo + 名称
+    try {
+      var d = Store.read();
+      var logo = document.getElementById('loginLogo');
+      var name = document.getElementById('loginShopName');
+      if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
+      if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+    } catch (e) {}
+    mask.style.display = 'grid';
+    var p = document.getElementById('loginPwd');
+    if (p) { p.value = ''; setTimeout(function () { try { p.focus(); } catch (e) {} }, 120); }
+  }
+  function hideLogin() {
+    var m = document.getElementById('loginMask'); if (m) m.style.display = 'none';
+  }
+  function bind() {
+    var btn = document.getElementById('loginBtn');
+    var pwd = document.getElementById('loginPwd');
+    var eye = document.getElementById('loginEye');
+    if (btn) btn.addEventListener('click', tryLogin);
+    if (pwd) pwd.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
+    if (eye && pwd) eye.addEventListener('click', function () {
+      if (pwd.type === 'password') { pwd.type = 'text'; eye.textContent = '🙈'; }
+      else { pwd.type = 'password'; eye.textContent = '👁'; }
+    });
+  }
+  function tryLogin() {
+    var pwd = document.getElementById('loginPwd');
+    var entered = (pwd.value || '').trim();
+    var stored = getPwd();
+    if (entered === stored) {
+      try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
+      hideLogin();
+      if (typeof toast === 'function') toast('✓ 登录成功');
+    } else {
+      pwd.classList.remove('err'); void pwd.offsetWidth; pwd.classList.add('err');
+      pwd.value = ''; setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 50);
+      if (typeof toast === 'function') toast('密码错误');
+    }
+  }
+  function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
+  window.doLogout = function () {
+    try { sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+    showLogin();
+    if (typeof toast === 'function') toast('已退出登录');
+  };
+
+  // 监听 Store 数据变化，店铺 logo/名称改了同步刷新登录卡
+  if (window.Store && Store.onChange) Store.onChange(function () {
+    if (!isAuthed()) {
+      try {
+        var d = Store.read();
+        var logo = document.getElementById('loginLogo');
+        var name = document.getElementById('loginShopName');
+        if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
+        if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+      } catch (e) {}
+    }
+  });
+
+  // 启动：等 Store 就绪后判断
+  function boot() {
+    bind();
+    if (!isAuthed()) showLogin();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
+
 <footer style="text-align:center;color:#999;font-size:12px;padding:16px 0 24px;">
   小淼饭店点餐系统 · 永久访问地址：<a href="https://dusk-collab.github.io/xiaomiao/" target="_blank" style="color:#ff5b4a;">github.io/xiaomiao</a>
 </footer>
