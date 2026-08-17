@@ -213,15 +213,26 @@
     }
 
     if (useGithub) {
-      // GitHub 同步模式：拉取远端最新 data.json 作为真源（last-write-wins）
+      // GitHub 同步模式：拉取远端最新 data.json。
+      // 以 _ts 时间戳做 last-write-wins：云端较新→采用云端；本地较新→保留本地并回推。
+      // 这样“刚改完就刷新”不会把新内容覆盖回旧云端（修复“改完一刷新就归零”）。
       CloudSync.pull().then(function (cloud) {
+        var local = read();
         if (cloud && cloud.shop) {
-          var c = stripMeta(cloud);
-          localStorage.setItem(KEY, JSON.stringify(c));
-          emit(c);
+          if ((cloud._ts || 0) >= (local._ts || 0)) {
+            var c = stripMeta(cloud);
+            localStorage.setItem(KEY, JSON.stringify(c));
+            emit(c);
+          } else {
+            CloudSync.push(stripMeta(local));   // 本地更新更新，回推云端对齐
+            emit(local);
+          }
+        } else if (local && local.shop) {
+          CloudSync.push(stripMeta(local));
+          emit(local);
         } else {
-          // 远端还没有数据 → 用本地初始化远端
-          var s = read();
+          var s = seed();
+          localStorage.setItem(KEY, JSON.stringify(s));
           CloudSync.push(stripMeta(s));
           emit(s);
         }
@@ -368,6 +379,20 @@
     reader.onerror = function () { cb(null); };
     reader.readAsDataURL(file);
   }
+
+  /* 关闭/切走页面时，把尚未推送的改动立即补推，避免“改完刷新就丢” */
+  function flushPending() {
+    if (_pushTimer) {
+      clearTimeout(_pushTimer); _pushTimer = null;
+      if (global.CloudSync && global.CloudSync.enabled) {
+        global.CloudSync.push(stripMeta(read()));
+      }
+    }
+  }
+  global.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') flushPending();
+  });
+  global.addEventListener('pagehide', flushPending);
 
   global.Store = {
     read: read, write: write, update: update, reset: reset, seed: seed,
