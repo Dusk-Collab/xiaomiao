@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>商家后台 · 扫码点餐</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%9E%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+body { background: #F7EFE3; }
+#shell { display: flex; min-height: 100vh; }
+
+/* ---- 侧边栏 ---- */
+.side {
+  width: 208px; flex: none; background: #fff; border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+}
+.side-brand { padding: 18px 16px 14px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--line); }
+.side-logo { width: 38px; height: 38px; border-radius: 11px; background: var(--grad); display: grid; place-items: center; font-size: 20px; flex: none; background-size: cover; background-position: center; overflow: hidden; }
+.side-logo img { width: 100%; height: 100%; object-fit: cover; }
+.nav { padding: 10px 10px; flex: 1; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+  font-size: 14px; color: var(--ink-2); margin-bottom: 3px; transition: all .15s; position: relative;
+}
+.nav-item:hover { background: #FAF6F3; }
+.nav-item.on { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+.nav-icon { font-size: 17px; width: 22px; text-align: center; flex: none; }
+.nav-badge {
+  margin-left: auto; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px;
+  background: var(--brand); color: #fff; font-size: 11px; font-weight: 800;
+  display: grid; place-items: center;
+}
+.side-foot { padding: 12px; border-top: 1px solid var(--line); }
+
+/* ---- 内容区 ---- */
+.content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  background: #fff; border-bottom: 1px solid var(--line); padding: 12px 20px;
+  display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 40; flex-wrap: wrap;
+}
+.page-title { font-size: 17px; font-weight: 800; }
+.body { padding: 18px 20px 90px; flex: 1; }
+.card { background: #fff; border-radius: var(--r-m); padding: 16px; box-shadow: var(--sh-s); margin-bottom: 14px; }
+.card h3 { margin: 0 0 14px; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 7px; }
+
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.stat {
+  background: #fff; border-radius: var(--r-m); padding: 14px 16px; box-shadow: var(--sh-s);
+  border-left: 3px solid var(--brand-2); transition: transform .15s, box-shadow .15s;
+}
+.stat:hover { transform: translateY(-2px); box-shadow: var(--sh-m); cursor: pointer; }
+.stat-v { font-size: 25px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.stat-l { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+
+/* ---- 订单看板 ---- */
+.kb-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.kb-tab {
+  padding: 7px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap;
+  background: #fff; color: var(--ink-2); border: 1px solid var(--line);
+}
+.kb-tab.on { background: var(--grad); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(232,53,46,.25); }
+.kb-tab .n { opacity: .75; margin-left: 3px; }
+
+.order-bulk-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #FFF7EA; border: 1px solid #F3DFC0; border-radius: 10px; padding: 9px 11px; margin: 8px 0 14px;
+}
+.order-bulk-bar .sel-all { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.order-bulk-bar .sel-info { font-size: 12px; color: var(--ink-3); flex: 1; }
+.order-bulk-bar .reset-btn {
+  margin-left: auto; font-size: 12px; color: #C0392B; border: 1px solid #F3DFC0; background: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-weight: 600;
+}
+.order-bulk-bar .reset-btn:hover { background: #FEE; border-color: #C0392B; }
+
+.order-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(292px, 1fr)); gap: 12px; }
+.owrap { position: relative; border-radius: var(--r-m); overflow: hidden; background: #E8DFD8; }
+.owrap .act-l, .owrap .act-r {
+  position: absolute; top: 0; bottom: 0; width: 50%; display: flex; align-items: center;
+  padding: 0 20px; font-size: 14px; font-weight: 800; color: #fff;
+}
+.owrap .act-r { right: 0; justify-content: flex-end; background: var(--ok); }
+.owrap .act-l { left: 0; background: #94908C; }
+.ocard {
+  background: #fff; padding: 13px 14px; position: relative; z-index: 1;
+  transition: transform .22s cubic-bezier(.22,1,.36,1); touch-action: pan-y;
+  border-radius: var(--r-m); cursor: grab;
+}
+.ocard.dragging { transition: none; cursor: grabbing; }
+.ocard.new { animation: pop .35s; box-shadow: inset 0 0 0 2px var(--brand); }
+.o-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.o-code {
+  font-size: 27px; font-weight: 900; color: var(--brand); line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: .5px;
+}
+.o-meta { font-size: 11px; color: var(--ink-3); margin-top: 4px; }
+.o-items { border-top: 1px dashed var(--line); padding-top: 9px; margin-bottom: 10px; }
+.o-line { display: flex; gap: 8px; padding: 3px 0; font-size: 13px; align-items: baseline; }
+.o-line .q { color: var(--brand); font-weight: 800; flex: none; min-width: 22px; }
+.o-line .s { font-size: 11px; color: var(--ink-3); }
+.o-remark {
+  background: #FFF8E6; border: 1px solid #FBE8B8; border-radius: 8px; padding: 6px 9px;
+  font-size: 12px; color: #8A6410; margin-bottom: 9px;
+}
+.o-foot { display: flex; align-items: center; gap: 8px; }
+.o-price { font-size: 17px; font-weight: 800; }
+.swipe-hint { font-size: 10.5px; color: var(--ink-3); text-align: center; margin-top: 7px; }
+
+/* ---- 商品表 ---- */
+.ptable { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.ptable th {
+  text-align: left; padding: 9px 10px; font-size: 12px; color: var(--ink-3);
+  font-weight: 600; border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+.ptable td { padding: 9px 10px; border-bottom: 1px solid #F6F1ED; vertical-align: middle; }
+.ptable tr:hover td { background: #FDFAF8; }
+.p-emoji { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 21px; }
+/* 商品缩略图（可上传图片） */
+.p-thumb {
+  position: relative; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center;
+  font-size: 21px; cursor: pointer; overflow: hidden; border: 1px dashed #E2D6CC; background-size: cover; background-position: center;
+}
+.p-thumb:hover { border-color: var(--brand-2); }
+.p-thumb.has-img { border-style: solid; }
+.thumb-cam { opacity: .45; font-size: 17px; }
+.thumb-x {
+  position: absolute; top: 0; right: 0; width: 16px; height: 16px; line-height: 15px; text-align: center;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 11px; border-bottom-left-radius: 8px;
+}
+/* 批量操作条 */
+.bulk-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: #FFF7EA; border: 1px solid #F3DFC0; border-radius: 10px; padding: 9px 11px; margin: 4px 0 12px;
+}
+.bulk-bar .sel-all { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bulk-bar .sel-info { font-size: 12px; color: var(--ink-3); }
+.bulk-bar .auto-cat { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.sel-box { width: 16px; height: 16px; cursor: pointer; accent-color: var(--brand); }
+.inline-in {
+  border: 1px solid transparent; background: transparent; padding: 5px 7px; border-radius: 7px;
+  width: 100%; transition: all .15s;
+}
+.inline-in:hover { background: #F7F2EE; }
+.inline-in:focus { background: #fff; border-color: var(--brand-2); outline: none; }
+.w-price { width: 84px; }
+.w-sold { width: 72px; }
+.icon-btn {
+  width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+  font-size: 14px; color: var(--ink-3); transition: all .15s;
+}
+.icon-btn:hover { background: #F5F0EC; color: var(--brand); }
+
+/* ---- 表单 ---- */
+.form-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #F6F1ED; }
+.form-row:last-child { border-bottom: none; }
+.form-label { font-size: 13.5px; font-weight: 600; min-width: 108px; flex: none; }
+.form-hint { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; font-weight: 400; }
+.form-ctl { flex: 1; display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+
+/* ---- 二维码 ---- */
+.qr-box {
+  background: #fff; border-radius: var(--r-l); padding: 18px; text-align: center;
+  box-shadow: var(--sh-m); width: 268px; border: 2px solid var(--brand); position: relative;
+}
+.qr-top { background: var(--grad); color: #fff; margin: -18px -18px 14px; padding: 14px; border-radius: 18px 18px 0 0; }
+canvas.qr { border-radius: 8px; }
+
+/* ---- 声音提示条 ---- */
+#soundBar {
+  position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 999px;
+  display: flex; align-items: center; gap: 11px; z-index: 70; box-shadow: var(--sh-l);
+  font-size: 13px; animation: slideUp .3s;
+}
+#newOrderFlash {
+  position: fixed; inset: 0; pointer-events: none; z-index: 65;
+  box-shadow: inset 0 0 0 5px var(--brand); opacity: 0; transition: opacity .3s;
+}
+#newOrderFlash.on { opacity: 1; }
+
+/* ---- 移动端 ---- */
+.mobile-nav { display: none; }
+@media (max-width: 860px) {
+  .side { display: none; }
+  .body { padding: 14px 12px 84px; }
+  .topbar { padding: 11px 14px; }
+  .order-grid { grid-template-columns: 1fr; }
+  .mobile-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,.97);
+    backdrop-filter: blur(10px); border-top: 1px solid var(--line); z-index: 60;
+    padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  }
+  .mn-item { flex: 1; text-align: center; font-size: 10.5px; color: var(--ink-3); padding: 4px 0; position: relative; }
+  .mn-item.on { color: var(--brand); font-weight: 700; }
+  .mn-icon { font-size: 20px; display: block; margin-bottom: 1px; }
+  .mn-badge {
+    position: absolute; top: 0; left: 50%; margin-left: 6px; min-width: 16px; height: 16px;
+    padding: 0 4px; border-radius: 999px; background: var(--brand); color: #fff;
+    font-size: 10px; font-weight: 800; display: grid; place-items: center;
+  }
+  #soundBar { bottom: 72px; }
+  .ptable th:nth-child(4), .ptable td:nth-child(4) { display: none; }
+  .form-label { min-width: 78px; font-size: 13px; }
+}
+
+/* ---- 商品管理：侧边栏 + 主区域布局 ---- */
+.product-layout { display: flex; gap: 16px; align-items: flex-start; }
+.product-sidebar { width: 220px; flex: none; }
+.product-main { flex: 1; min-width: 0; }
+
+.sidebar-section {
+  background: #fff; border-radius: var(--r-m); padding: 12px 14px 14px;
+  box-shadow: var(--sh-s); margin-bottom: 12px;
+}
+.sidebar-section h4 {
+  margin: 0 0 10px; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 6px; color: var(--ink); cursor: pointer; user-select: none;
+}
+.sidebar-section h4 .fold-icon {
+  font-size: 12px; color: var(--ink-3); transition: transform .25s ease;
+  width: 20px; height: 20px; display: grid; place-items: center;
+}
+.sidebar-section.collapsed h4 .fold-icon { transform: rotate(-90deg); }
+.sidebar-section .sidebar-body {
+  overflow: hidden; transition: max-height .3s ease, opacity .25s ease;
+  max-height: 999px; opacity: 1;
+}
+.sidebar-section.collapsed .sidebar-body {
+  max-height: 0; opacity: 0; pointer-events: none;
+}
+
+.cat-list { display: flex; flex-direction: column; gap: 2px; }
+.cat-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px; border-radius: 8px; font-size: 13px;
+  cursor: pointer; transition: background .15s; user-select: none;
+}
+.cat-item:hover { background: #FAF6F3; }
+.cat-item.on { background: var(--brand-soft); color: var(--brand); font-weight: 700; }
+.cat-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-count { font-size: 11.5px; color: var(--ink-3); background: #F7F2EE; padding: 1px 6px; border-radius: 999px; font-weight: 600; }
+.cat-item.on .cat-count { background: rgba(232,132,28,.15); }
+.cat-del { opacity: 0; font-size: 12px; color: #C0392B; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; transition: opacity .15s; }
+.cat-item:hover .cat-del { opacity: .6; }
+.cat-del:hover { opacity: 1 !important; background: #FEF0F0; }
+
+.banner-list { display: flex; flex-direction: column; gap: 6px; }
+.banner-empty { font-size: 12px; color: var(--ink-3); text-align: center; padding: 14px 6px; background: #FDFAF8; border-radius: 8px; }
+.banner-item {
+  display: flex; align-items: center; gap: 7px; padding: 6px 8px; border-radius: 8px;
+  background: #FDFAF8; font-size: 12.5px; transition: background .15s;
+}
+.banner-item:hover { background: #F5F0EC; }
+.banner-thumb { width: 28px; height: 28px; border-radius: 6px; background-size: cover; background-position: center; flex: none; }
+.banner-emoji { width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; font-size: 16px; background: var(--brand-soft); flex: none; }
+.banner-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.banner-tag { font-size: 10.5px; color: var(--brand); background: var(--brand-soft); padding: 1px 5px; border-radius: 4px; font-weight: 600; flex: none; }
+.banner-del { opacity: 0; font-size: 12px; color: #C0392B; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 4px; cursor: pointer; transition: opacity .15s; }
+.banner-item:hover .banner-del { opacity: .6; }
+.banner-del:hover { opacity: 1 !important; background: #FEF0F0; }
+
+/* ---- 小型模态弹窗 ---- */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(30,22,18,.45);
+  display: none; place-items: center; z-index: 80; padding: 16px;
+  animation: fadeIn .18s ease both;
+}
+.modal-mask.show { display: grid; }
+.modal-card {
+  background: #fff; border-radius: var(--r-m); padding: 20px 22px 18px;
+  width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(30,22,18,.2);
+  animation: popIn .2s ease both;
+}
+.modal-card h4 { margin: 0 0 14px; font-size: 15px; font-weight: 800; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.modal-card .modal-input {
+  width: 100%; padding: 10px 13px; font-size: 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: #FAF7F4; outline: none; margin-bottom: 8px; transition: border-color .15s, box-shadow .15s;
+  box-sizing: border-box;
+}
+.modal-card .modal-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); background: #fff; }
+.modal-card .modal-row { margin-bottom: 14px; }
+.modal-card .modal-row label { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; display: block; }
+.modal-card .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+.modal-card .modal-btns button { padding: 8px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; transition: transform .12s, opacity .15s; }
+.modal-card .modal-btns button:hover { transform: translateY(-1px); }
+.modal-card .modal-btns .btn-cancel { background: #F5F0EC; color: var(--ink-2); }
+.modal-card .modal-btns .btn-confirm { background: var(--grad); color: #fff; }
+.modal-card .modal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.modal-card .modal-tag {
+  padding: 5px 11px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+  background: #F5F0EC; color: var(--ink-2); cursor: pointer; border: 1.5px solid transparent;
+  transition: all .15s;
+}
+.modal-card .modal-tag:hover { background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+.modal-card .modal-tag.on { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: scale(.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+/* ===== 手机端适配兜底：避免放大/横向溢出/布局错乱 ===== */
+@media (max-width: 768px) {
+  .product-layout { flex-direction: column; gap: 12px; }
+  .product-sidebar { width: 100%; }
+  .product-main { width: 100%; }
+  .form-row { flex-direction: column; align-items: stretch; gap: 5px; padding: 12px 0; }
+  .form-label { min-width: 0; font-size: 13px; }
+  .form-ctl { justify-content: flex-start; flex-wrap: wrap; }
+  .form-ctl select, .form-ctl input { width: 100%; box-sizing: border-box; }
+  .ptable { display: block; width: 100%; overflow-x: auto; white-space: nowrap; font-size: 12px; }
+  .ptable th, .ptable td { padding: 7px 6px; }
+  .modal-card { width: 92% !important; max-width: 92% !important; }
+  .qr-box { width: auto; max-width: 100%; }
+  .card { padding: 13px 12px; }
+  .topbar { gap: 8px; }
+  .page-title { font-size: 15px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .stat-v { font-size: 21px; }
+  .bulk-bar, .order-bulk-bar { gap: 6px; padding: 8px; }
+  .o-code { font-size: 22px; }
+  .order-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- 商家账户登录门 -->
+<div id="adminLock" class="admin-lock">
+  <div class="admin-lock-box">
+    <div style="font-size:34px">🛡️</div>
+    <div id="alTitle" class="al-title">商家登录</div>
+    <div id="alSub" class="al-sub">用手机号登录商家后台</div>
+
+    <!-- 注册（首次开号） -->
+    <div id="regBox">
+      <input id="regPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号（11 位）">
+      <input id="regPwd" class="inp" type="password" placeholder="设置登录密码（至少 6 位）" style="margin-top:8px">
+      <input id="regPwd2" class="inp" type="password" placeholder="再输一次密码" style="margin-top:8px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
+        <input id="regRemember" type="checkbox" checked> 本设备 7 天内免登录
+      </label>
+      <button id="regBtn" class="btn-primary" style="width:100%;margin-top:12px">创建商家账户</button>
+      <div class="al-link"><span onclick="switchToLogin()">已有账户？去登录</span></div>
+      <div class="al-link"><span onclick="openTransferModal()">📲 已在另一台设备注册？扫码迁移</span></div>
+    </div>
+
+    <!-- 登录 -->
+    <div id="loginBox" style="display:none">
+      <div class="al-tabs">
+        <div class="al-tab on" id="tabPwd" onclick="switchTab('pwd')">密码登录</div>
+        <div class="al-tab" id="tabCode" onclick="switchTab('code')">验证码登录</div>
+      </div>
+      <input id="alPhone" class="inp" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号">
+      <input id="alPwd" class="inp" type="password" placeholder="登录密码" autocomplete="off" style="margin-top:8px">
+      <div id="codeRow" style="display:none;margin-top:8px">
+        <div style="display:flex;gap:8px">
+          <input id="alCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
+          <button id="btnGetCode" class="btn-soft" style="white-space:nowrap" onclick="getLoginCode()">获取验证码</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-top:8px">
+        <input id="alRemember" type="checkbox" checked> 本设备 7 天内免登录
+      </label>
+      <button id="alBtn" class="btn-primary" style="width:100%;margin-top:12px">登录</button>
+      <div class="al-link"><span onclick="toReset()">忘记密码？</span></div>
+      <div class="al-link"><span onclick="openTransferModal()">📲 已在另一台设备注册？扫码迁移</span></div>
+    </div>
+
+    <!-- 找回密码 -->
+    <div id="resetBox" style="display:none">
+      <div class="al-sub" style="margin-bottom:8px">通过手机号或邮箱验证码重置</div>
+      <input id="rsTarget" class="inp" placeholder="手机号 或 邮箱">
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="rsCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="验证码">
+        <button id="btnRsCode" class="btn-soft" style="white-space:nowrap" onclick="getResetCode()">获取验证码</button>
+      </div>
+      <input id="rsPwd" class="inp" type="password" placeholder="设置新密码（至少 6 位）" style="margin-top:8px">
+      <button id="rsBtn" class="btn-primary" style="width:100%;margin-top:12px">重置并登录</button>
+      <div class="al-link"><span onclick="switchToLogin()">返回登录</span></div>
+    </div>
+
+    <div id="alErr" class="al-err"></div>
+    <div id="alWarn" class="al-warn"></div>
+  </div>
+</div>
+
+<!-- 云端同步设置面板 -->
+<div id="cloudModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">☁ 云端同步</div>
+      <button id="cloudClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p class="hint" style="margin:8px 0 12px;line-height:1.6">
+      数据存在云端，多设备自动同步。<b>推荐 GitHub 通道</b>（免费、永久、免实名）；
+      CloudBase 通道体验版已被官方锁死，仅作为升级 ¥19.9/月 个人版后的备选。
+    </p>
+
+    <!-- A. GitHub 同步（主推） -->
+    <div style="padding:10px;background:#f5f8ff;border-radius:8px;border:1px solid #dde6f7">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <b style="font-size:14px">A. GitHub Token（推荐·免费）</b>
+        <span style="font-size:11px;color:#1f7a1f;background:#e6f6e6;padding:2px 8px;border-radius:10px">免费永久</span>
+      </div>
+      <input id="gitTokenInput" class="inp" placeholder="ghp_xxx / github_pat_xxx" autocomplete="off" spellcheck="false">
+      <button id="btnSaveGitToken" class="btn-primary" style="width:100%;margin-top:10px">保存并启用</button>
+      <div id="gitTokenStatus" class="hint" style="margin-top:8px;min-height:1em"></div>
+      <details style="margin-top:6px;font-size:12px;color:var(--ink-3)">
+        <summary>怎么生成 GitHub token？</summary>
+        <ol style="margin:6px 0 0 18px;line-height:1.7;padding:0">
+          <li>GitHub → 右上角头像 → <b>Settings</b></li>
+          <li>左侧底部 <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Tokens (classic)</b></li>
+          <li><b>Generate new token</b> → 勾 <code>repo</code> → Generate</li>
+          <li>复制 <code>ghp_</code> 开头的整串粘贴到上面</li>
+        </ol>
+        <p style="margin:6px 0 0">也支持 fine-grained token（仅授权本仓库 Contents 读写即可）。</p>
+      </details>
+    </div>
+
+    <!-- B. CloudBase（次选，体验版不支持） -->
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;color:var(--ink-3);font-size:13px">B. CloudBase 环境 ID（需 ¥19.9/月个人版）</summary>
+      <div style="margin-top:10px">
+        <input id="envInput" class="inp" placeholder="例如 xiaomiao-7gabc123">
+        <button id="btnSaveEnv" class="btn-soft" style="width:100%;margin-top:8px">保存并连接</button>
+        <div id="envStatus" class="hint" style="margin-top:8px;min-height:1em;color:var(--ink-3)">体验版不支持网页调用，建议改用上方 GitHub 通道。</div>
+      </div>
+    </details>
+
+    <hr style="margin:14px 0;border:none;border-top:1px solid var(--line)">
+    <button id="btnSetPwd" class="btn-soft" style="width:100%;justify-content:center">修改管理员密码</button>
+  </div>
+</div>
+
+<div id="shell">
+  <aside class="side">
+    <div class="side-brand">
+      <div class="side-logo" id="sideLogo">🧋</div>
+      <div style="min-width:0">
+        <div style="font-size:13.5px;font-weight:800" class="ell" id="sideName">小淼饭店</div>
+        <div style="font-size:11px;color:var(--ink-3)">商家管理后台</div>
+      </div>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot">
+      <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+        <span id="sideStatusDot" style="width:8px;height:8px;border-radius:50%;background:var(--ok)"></span>
+        <span id="sideStatus">营业中</span>
+        <div class="switch on" id="quickOpen" style="margin-left:auto;transform:scale(.82)"></div>
+      </div>
+      <button id="btnAccount" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">👤 账户与安全</button>
+      <button id="btnCloudSettings" class="btn-soft" style="width:100%;margin-top:10px;justify-content:center">☁ 云端同步设置</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="topbar">
+      <div class="page-title" id="pageTitle">订单看板</div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="openCustomer()">👀 顾客视角</button>
+        <button class="btn btn-ghost btn-sm" onclick="testOrder()">🧪 模拟来单</button>
+        <button id="btnChangePwdTop" class="btn btn-ghost btn-sm" onclick="openChangePwdModal()" style="font-weight:700">🔒 修改密码</button>
+      </div>
+    </div>
+    <div class="body" id="body"></div>
+  </main>
+</div>
+
+<div class="mobile-nav" id="mobileNav"></div>
+<div id="newOrderFlash"></div>
+<!-- 账户与安全面板 -->
+<div id="accModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">👤 账户与安全</div>
+      <button id="accClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p id="accHint" class="hint" style="margin:8px 0 12px"></p>
+    <div class="acc-row"><span>手机号</span><b id="accPhone">未绑定</b></div>
+    <div class="acc-row"><span>邮箱</span><b id="accEmail">未绑定</b></div>
+    <hr style="margin:12px 0;border:none;border-top:1px solid var(--line)">
+    <button id="btnAccChangePwd" class="btn-soft" style="width:100%;justify-content:center">🔒 修改密码</button>
+    <button id="btnAccTransfer" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">📲 把账户搬到另一台设备</button>
+    <button id="btnAccBindPhone" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定 / 换绑手机号</button>
+    <button id="btnAccBindEmail" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px">绑定邮箱（用于找回）</button>
+    <button id="btnAccLogout" class="btn-soft" style="width:100%;justify-content:center;margin-top:8px;color:#e23">退出登录</button>
+  </div>
+</div>
+
+<!-- 修改密码面板（顶栏入口） -->
+<div id="chPwdModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">🔒 修改密码</div>
+      <button id="chPwdClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p id="chPwdHint" class="hint" style="margin:8px 0 12px"></p>
+    <div id="chPwdStepOld">
+      <label class="lbl">原密码</label>
+      <input id="chPwdOld" class="inp" type="password" placeholder="输入当前密码">
+    </div>
+    <div id="chPwdStepCode" style="display:none">
+      <label class="lbl">手机验证码（已发送）</label>
+      <div style="display:flex;gap:8px">
+        <input id="chPwdCode" class="inp" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位验证码">
+        <button id="btnChPwdGetCode" class="btn-soft" style="white-space:nowrap" onclick="getChPwdCode()">获取验证码</button>
+      </div>
+    </div>
+    <label class="lbl" style="margin-top:10px">新密码</label>
+    <input id="chPwdNew" class="inp" type="password" placeholder="至少 6 位">
+    <label class="lbl" style="margin-top:8px">再输一次新密码</label>
+    <input id="chPwdNew2" class="inp" type="password" placeholder="再次输入新密码">
+    <button id="btnChPwdSubmit" class="btn-primary" style="width:100%;margin-top:14px">确认修改</button>
+    <div id="chPwdErr" class="al-err"></div>
+  </div>
+</div>
+
+<!-- 账户迁移面板（扫码把账户搬到另一台设备） -->
+<div id="transferModal" class="cloud-modal">
+  <div class="cloud-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-weight:800;font-size:16px">📲 迁移账户到另一台设备</div>
+      <button id="transferClose" style="border:none;background:none;font-size:22px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <p class="hint" style="margin:8px 0 12px">当前是本地模式，本账户只在本设备。用下方二维码 / 迁移码，搬到另一台设备（10 分钟内有效）。</p>
+    <div class="al-tabs">
+      <div class="al-tab on" id="tabExport" onclick="switchTransferTab('export')">我是原设备（生成二维码）</div>
+      <div class="al-tab" id="tabImport" onclick="switchTransferTab('import')">我是新设备（扫码 / 输入迁移码）</div>
+    </div>
+    <div id="transferExportBox" style="margin-top:12px">
+      <div style="text-align:center;font-size:13px;color:var(--ink-3)">用另一台设备的相机 / 浏览器扫描下方二维码</div>
+      <div id="transferQrBox" style="display:flex;justify-content:center;margin:10px 0"></div>
+      <label class="lbl">迁移码（也可手动复制粘贴）</label>
+      <textarea id="transferCode" class="inp" readonly style="height:90px;font-size:11px;line-height:1.4;word-break:break-all;font-family:ui-monospace,Consolas,monospace"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-soft" style="flex:1;justify-content:center" onclick="copyTransferCode()">复制迁移码</button>
+        <button class="btn-soft" style="flex:1;justify-content:center" onclick="regenTransfer()">刷新二维码</button>
+      </div>
+      <div id="transferExpHint" class="hint" style="margin-top:8px;text-align:center"></div>
+    </div>
+    <div id="transferImportBox" style="display:none;margin-top:12px">
+      <label class="lbl">迁移码（从另一台设备复制过来）</label>
+      <textarea id="transferInput" class="inp" placeholder="把另一台设备显示的迁移码粘贴到这里" style="height:100px;font-size:12px;line-height:1.4;word-break:break-all;font-family:ui-monospace,Consolas,monospace"></textarea>
+      <button id="btnTransferImport" class="btn-primary" style="width:100%;margin-top:10px">导入并登录</button>
+      <div id="transferImportErr" class="al-err"></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- 小型模态弹窗（自定义 prompt） -->
+<div class="modal-mask" id="modalMask" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card" id="modalCard">
+    <h4 id="modalTitle">提示</h4>
+    <div id="modalBody"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="modalCancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="modalConfirm" onclick="modalConfirm()">确定</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/sync.js"></script>
+<script src="assets/cloud-config.js"></script>
+<script src="assets/sync-github.js"></script>
+<script src="https://static.cloudbase.com/cloudbase/js-sdk/1.6.4/cloudbase.full.js"></script>
+<script src="assets/cloud-core.js"></script>
+<script src="assets/account.js"></script>
+<script src="assets/qrcode.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/admin-login.js"></script>
+<script src="assets/qrcode.js"></script>
+<script>
+/* ================= 基础 ================= */
+var D = Store.read();
+var page = 'orders';
+var kbTab = 'pending';
+var soundReady = false;
+var audioCtx = null;
+var knownIds = {};
+var orderSelIds = {};    // 已勾选订单 id 集合（批量操作用）
+var prodFilterCat = '';  // 商品分类筛选
+var sidebarColl = { cat: false, banner: false }; // 侧边栏折叠状态：false=展开, true=折叠
+var statsFilter = 'all'; // 经营数据订单筛选：all | valid | canceled
+
+var PAGES = [
+  { k: 'orders',   t: '订单看板', i: '📋' },
+  { k: 'products', t: '商品管理', i: '🧋' },
+  { k: 'coupons',  t: '优惠券',   i: '🎟' },
+  { k: 'shop',     t: '店铺设置', i: '⚙️' },
+  { k: 'qrcode',   t: '点餐码',   i: '🔳' },
+  { k: 'stats',    t: '经营数据', i: '📊' }
+];
+
+function $(id) { return document.getElementById(id); }
+function money(n) { return Store.money(n); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function openMap(address) {
+  var q = encodeURIComponent(address);
+  if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.open('http://maps.apple.com/?q=' + q, '_blank');
+  } else {
+    window.open('https://uri.amap.com/search?keyword=' + q, '_blank');
+  }
+}
+function toast(m) {
+  var t = $('toast'); t.textContent = m; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1600);
+}
+function save(fn) { Store.update(fn); D = Store.read(); }
+
+/* ---------- 自定义模态弹窗 ---------- */
+var _modalCb = null;
+function showModal(title, html, confirmCb) {
+  var mask = $('modalMask');
+  $('modalTitle').innerHTML = title;
+  $('modalBody').innerHTML = html;
+  _modalCb = confirmCb;
+  mask.style.display = 'grid';
+  requestAnimationFrame(function () { mask.classList.add('show'); });
+  // 聚焦第一个输入框
+  var inp = mask.querySelector('.modal-input');
+  if (inp) setTimeout(function () { inp.focus(); }, 60);
+}
+function closeModal() {
+  var mask = $('modalMask');
+  mask.classList.remove('show');
+  setTimeout(function () { mask.style.display = 'none'; _modalCb = null; }, 180);
+}
+function modalConfirm() {
+  if (_modalCb) { _modalCb(); }
+  else { closeModal(); }
+}
+function modalInput(name, opts) {
+  opts = opts || {};
+  var val = ($('modalInput_' + name) || {}).value || '';
+  if (opts.trim !== false) val = val.trim();
+  if (opts.number) val = parseFloat(val) || 0;
+  return val;
+}
+
+/* ================= 声音 ================= */
+function initSound() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    soundReady = true;
+    var b = $('soundBar'); if (b) b.remove();
+    beep(); setTimeout(function () { speak('提示音已开启'); }, 260);
+  } catch (e) { toast('浏览器不支持音频'); }
+}
+function beep() {
+  if (!audioCtx) return;
+  [[880, 0], [1320, .16]].forEach(function (p) {
+    var o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = p[0];
+    var t0 = audioCtx.currentTime + p[1];
+    g.gain.setValueAtTime(0, t0);
+    g.gain.linearRampToValueAtTime(.32, t0 + .015);
+    g.gain.exponentialRampToValueAtTime(.001, t0 + .32);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t0); o.stop(t0 + .34);
+  });
+}
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    speechSynthesis.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = 'zh-CN'; u.rate = 1.05; u.volume = 1;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function alertNewOrder(n) {
+  if (!D.settings.soundOn) return;
+  beep();
+  setTimeout(function () { speak('您有新的订单，请及时处理'); }, 420);
+  var f = $('newOrderFlash');
+  f.classList.add('on');
+  setTimeout(function () { f.classList.remove('on'); }, 900);
+  try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
+  document.title = '(' + n + ') 新订单！· 商家后台';
+}
+function showSoundBar() {
+  if (soundReady || $('soundBar')) return;
+  var d = document.createElement('div');
+  d.id = 'soundBar';
+  d.innerHTML = '<span>🔕 浏览器需授权后才能播报新订单</span>'
+    + '<button class="btn btn-sm" style="background:#fff;color:var(--ink)" onclick="initSound()">开启提示音</button>';
+  document.body.appendChild(d);
+}
+
+/* ================= 导航 ================= */
+function renderNav() {
+  var pend = D.orders.filter(function (o) { return o.status === 'pending'; }).length;
+  $('nav').innerHTML = PAGES.map(function (p) {
+    return '<div class="nav-item' + (page === p.k ? ' on' : '') + '" onclick="go(\'' + p.k + '\')">'
+      + '<span class="nav-icon">' + p.i + '</span>' + p.t
+      + (p.k === 'orders' && pend ? '<span class="nav-badge">' + pend + '</span>' : '') + '</div>';
+  }).join('');
+  $('mobileNav').innerHTML = PAGES.map(function (p) {
+    return '<div class="mn-item' + (page === p.k ? ' on' : '') + '" onclick="go(\'' + p.k + '\')">'
+      + '<span class="mn-icon">' + p.i + '</span>' + p.t.slice(0, 4)
+      + (p.k === 'orders' && pend ? '<span class="mn-badge">' + pend + '</span>' : '') + '</div>';
+  }).join('');
+  $('pageTitle').textContent = (PAGES.find(function (p) { return p.k === page; }) || {}).t;
+  $('sideName').textContent = D.shop.name;
+  var logo = $('sideLogo');
+  if (D.shop.logoImg) { logo.innerHTML = '<img src="' + D.shop.logoImg + '" alt="">'; logo.style.background = 'transparent'; }
+  else { logo.innerHTML = esc(D.shop.logo || '🧋'); logo.style.backgroundImage = ''; }
+  var open = Store.isOpenNow(D);
+  $('sideStatus').textContent = open ? '营业中' : (D.shop.manualClose ? '手动打烊' : '非营业时段');
+  $('sideStatusDot').style.background = open ? 'var(--ok)' : '#C9C0BA';
+  $('quickOpen').className = 'switch' + (D.shop.manualClose ? '' : ' on');
+}
+function go(k) { page = k; render(); window.scrollTo(0, 0); }
+$('quickOpen').onclick = function () {
+  save(function (d) { d.shop.manualClose = !d.shop.manualClose; });
+  toast(D.shop.manualClose ? '已打烊，顾客无法下单' : '已开始营业');
+  render();
+};
+
+/* ================= 页面渲染 ================= */
+function render() { D = Store.read(); renderNav(); ({ orders: pgOrders, products: pgProducts, coupons: pgCoupons, shop: pgShop, qrcode: pgQR, stats: pgStats })[page](); }
+
+/* ---------- 订单看板 ---------- */
+function pgOrders() {
+  var counts = { pending: 0, making: 0, ready: 0, done: 0, canceled: 0 };
+  D.orders.forEach(function (o) { if (counts[o.status] !== undefined) counts[o.status]++; });
+  var TABS = [['pending', '待接单'], ['making', '制作中'], ['ready', '待取餐'], ['done', '已完成'], ['canceled', '已取消'], ['all', '全部']];
+
+  var todayStr = Store.today();
+  var todayOrders = D.orders.filter(function (o) { return new Date(o.createdAt).toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10); });
+  var rev = todayOrders.filter(function (o) { return o.status !== 'canceled'; }).reduce(function (s, o) { return s + o.total; }, 0);
+
+  var html = '<div class="stat-grid">'
+    + stat(counts.pending, '待接单', counts.pending ? 'var(--brand)' : '#D5CCC6')
+    + stat(counts.making, '制作中', 'var(--info)')
+    + stat(counts.ready, '待取餐', 'var(--ok)')
+    + stat(counts.done, '已完成', '#8A7A66')
+    + stat(counts.canceled, '已取消', '#C9C0BA')
+    + stat(todayOrders.length, '今日订单', 'var(--brand-2)')
+    + stat(money(rev), '今日营业额', 'var(--warn)')
+    + '</div>';
+
+  html += '<div class="kb-tabs" style="margin-bottom:14px">' + TABS.map(function (t) {
+    var n = t[0] === 'all' ? D.orders.length : (counts[t[0]] || 0);
+    return '<div class="kb-tab' + (kbTab === t[0] ? ' on' : '') + '" onclick="setTab(\'' + t[0] + '\')">'
+      + t[1] + '<span class="n">' + n + '</span></div>';
+  }).join('') + '</div>';
+
+  // 搜索框
+  html += '<div style="margin:0 0 8px;position:relative">'
+    + '<span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--ink-3)">🔍</span>'
+    + '<input id="orderSearch" class="field" style="padding-left:36px;width:100%;margin:0" placeholder="搜索订单编号 / 取餐码…" value="' + esc(window._adminSearch || '') + '" oninput="onOrderSearch(this.value)">'
+    + '</div>';
+
+  // 批量操作条
+  var orderSelCount = Object.keys(orderSelIds).length;
+  var list2 = kbTab === 'all' ? D.orders : D.orders.filter(function (o) { return o.status === kbTab; });
+  var st2 = (window._adminSearch || '').trim().toLowerCase();
+  if (st2) { list2 = list2.filter(function (o) { return o.code.toLowerCase().indexOf(st2) >= 0 || o.id.toLowerCase().indexOf(st2) >= 0; }); }
+  var allOrderChecked = list2.length > 0 && list2.every(function (o) { return orderSelIds[o.id]; });
+  html += '<div class="order-bulk-bar">'
+    + '<label class="sel-all"><input type="checkbox" class="sel-box" ' + (allOrderChecked ? 'checked' : '') + ' onchange="toggleAllOrders(this)"> 全选</label>'
+    + '<span class="sel-info">' + (orderSelCount ? '已选 ' + orderSelCount + ' 单' : '') + '</span>'
+    + '<button class="btn btn-sm btn-primary" onclick="bulkAccept()">批量接单</button>'
+    + '<button class="btn btn-sm btn-ghost" onclick="bulkCancel()">批量取消</button>'
+    + '<button class="btn btn-sm btn-danger" onclick="bulkDeleteOrders()">批量删除</button>'
+    + '</div>';
+
+  var list = kbTab === 'all' ? D.orders : D.orders.filter(function (o) { return o.status === kbTab; });
+
+  // 搜索过滤
+  var st = (window._adminSearch || '').trim().toLowerCase();
+  if (st) { list = list.filter(function (o) { return o.code.toLowerCase().indexOf(st) >= 0 || o.id.toLowerCase().indexOf(st) >= 0; }); }
+
+  if (!list.length) {
+    html += '<div class="card" style="text-align:center;padding:46px 20px;color:var(--ink-3)">'
+      + '<div style="font-size:42px;opacity:.3">' + (st ? '🔍' : '🍵') + '</div>'
+      + '<div style="margin-top:10px;font-size:13.5px">' + (st ? '没有找到匹配的订单' : '暂无' + (kbTab === 'all' ? '' : TABS.find(function (t) { return t[0] === kbTab; })[1]) + '订单') + '</div>'
+      + '<div style="font-size:12px;margin-top:6px">打开顾客端下一单试试，这里会实时响铃</div></div>';
+  } else {
+    html += '<div class="order-grid">' + list.map(orderCard).join('') + '</div>';
+  }
+  $('body').innerHTML = html;
+  bindSwipe();
+}
+function onOrderSearch(v) { window._adminSearch = v; pgOrders(); }
+function setTab(t) { kbTab = t; pgOrders(); }
+function stat(v, l, c, onClick) {
+  var click = onClick ? ' onclick="' + onClick.replace(/"/g, '&quot;') + '"' : '';
+  return '<div class="stat"' + click + ' style="border-left-color:' + c + '"><div class="stat-v" style="color:' + c + '">' + v + '</div><div class="stat-l">' + l + '</div></div>';
+}
+
+function orderCard(o) {
+  var NEXT = { pending: ['接单', 'making'], making: ['出餐', 'ready'], ready: ['完成', 'done'] };
+  var nx = NEXT[o.status];
+  var mins = Math.floor((Date.now() - o.createdAt) / 60000);
+  var STC = { pending: 'tag-warn', making: 'tag-info', ready: 'tag-ok', done: 'tag-off', canceled: 'tag-off' };
+  var checked = orderSelIds[o.id] ? 'checked' : '';
+  var custName = o.customerName || (o.customer && o.customer.name) || '';
+
+  return '<div class="owrap">'
+    + (nx ? '<div class="act-r">' + nx[0] + ' ✓</div>' : '')
+    + '<div class="act-l">✕ 取消</div>'
+    + '<div class="ocard' + (o.isNew ? ' new' : '') + '" data-id="' + o.id + '" data-st="' + o.status + '">'
+    + '<div class="o-head">'
+    + '<input type="checkbox" class="sel-box" ' + checked + ' onclick="event.stopPropagation();toggleOrderSel(\'' + o.id + '\',this.checked)" style="flex:none;margin-top:4px">'
+    + '<div><div class="o-code">' + o.code + '</div>'
+    + '<div class="o-meta">' + Store.timeStr(o.createdAt) + ' · ' + (mins < 1 ? '刚刚' : mins + ' 分钟前')
+    + (custName ? ' · 👤 ' + esc(custName) : '') + '</div></div>'
+    + '<div style="margin-left:auto;text-align:right">'
+    + '<span class="tag ' + STC[o.status] + '">' + Store.STATUS_TEXT[o.status] + '</span>'
+    + '<div style="font-size:11px;color:var(--ink-3);margin-top:5px">'
+    + (o.mode === 'pickup' ? '🏪 自取' : '🛵 外送')
+    + (o.table ? ' · ' + esc(o.table) : '')
+    + (o.phone || (o.customer && o.customer.phone) ? ' · ' + esc(o.phone || o.customer.phone) : '') + '</div></div></div>'
+
+    + (o.address && o.address !== '到店自取' && o.address !== '外送到家' ? '<div style="font-size:12px;color:var(--ink-2);padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer" onclick="openMap(\'' + esc(o.address).replace(/'/g, "\\'") + '\')">📍 ' + esc(o.address) + '</div>' : '')
+
+    + '<div class="o-items">' + o.items.map(function (it) {
+      return '<div class="o-line"><span class="q">×' + it.qty + '</span><span style="flex:1;min-width:0">'
+        + esc(it.name) + (it.spec ? '<span class="s"> · ' + esc(it.spec) + '</span>' : '') + '</span></div>';
+    }).join('') + '</div>'
+
+    + (o.remark ? '<div class="o-remark">📝 ' + esc(o.remark) + '</div>' : '')
+
+    + '<div class="o-foot">'
+    + '<span class="o-price">' + money(o.total) + '</span>'
+    + (o.discount ? '<span class="tag tag-hot">券 -' + o.discount + '</span>' : '')
+    + '<div style="margin-left:auto;display:flex;gap:6px">'
+    + (o.status !== 'done' && o.status !== 'canceled'
+      ? '<button class="btn btn-ghost btn-sm" onclick="setSt(\'' + o.id + '\',\'canceled\')">取消</button>'
+        + '<button class="btn btn-primary btn-sm" onclick="setSt(\'' + o.id + '\',\'' + nx[1] + '\')">' + nx[0] + '</button>'
+      : '<span style="font-size:11.5px;color:var(--ink-3)">' + (o.status === 'done' ? '已完成' : '已取消') + '</span>')
+    + '<button class="btn btn-sm" style="color:#C0392B;background:#FEF0F0;border:1px solid #FAD5D5" onclick="delOrder(\'' + o.id + '\')" title="删除此订单">🗑</button>'
+    + '</div></div>'
+    + (nx ? '<div class="swipe-hint">← 左滑取消 · 右滑' + nx[0] + ' →</div>' : '')
+    + '</div></div>';
+}
+
+function setSt(id, st) {
+  Store.setOrderStatus(id, st);
+  var T = { making: '已接单', ready: '已出餐，顾客收到通知', done: '订单已完成', canceled: '订单已取消' };
+  toast(T[st] || '已更新');
+  if (st === 'ready') { beep(); }
+  render();
+}
+
+/* ---------- 订单选择 / 批量操作 / 删除 ---------- */
+function toggleOrderSel(id, v) { if (v) orderSelIds[id] = true; else delete orderSelIds[id]; pgOrders(); }
+function toggleAllOrders(el) {
+  var on = el.checked;
+  var list = kbTab === 'all' ? D.orders : D.orders.filter(function (o) { return o.status === kbTab; });
+  var st = (window._adminSearch || '').trim().toLowerCase();
+  if (st) { list = list.filter(function (o) { return o.code.toLowerCase().indexOf(st) >= 0 || o.id.toLowerCase().indexOf(st) >= 0; }); }
+  list.forEach(function (o) { if (on) orderSelIds[o.id] = true; else delete orderSelIds[o.id]; });
+  pgOrders();
+}
+function delOrder(id) {
+  var o = Store.getOrder(id);
+  if (!o) return;
+  if (!confirm('确定删除订单 ' + o.code + ' 吗？删除后不可恢复。')) return;
+  save(function (d) { d.orders = d.orders.filter(function (x) { return x.id !== id; }); });
+  delete orderSelIds[id];
+  toast('订单已删除'); render();
+}
+function bulkAccept() {
+  var ids = Object.keys(orderSelIds);
+  if (!ids.length) { toast('请先勾选订单'); return; }
+  if (!confirm('批量接单 ' + ids.length + ' 个订单？')) return;
+  save(function (d) {
+    d.orders.forEach(function (o) {
+      if (orderSelIds[o.id] && o.status === 'pending') {
+        o.status = 'making'; o.isNew = false;
+        o.timeline.push({ s: 'making', t: Date.now() });
+      }
+    });
+  });
+  orderSelIds = {};
+  toast('已批量接单'); render();
+}
+function bulkCancel() {
+  var ids = Object.keys(orderSelIds);
+  if (!ids.length) { toast('请先勾选订单'); return; }
+  if (!confirm('批量取消 ' + ids.length + ' 个订单？')) return;
+  save(function (d) {
+    d.orders.forEach(function (o) {
+      if (orderSelIds[o.id] && o.status !== 'done' && o.status !== 'canceled') {
+        o.status = 'canceled'; o.isNew = false;
+        o.timeline.push({ s: 'canceled', t: Date.now() });
+      }
+    });
+  });
+  orderSelIds = {};
+  toast('已批量取消'); render();
+}
+function bulkDeleteOrders() {
+  var ids = Object.keys(orderSelIds);
+  if (!ids.length) { toast('请先勾选订单'); return; }
+  if (!confirm('批量删除 ' + ids.length + ' 个订单？删除后不可恢复。')) return;
+  save(function (d) { d.orders = d.orders.filter(function (o) { return !orderSelIds[o.id]; }); });
+  orderSelIds = {};
+  toast('已批量删除'); render();
+}
+function resetAllData() {
+  if (!confirm('确定重置所有数据？这将清空全部订单和经营记录，恢复到初始演示状态。此操作不可恢复！')) return;
+  if (!confirm('再次确认：所有订单、统计数据将被清空，确定吗？')) return;
+  Store.reset();
+  orderSelIds = {};
+  D = Store.read();
+  toast('数据已重置'); render();
+}
+
+/* ---------- 滑动手势 ---------- */
+function bindSwipe() {
+  document.querySelectorAll('.ocard').forEach(function (el) {
+    var st = el.dataset.st;
+    if (st === 'done' || st === 'canceled') return;
+    var sx = 0, dx = 0, active = false;
+
+    function start(x) { sx = x; dx = 0; active = true; el.classList.add('dragging'); }
+    function move(x) {
+      if (!active) return;
+      dx = x - sx;
+      dx = Math.max(-150, Math.min(150, dx));
+      el.style.transform = 'translateX(' + dx + 'px)';
+    }
+    function end() {
+      if (!active) return;
+      active = false;
+      el.classList.remove('dragging');
+      el.style.transform = '';
+      var NEXT = { pending: 'making', making: 'ready', ready: 'done' };
+      if (dx > 78) setSt(el.dataset.id, NEXT[st]);
+      else if (dx < -78) { if (confirm('确定取消这一单吗？')) setSt(el.dataset.id, 'canceled'); }
+    }
+
+    el.addEventListener('touchstart', function (e) { start(e.touches[0].clientX); }, { passive: true });
+    el.addEventListener('touchmove', function (e) { move(e.touches[0].clientX); }, { passive: true });
+    el.addEventListener('touchend', end);
+    el.addEventListener('mousedown', function (e) { if (e.target.closest('button')) return; start(e.clientX); e.preventDefault(); });
+    window.addEventListener('mousemove', function (e) { if (active) move(e.clientX); });
+    window.addEventListener('mouseup', end);
+  });
+}
+
+/* ---------- 商品管理 ---------- */
+var selIds = {};        // 已勾选商品 id 集合（批量操作用）
+var pendingImgId = null; // 等待上传图片的商品 id
+function pgProducts() {
+  var products = prodFilterCat
+    ? D.products.filter(function (p) { return p.cat === prodFilterCat; })
+    : D.products;
+  var allChecked = products.length && Object.keys(selIds).length === products.length;
+
+  // 分类统计
+  var catCounts = {};
+  D.categories.forEach(function (c) { catCounts[c] = 0; });
+  D.products.forEach(function (p) {
+    if (catCounts[p.cat] !== undefined) catCounts[p.cat]++;
+  });
+
+  // 已上架 Banner 商品
+  var bannerProducts = D.products.filter(function (p) { return p.banner && p.on; });
+
+  var html = '<div class="product-layout">';
+
+  // 左侧 sidebar
+  html += '<div class="product-sidebar">';
+
+  // 分类管理
+  html += '<div class="sidebar-section' + (sidebarColl.cat ? ' collapsed' : '') + '">'
+    + '<h4 onclick="toggleSidebar(\'cat\')">🗂 分类管理<span class="fold-icon">▼</span></h4>'
+    + '<div class="sidebar-body">'
+    + '<div class="cat-list">'
+    + '<div class="cat-item' + (prodFilterCat === '' ? ' on' : '') + '" onclick="filterCat(\'\')">'
+    + '<span class="cat-name">全部商品</span>'
+    + '<span class="cat-count">' + D.products.length + '</span></div>';
+  D.categories.forEach(function (c, i) {
+    html += '<div class="cat-item' + (prodFilterCat === c ? ' on' : '') + '" onclick="filterCat(\'' + c + '\')">'
+      + '<span class="cat-name">' + esc(c) + '</span>'
+      + '<span class="cat-count">' + (catCounts[c] || 0) + '</span>'
+      + '<span class="cat-del" onclick="event.stopPropagation();delCat(' + i + ')" title="删除分类">✕</span></div>';
+  });
+  html += '</div>'
+    + '<button class="btn btn-ghost btn-sm" onclick="addCat()" style="width:100%;margin-top:8px">+ 新建分类</button>'
+    + '</div></div>';
+
+  // Banner 管理
+  html += '<div class="sidebar-section' + (sidebarColl.banner ? ' collapsed' : '') + '">'
+    + '<h4 onclick="toggleSidebar(\'banner\')">🎯 首页广告位<span class="fold-icon">▼</span></h4>'
+    + '<div class="sidebar-body">'
+    + '<div class="banner-list">';
+  if (!bannerProducts.length) {
+    html += '<div class="banner-empty">暂无 Banner 商品<br>在商品列表中开启</div>';
+  } else {
+    bannerProducts.forEach(function (p) {
+      html += '<div class="banner-item">'
+        + (p.img ? '<div class="banner-thumb" style="background-image:url(\'' + p.img + '\')"></div>' : '<div class="banner-emoji">' + (p.emoji || '🧋') + '</div>')
+        + '<span class="banner-item-name">' + esc(p.name) + '</span>'
+        + '<span class="banner-tag">' + esc(p.bannerTag || '推荐') + '</span>'
+        + '<span class="banner-del" onclick="upd(\'' + p.id + '\',\'banner\',false)" title="从广告位移除">✕</span>'
+        + '</div>';
+    });
+  }
+  html += '</div></div></div>'; // end banner-list, end body, end section
+
+  html += '</div>'; // end sidebar
+
+  // 右侧主区域
+  html += '<div class="product-main">';
+
+  // 标题
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+    + '<h3 style="margin:0;flex:1">🧋 商品列表' + (prodFilterCat ? ' <span class="tag" style="margin-left:6px">' + esc(prodFilterCat) + '</span>' : '') + '</h3>'
+    + '<button class="btn btn-primary btn-sm" onclick="addProduct()">+ 新增商品</button></div>';
+
+  // 批量操作条
+  html += '<div class="bulk-bar">'
+    + '<label class="sel-all"><input type="checkbox" id="selAll" class="sel-box" ' + (allChecked ? 'checked' : '') + ' onchange="toggleAll(this)"> 全选</label>'
+    + '<span id="selInfo" class="sel-info"></span>'
+    + '<button class="btn btn-sm btn-success" onclick="bulkOn()">批量上架</button>'
+    + '<button class="btn btn-sm btn-ghost" onclick="bulkOff()">批量下架</button>'
+    + '<button class="btn btn-sm btn-ghost" onclick="bulkMoveCat()">移动到分类</button>'
+    + '<button class="btn btn-sm btn-ghost" onclick="bulkBanner()">店长推荐</button>'
+    + '<button class="btn btn-sm btn-danger" onclick="bulkDel()">批量删除</button>'
+    + '<label class="auto-cat"><input type="checkbox" ' + ((D.settings && D.settings.autoCat) ? 'checked' : '') + ' onchange="setAutoCat(this.checked)"> 上架自动分类</label>'
+    + '</div>';
+
+  // 商品表格（去掉分类和 Banner 列）
+  html += '<div style="overflow-x:auto"><table class="ptable"><thead><tr>'
+    + '<th style="width:40px"><input type="checkbox" class="sel-box" ' + (allChecked ? 'checked' : '') + ' onclick="toggleAll(this)"></th>'
+    + '<th style="width:56px">图</th><th style="min-width:120px">名称</th><th style="width:96px">价格</th>'
+    + '<th style="min-width:130px">描述</th><th style="width:76px">库存</th><th style="width:88px">月售</th>'
+    + '<th style="width:70px">上架</th><th style="width:84px">操作</th></tr></thead><tbody>';
+
+  products.forEach(function (p) {
+    var thumb = '<div class="p-thumb' + (p.img ? ' has-img' : '') + '" style="'
+      + (p.img ? ('background-image:url(\'' + p.img + '\')') : ('background:' + p.color)) + '"'
+      + ' onclick="pickImg(\'' + p.id + '\')" title="点击上传/更换图片">'
+      + (p.img ? '<div class="thumb-x" onclick="event.stopPropagation();removeImg(\'' + p.id + '\')">✕</div>' : '<div class="thumb-cam">📷</div>')
+      + (p.img ? '' : (p.emoji || '🧋')) + '</div>';
+
+    html += '<tr>'
+      + '<td><input type="checkbox" class="sel-box" ' + (selIds[p.id] ? 'checked' : '') + ' onchange="toggleSel(\'' + p.id + '\',this.checked)"></td>'
+      + '<td>' + thumb + '</td>'
+      + '<td><input class="inline-in" value="' + esc(p.name) + '" onchange="upd(\'' + p.id + '\',\'name\',this.value)"></td>'
+      + '<td><input class="inline-in w-price mono" type="number" step="0.5" min="0" value="' + p.price + '" onchange="upd(\'' + p.id + '\',\'price\',+this.value)"></td>'
+      + '<td><input class="inline-in" value="' + esc(p.desc) + '" onchange="upd(\'' + p.id + '\',\'desc\',this.value)"></td>'
+      + '<td><input class="inline-in mono" type="number" min="0" value="' + p.stock + '" onchange="upd(\'' + p.id + '\',\'stock\',+this.value)"></td>'
+      + '<td><input class="inline-in mono w-sold" type="number" min="0" value="' + (p.sold || 0) + '" onchange="upd(\'' + p.id + '\',\'sold\',+this.value)" title="月售数量，可自由修改"></td>'
+      + '<td><div class="switch' + (p.on ? ' on' : '') + '" style="transform:scale(.78);transform-origin:left" onclick="upd(\'' + p.id + '\',\'on\',!' + p.on + ')"></div></td>'
+      + '<td style="white-space:nowrap"><div class="icon-btn" onclick="editProductDetail(\'' + p.id + '\')" title="编辑商品详情（顾客端详情页显示）">📋</div>'
+      + '<div class="icon-btn" onclick="delProduct(\'' + p.id + '\')" title="删除商品">🗑</div></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '</div>'; // end product-main
+  html += '</div>'; // end product-layout
+
+  html += '<input id="fileInput" type="file" accept="image/*" style="display:none" onchange="onFileChosen(event)">';
+
+  $('body').innerHTML = html;
+  updateSelCount();
+}
+function toggleSidebar(key) {
+  sidebarColl[key] = !sidebarColl[key];
+  render();
+}
+
+function filterCat(c) {
+  prodFilterCat = prodFilterCat === c ? '' : c;
+  render();
+}
+function upd(id, k, v) {
+  save(function (d) {
+    var p = d.products.find(function (x) { return x.id === id; }); if (!p) return;
+    p[k] = v;
+    // 上架、或改名（且当前已上架）时，若开启自动分类，则按名称推断分类（缺分类自动新建，仍可手动覆盖）
+    var listed = (k === 'on') ? v : p.on;
+    if (D.settings && D.settings.autoCat && listed && (k === 'on' || k === 'name')) {
+      var c = Store.autoCat(p.name);
+      if (c && d.categories.indexOf(c) < 0) d.categories.push(c);
+      if (c) p.cat = c;
+    }
+  });
+  toast('已保存，顾客端已同步');
+  render();
+}
+function onCatChange(id, v) {
+  if (v === '__new__') {
+    var body = '<div class="modal-row"><label>分类名称</label><input class="modal-input" id="modalInput_catNewName" placeholder="请输入新分类名称"></div>';
+    showModal('🗂 新建分类', body, function () {
+      var n = modalInput('catNewName');
+      if (!n) { closeModal(); return; }
+      save(function (d) {
+        if (d.categories.indexOf(n) < 0) d.categories.push(n);
+        var p = d.products.find(function (x) { return x.id === id; }); if (p) p.cat = n;
+      });
+      closeModal();
+      toast('已更新'); render();
+    });
+  } else { upd(id, 'cat', v); }
+}
+function addProduct() {
+  var body = '<div class="modal-row"><label>商品名称</label><input class="modal-input" id="modalInput_name" placeholder="如：招牌奶茶" value=""></div>'
+    + '<div class="modal-row"><label>价格（元）</label><input class="modal-input" id="modalInput_price" type="number" step="0.5" min="0" placeholder="8" value="8"></div>';
+  showModal('🧋 新增商品', body, function () {
+    var name = modalInput('name');
+    if (!name) { toast('请填写商品名称'); return; }
+    var price = modalInput('price', { number: true });
+    if (price <= 0) price = 8;
+    save(function (d) {
+      var cat = (d.settings && d.settings.autoCat) ? Store.autoCat(name) : '';
+      if (!cat) cat = d.categories[0];
+      if (d.categories.indexOf(cat) < 0) d.categories.push(cat);
+      d.products.unshift({
+        id: 'p' + Date.now(), name: name, price: price, old: 0, cat: cat,
+        emoji: '🧋', color: '#FFF0E6', img: '', desc: '', on: true, stock: 999, hot: false, sold: 0, banner: false, bannerTag: ''
+      });
+    });
+    closeModal();
+    toast('已新增'); render();
+  });
+}
+function delProduct(id) {
+  if (!confirm('确定删除该商品？')) return;
+  save(function (d) { d.products = d.products.filter(function (p) { return p.id !== id; }); });
+  delete selIds[id];
+  toast('已删除'); render();
+}
+/* ---------- 商品详情编辑 ---------- */
+function detailRowInput(icon, label, key, val, placeholder) {
+  return '<div class="modal-row" style="display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;margin-bottom:12px">'
+    + '<span style="font-size:20px;padding-top:8px;line-height:1">' + icon + '</span>'
+    + '<div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:4px;font-weight:600">' + label + '</div>'
+    + '<input class="modal-input" id="modalInput_' + key + '" value="' + val + '" placeholder="' + placeholder + '">'
+    + '</div></div>';
+}
+function editProductDetail(id) {
+  var p = D.products.find(function (x) { return x.id === id; });
+  if (!p) return;
+  var d = p.detail || {};
+  var v = function (k) { return esc(d[k] || ''); };
+  var body = ''
+    + '<div style="max-height:min(560px,68vh);overflow-y:auto;padding-right:4px">'
+    + '<div class="modal-row" style="margin-bottom:12px">'
+    + '<label style="font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px;display:block">📝 长描述（详情区顶部那段话）</label>'
+    + '<textarea class="modal-input" id="modalInput_dDesc" rows="3" style="resize:vertical;font-family:inherit;line-height:1.55" placeholder="比如：阿尔卑斯山脉的水熬制七七四十九个小时...">' + v('desc') + '</textarea>'
+    + '</div>'
+    + detailRowInput('🧂', '原料',    'dRaw',     v('raw'),     '比如：本地直供、源头可溯')
+    + detailRowInput('🍽️', '份量',    'dServing', v('serving'), '比如：1 人份（女生可吃饱）')
+    + detailRowInput('🥗', '类型',    'dType',    v('type'),    '比如：荤菜 / 素菜 / 荤素搭配')
+    + detailRowInput('👨‍🍳', '制作方法', 'dMethod',  v('method'),  '比如：现做现卖，立等可取')
+    + detailRowInput('⏰', '保质期',  'dShelf',   v('shelf'),   '比如：建议现做现吃')
+    + detailRowInput('💡', '小贴士',  'dTips',    v('tips'),    '比如：可备注辣度 / 忌口')
+    + '<div style="font-size:11.5px;color:var(--ink-3);padding:8px 4px 4px;line-height:1.6;background:#FAF7F4;border-radius:8px">'
+    + '💡 保存后顾客端 <code>商品详情</code> 页会立刻同步显示。没填的字段会保持空白（不再用系统模板凑）。'
+    + '</div>'
+    + '</div>';
+  showModal('📋 编辑商品详情 · ' + esc(p.name), body, function () {
+    save(function (data) {
+      var pp = data.products.find(function (x) { return x.id === id; }); if (!pp) return;
+      pp.detail = {
+        desc: modalInput('dDesc'),
+        raw: modalInput('dRaw'),
+        serving: modalInput('dServing'),
+        type: modalInput('dType'),
+        method: modalInput('dMethod'),
+        shelf: modalInput('dShelf'),
+        tips: modalInput('dTips')
+      };
+    });
+    closeModal();
+    toast('详情已更新，顾客端已同步');
+    render();
+  });
+  var card = $('modalCard');
+  if (card) card.style.maxWidth = '460px';
+}
+/* ---------- 批量选择 ---------- */
+function toggleSel(id, v) { if (v) selIds[id] = true; else delete selIds[id]; updateSelCount(); }
+function toggleAll(el) {
+  var on = el.checked;
+  var list = prodFilterCat ? D.products.filter(function (p) { return p.cat === prodFilterCat; }) : D.products;
+  list.forEach(function (p) { if (on) selIds[p.id] = true; else delete selIds[p.id]; });
+  document.querySelectorAll('.sel-box').forEach(function (cb) { cb.checked = on; });
+  updateSelCount();
+}
+function updateSelCount() {
+  var list = prodFilterCat ? D.products.filter(function (p) { return p.cat === prodFilterCat; }) : D.products;
+  var n = Object.keys(selIds).length;
+  var info = document.getElementById('selInfo'); if (info) info.textContent = n ? ('已选 ' + n + ' 项') : '';
+  var all = document.getElementById('selAll');
+  if (all) all.checked = n === list.length && n > 0;
+}
+function applyBulk(fn) {
+  var ids = Object.keys(selIds);
+  if (!ids.length) { toast('请先勾选商品'); return; }
+  save(function (d) { d.products.forEach(function (p) { if (selIds[p.id]) fn(p, d); }); });
+  toast('已更新'); render();
+}
+function bulkOn() {
+  applyBulk(function (p, d) {
+    p.on = true;
+    if (d.settings && d.settings.autoCat) {
+      var c = Store.autoCat(p.name);
+      if (c && d.categories.indexOf(c) < 0) d.categories.push(c);
+      if (c) p.cat = c;
+    }
+  });
+}
+function bulkOff() { applyBulk(function (p) { p.on = false; }); }
+function bulkDel() {
+  var ids = Object.keys(selIds);
+  if (!ids.length) { toast('请先勾选商品'); return; }
+  if (!confirm('确定删除选中的 ' + ids.length + ' 个商品？此操作不可恢复')) return;
+  save(function (d) { d.products = d.products.filter(function (p) { return selIds[p.id] === undefined; }); });
+  selIds = {};
+  toast('已删除'); render();
+}
+function bulkMoveCat() {
+  var ids = Object.keys(selIds);
+  if (!ids.length) { toast('请先勾选商品'); return; }
+  var catList = D.categories.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+  var body = '<div class="modal-row"><label>选择已有分类</label>'
+    + '<select class="modal-input" id="modalInput_catSelect" style="margin-bottom:12px">'
+    + '<option value="">-- 选择分类 --</option>' + catList + '</select></div>'
+    + '<div class="modal-row"><label>或新建分类</label>'
+    + '<input class="modal-input" id="modalInput_catNew" placeholder="输入新分类名称"></div>';
+  showModal('🗂 移动到分类', body, function () {
+    var c = modalInput('catNew', { trim: true });
+    if (!c) c = modalInput('catSelect', { trim: true });
+    if (!c) { toast('请选择或输入分类'); return; }
+    save(function (d) {
+      if (d.categories.indexOf(c) < 0) d.categories.push(c);
+      d.products.forEach(function (p) { if (selIds[p.id]) p.cat = c; });
+    });
+    closeModal();
+    toast('已移动'); render();
+  });
+}
+function bulkBanner() {
+  var ids = Object.keys(selIds);
+  if (!ids.length) { toast('请先勾选商品'); return; }
+  var presets = ['新品推荐', '店长推荐', '人气热销', '本店特惠'];
+  var body = '<div class="modal-row"><label>选择标签（或自定义输入）</label>'
+    + '<div class="modal-tags" id="bannerTags">'
+    + presets.map(function (t) { return '<div class="modal-tag" data-val="' + t + '" onclick="pickBannerTag(this)">' + t + '</div>'; }).join('')
+    + '</div></div>'
+    + '<div class="modal-row"><input class="modal-input" id="modalInput_tag" placeholder="自定义标签（留空则用默认推荐）" value="店长推荐"></div>';
+  showModal('🎯 店长推荐', body, function () {
+    var tag = modalInput('tag', { trim: true });
+    if (!tag) tag = '店长推荐';
+    save(function (d) {
+      d.products.forEach(function (p) {
+        if (selIds[p.id]) { p.banner = true; p.bannerTag = tag; }
+      });
+    });
+    closeModal();
+    toast('已添加到首页Banner'); render();
+  });
+}
+function pickBannerTag(el) {
+  document.querySelectorAll('#bannerTags .modal-tag').forEach(function (t) { t.classList.remove('on'); });
+  el.classList.add('on');
+  var inp = $('modalInput_tag'); if (inp) inp.value = el.dataset.val;
+}
+function setAutoCat(v) { save(function (d) { d.settings.autoCat = v; }); render(); }
+/* ---------- 图片上传 ---------- */
+function pickImg(id) { pendingImgId = id; var fi = document.getElementById('fileInput'); if (fi) fi.click(); }
+function onFileChosen(e) {
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  var id = pendingImgId;
+  Store.compressImage(f, 240, 0.6, function (url) {
+    if (url) upd(id, 'img', url); else toast('图片读取失败');
+  });
+  e.target.value = '';
+}
+function removeImg(id) { upd(id, 'img', ''); toast('已移除图片，恢复 emoji'); }
+/* ---- 店铺图标上传 ---- */
+function pickShopLogo() {
+  var i = document.createElement('input');
+  i.type = 'file'; i.accept = 'image/*';
+  i.onchange = function () {
+    var f = i.files && i.files[0]; if (!f) return;
+    Store.compressImage(f, 320, 0.7, function (url) {
+      if (!url) { toast('读取失败'); return; }
+      save(function (d) { d.shop.logoImg = url; });
+      toast('店铺图标已更新，顾客端已同步');
+      render();
+    });
+  };
+  i.click();
+}
+function addCat() {
+  var body = '<div class="modal-row"><label>分类名称</label><input class="modal-input" id="modalInput_catName" placeholder="如：甜品饮品"></div>';
+  showModal('🗂 新建分类', body, function () {
+    var n = modalInput('catName');
+    if (!n) { closeModal(); return; }
+    save(function (d) { if (d.categories.indexOf(n) < 0) d.categories.push(n); });
+    closeModal();
+    render();
+  });
+}
+function delCat(i) {
+  save(function (d) {
+    var c = d.categories[i];
+    if (d.products.some(function (p) { return p.cat === c; })) { toast('该分类下还有商品，不能删除'); return; }
+    d.categories.splice(i, 1);
+  });
+  render();
+}
+
+/* ---------- 优惠券 ---------- */
+function pgCoupons() {
+  var html = '<div class="card"><h3>🎟 优惠券'
+    + '<button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="addCoupon()">+ 新建优惠券</button></h3>'
+    + '<div style="overflow-x:auto"><table class="ptable"><thead><tr>'
+    + '<th style="min-width:130px">名称</th><th style="width:100px">类型</th><th style="width:96px">门槛(元)</th>'
+    + '<th style="width:96px">面额(元)</th><th style="width:70px">启用</th><th style="width:44px"></th></tr></thead><tbody>';
+  D.coupons.forEach(function (c) {
+    html += '<tr>'
+      + '<td><input class="inline-in" value="' + esc(c.name) + '" onchange="updC(\'' + c.id + '\',\'name\',this.value)"></td>'
+      + '<td><select class="inline-in" onchange="updC(\'' + c.id + '\',\'type\',this.value)">'
+      + '<option value="cash"' + (c.type === 'cash' ? ' selected' : '') + '>满减</option>'
+      + '<option value="ship"' + (c.type === 'ship' ? ' selected' : '') + '>免运费</option></select></td>'
+      + '<td><input class="inline-in mono" type="number" min="0" value="' + c.threshold + '" onchange="updC(\'' + c.id + '\',\'threshold\',+this.value)"></td>'
+      + '<td>' + (c.type === 'ship' ? '<span style="color:var(--ink-3);font-size:12px">运费全免</span>'
+        : '<input class="inline-in mono" type="number" min="0" value="' + c.value + '" onchange="updC(\'' + c.id + '\',\'value\',+this.value)">') + '</td>'
+      + '<td><div class="switch' + (c.on ? ' on' : '') + '" style="transform:scale(.78);transform-origin:left" onclick="updC(\'' + c.id + '\',\'on\',!' + c.on + ')"></div></td>'
+      + '<td><div class="icon-btn" onclick="delCoupon(\'' + c.id + '\')">🗑</div></td></tr>';
+  });
+  html += '</tbody></table></div></div>'
+    + '<div class="card"><h3>🚚 配送与起送</h3>'
+    + fRow('配送费', '外送订单加收', '<input class="field mono" style="width:110px" type="number" step="0.5" min="0" value="' + D.settings.deliveryFee + '" onchange="updS(\'deliveryFee\',+this.value)"> 元')
+    + fRow('打包费', '外送订单加收包装费', '<input class="field mono" style="width:110px" type="number" step="0.5" min="0" value="' + (D.settings.packingFee || 1) + '" onchange="updS(\'packingFee\',+this.value)"> 元')
+    + fRow('免配送门槛', '商品满此金额免配送费', '<input class="field mono" style="width:110px" type="number" min="0" value="' + D.settings.freeDeliveryAt + '" onchange="updS(\'freeDeliveryAt\',+this.value)"> 元')
+    + fRow('外送起送价', '低于此金额不能下外送单', '<input class="field mono" style="width:110px" type="number" min="0" value="' + D.settings.minOrder + '" onchange="updS(\'minOrder\',+this.value)"> 元')
+    + '</div>';
+  $('body').innerHTML = html;
+}
+function updC(id, k, v) { save(function (d) { var c = d.coupons.find(function (x) { return x.id === id; }); if (c) c[k] = v; }); toast('已保存'); render(); }
+function addCoupon() {
+  var body = '<div class="modal-row"><label>优惠券名称</label><input class="modal-input" id="modalInput_couponName" placeholder="如：满 40 减 12" value="满 40 减 12"></div>'
+    + '<div class="modal-row"><label>类型</label>'
+    + '<div class="modal-tags" id="couponTypeTags">'
+    + '<div class="modal-tag on" data-val="cash" onclick="pickCouponType(this)">满减</div>'
+    + '<div class="modal-tag" data-val="ship" onclick="pickCouponType(this)">免运费</div>'
+    + '</div></div>';
+  showModal('🎟 新建优惠券', body, function () {
+    var n = modalInput('couponName');
+    if (!n) { closeModal(); return; }
+    var type = (window._couponType || 'cash');
+    save(function (d) { d.coupons.push({ id: 'c' + Date.now(), name: n, type: type, threshold: type === 'ship' ? 0 : 40, value: 12, on: true }); });
+    closeModal();
+    toast('已创建'); render();
+  });
+}
+function pickCouponType(el) {
+  window._couponType = el.dataset.val;
+  document.querySelectorAll('#couponTypeTags .modal-tag').forEach(function (t) { t.classList.remove('on'); });
+  el.classList.add('on');
+}
+function delCoupon(id) {
+  if (!confirm('删除该优惠券？')) return;
+  save(function (d) { d.coupons = d.coupons.filter(function (c) { return c.id !== id; }); }); render();
+}
+function updS(k, v) { save(function (d) { d.settings[k] = v; }); toast('已保存'); render(); }
+
+/* ---------- 店铺设置 ---------- */
+function pgShop() {
+  var s = D.shop;
+  var open = Store.isOpenNow(D);
+  var html = '<div class="card" style="background:' + (open ? 'linear-gradient(135deg,#E7F6EC,#F5FBF7)' : '#F5F1EE') + '">'
+    + '<div style="display:flex;align-items:center;gap:14px">'
+    + '<div style="font-size:36px">' + (open ? '😊' : '😴') + '</div>'
+    + '<div><div style="font-size:17px;font-weight:800">' + (open ? '正在营业' : '已打烊') + '</div>'
+    + '<div style="font-size:12.5px;color:var(--ink-2);margin-top:3px">'
+    + (s.manualClose ? '你手动打烊了，顾客扫码会看到打烊提示' : '营业时间 ' + s.hours.start + ' - ' + s.hours.end) + '</div></div>'
+    + '<button class="btn ' + (s.manualClose ? 'btn-primary' : 'btn-ghost') + '" style="margin-left:auto" onclick="toggleClose()">'
+    + (s.manualClose ? '▶ 开始营业' : '⏸ 一键打烊') + '</button></div></div>';
+
+  html += '<div class="card"><h3>🏪 店铺信息</h3>'
+    + fRow('店铺名称', '显示在顾客点餐页顶部', '<input class="field" value="' + esc(s.name) + '" onchange="updShop(\'name\',this.value)">', 1)
+    + fRow('店铺标语', '', '<input class="field" value="' + esc(s.slogan) + '" onchange="updShop(\'slogan\',this.value)">', 1)
+    + fRow('店铺图标', '可上传图片（自动压缩）', '<div style="display:flex;gap:10px;align-items:center">'
+      + '<div id="logoPreview" onclick="pickShopLogo()" title="点击上传 / 更换" style="width:56px;height:56px;border-radius:14px;background:' + (s.logoImg ? 'center/cover url(' + s.logoImg + ')' : 'var(--brand-soft)') + ';display:grid;place-items:center;font-size:28px;cursor:pointer;border:1.5px dashed ' + (s.logoImg ? 'transparent' : 'var(--brand-2)') + '">' + (s.logoImg ? '' : esc(s.logo || '🧋')) + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:5px"><button class="btn btn-ghost btn-sm" onclick="pickShopLogo()">📷 上传图片</button>'
+      + (s.logoImg ? '<button class="btn btn-ghost btn-sm" onclick="updShop(\'logoImg\',\'\')">恢复默认</button>' : '')
+      + '<button class="btn btn-ghost btn-sm" onclick="changeShopEmoji()">换 emoji</button></div></div>'
+    )
+    + fRow('联系电话', '', '<input class="field" style="width:170px" value="' + esc(s.phone) + '" onchange="updShop(\'phone\',this.value)">')
+    + fRow('门店地址', '', '<input class="field" value="' + esc(s.address) + '" onchange="updShop(\'address\',this.value)">', 1)
+    + '</div>';
+
+  html += '<div class="card"><h3>🕐 营业时间</h3>'
+    + fRow('开始时间', '到点自动开门', '<input class="field mono" style="width:130px" type="time" value="' + s.hours.start + '" onchange="updHours(\'start\',this.value)">')
+    + fRow('结束时间', '到点自动打烊，支持跨夜', '<input class="field mono" style="width:130px" type="time" value="' + s.hours.end + '" onchange="updHours(\'end\',this.value)">')
+    + '</div>';
+
+  html += '<div class="card"><h3>📢 店铺公告</h3>'
+    + fRow('显示公告', '顾客扫码进入时弹窗提示', '<div class="switch' + (s.noticeOn ? ' on' : '') + '" onclick="updShop(\'noticeOn\',' + !s.noticeOn + ')"></div>')
+    + '<div style="padding-top:11px"><textarea class="field" rows="3" placeholder="例如：今日鲜果茶第二杯半价…" onchange="updShop(\'notice\',this.value)">' + esc(s.notice) + '</textarea></div>'
+    + '</div>';
+
+  html += '<div class="card"><h3>🔔 提示音</h3>'
+    + fRow('新订单语音播报', '前台常驻时播报「您有新的订单」', '<div class="switch' + (D.settings.soundOn ? ' on' : '') + '" onclick="updS(\'soundOn\',' + !D.settings.soundOn + ')"></div>')
+    + fRow('测试提示音', '点一下听听效果', '<button class="btn btn-ghost btn-sm" onclick="soundReady?alertNewOrder(1):initSound()">▶ 试听</button>')
+    + '<div style="margin-top:12px;background:#FFF8E6;border:1px solid #FBE8B8;border-radius:10px;padding:11px;font-size:12.5px;color:#8A6410;line-height:1.6">'
+    + '⚠️ 手机锁屏或应用切到后台时，系统会禁止网页/小程序播放声音。真正开店建议加一台<b>云喇叭</b>（约 200 元），订单直达硬件播报，绝不漏单。</div>'
+    + '</div>';
+
+  $('body').innerHTML = html;
+}
+function fRow(label, hint, ctl, wide) {
+  return '<div class="form-row"' + (wide ? ' style="flex-wrap:wrap"' : '') + '>'
+    + '<div class="form-label">' + label + (hint ? '<div class="form-hint">' + hint + '</div>' : '') + '</div>'
+    + '<div class="form-ctl"' + (wide ? ' style="min-width:200px"' : '') + '>' + ctl + '</div></div>';
+}
+function updShop(k, v) { save(function (d) { d.shop[k] = v; }); toast('已保存'); render(); }
+function changeShopEmoji() {
+  var body = '<div class="modal-row"><label>输入 Emoji 图标</label><input class="modal-input" id="modalInput_emoji" placeholder="如：🥐" value="' + esc(D.shop.logo || '🥐') + '"></div>'
+    + '<div style="text-align:center;font-size:48px;padding:14px;background:#FAF7F4;border-radius:12px;margin-top:8px" id="emojiPreview">' + (D.shop.logo || '🥐') + '</div>';
+  showModal('🧋 更换店铺图标', body, function () {
+    var emoji = modalInput('emoji');
+    if (!emoji) { closeModal(); return; }
+    save(function (d) { d.shop.logoImg = ''; d.shop.logo = emoji; });
+    closeModal();
+    toast('图标已更新'); render();
+  });
+  setTimeout(function () {
+    var inp = $('modalInput_emoji');
+    var prev = $('emojiPreview');
+    if (inp && prev) {
+      inp.addEventListener('input', function () { prev.textContent = inp.value || '🥐'; });
+    }
+  }, 100);
+}
+function updHours(k, v) { save(function (d) { d.shop.hours[k] = v; }); toast('已保存'); render(); }
+function toggleClose() { save(function (d) { d.shop.manualClose = !d.shop.manualClose; }); toast(D.shop.manualClose ? '已打烊' : '开始营业'); render(); }
+function clearOrders() { /* 已废弃，订单删除请在订单看板操作 */ }
+function resetAll() {
+  if (!confirm('恢复到初始演示数据？所有订单和设置将清空。')) return;
+  Store.reset(); orderSelIds = {}; D = Store.read(); toast('已重置'); render();
+}
+
+/* ---------- 点餐码 ---------- */
+function pgQR() {
+  var base = location.href.replace(/admin\.html.*$/, 'customer.html');
+  var html = '<div class="card"><h3>🔳 扫码点餐码</h3>'
+    + '<div style="font-size:13px;color:var(--ink-2);line-height:1.7;margin-bottom:16px">'
+    + '把二维码打印出来贴在桌上或收银台，顾客用微信扫一扫就能直接进入点餐页。<br>'
+    + '<span style="color:var(--ink-3);font-size:12px">正式版会换成微信小程序码，扫码直达小程序，无需下载任何 App。</span></div>'
+    + '<div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">'
+    + '<div class="qr-box">'
+    + '<div class="qr-top"><div style="font-size:15px;font-weight:800">' + esc(D.shop.name) + '</div>'
+    + '<div style="font-size:11.5px;opacity:.9;margin-top:2px">微信扫码 · 自助点单</div></div>'
+    + '<canvas class="qr" id="qrCanvas"></canvas>'
+    + '<div id="qrLabel" style="font-size:13px;font-weight:700;margin-top:10px">通用点餐码</div>'
+    + '<div style="font-size:11px;color:var(--ink-3);margin-top:3px">扫码点单 · 免排队 · 免注册</div></div>'
+
+    + '<div style="flex:1;min-width:230px">'
+    + fRow('桌号', '留空生成通用码', '<input class="field" style="width:120px" id="tableInput" placeholder="如 A3" oninput="drawQR()">')
+    + '<div style="margin-top:14px;display:flex;gap:9px;flex-wrap:wrap">'
+    + '<button class="btn btn-primary btn-sm" onclick="downloadQR()">⬇ 下载二维码</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="printQR()">🖨 打印</button>'
+    + '<button class="btn btn-ghost btn-sm" onclick="openCustomer()">🔗 直接打开</button></div>'
+    + '<div style="margin-top:16px;background:#F7F3F0;border-radius:10px;padding:12px;font-size:12px;color:var(--ink-2);word-break:break-all;line-height:1.6">'
+    + '<b>链接地址</b><br><span id="qrUrl"></span></div>'
+    + '<div style="margin-top:12px;background:#E8F0FE;border-radius:10px;padding:12px;font-size:12.5px;color:#1B4FA8;line-height:1.65">'
+    + '💡 批量出码：把桌号依次填入并下载，或正式版一键生成 1–99 桌的码，打包下载直接送印。</div>'
+    + '</div></div></div>';
+  $('body').innerHTML = html;
+  drawQR();
+}
+function qrUrl() {
+  var base = location.href.split('#')[0].replace(/admin\.html.*$/, 'customer.html');
+  var t = ($('tableInput') && $('tableInput').value || '').trim();
+  return base + (t ? '?t=' + encodeURIComponent(t) : '');
+}
+function drawQR() {
+  var url = qrUrl();
+  try { QR.render($('qrCanvas'), url, 208, { dark: '#1F1B18' }); } catch (e) { toast('二维码生成失败：' + e.message); }
+  var t = ($('tableInput') && $('tableInput').value || '').trim();
+  $('qrLabel').textContent = t ? '桌号 ' + t : '通用点餐码';
+  $('qrUrl').textContent = url;
+}
+function downloadQR() {
+  var t = ($('tableInput').value || '').trim();
+  var out = buildQRCardCanvas($('qrCanvas'), D.shop.name || '扫码点餐', t);
+  var a = document.createElement('a');
+  a.download = (D.shop.name || '店铺') + '点餐码' + (t ? '-' + t : '') + '.png';
+  a.href = out.toDataURL('image/png');
+  a.click();
+  toast('已下载（含店铺名称的卡片）');
+}
+function printQR() {
+  var w = window.open('', '_blank', 'width=420,height=560');
+  var t = ($('tableInput').value || '').trim();
+  var out = buildQRCardCanvas($('qrCanvas'), D.shop.name || '扫码点餐', t);
+  var img = out.toDataURL('image/png');
+  w.document.write('<html><head><title>' + esc(D.shop.name) + '点餐码</title>'
+    + '<style>body{font-family:-apple-system,"Microsoft YaHei",sans-serif;text-align:center;padding:24px;margin:0;background:#FBF5EB}'
+    + 'img{width:320px;box-shadow:0 8px 22px rgba(120,70,20,.12);border-radius:14px}</style></head>'
+    + '<body><img src="' + img + '"></body></html>');
+  w.document.close();
+  setTimeout(function () { w.print(); }, 300);
+}
+/* 合成「橙底店名 + QR + 底部说明」卡片 PNG，店名自动跟店铺设置走 */
+function buildQRCardCanvas(srcCanvas, shopName, tableNo) {
+  var W = 320, H = 460;
+  var cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  var ctx = cv.getContext('2d');
+  // 白底圆角
+  fillRoundRect(ctx, 0, 0, W, H, 18, '#FFFFFF');
+  // 顶部橙底（只上两角圆）
+  fillTopRoundRect(ctx, 0, 0, W, 96, 18, '#E8841C');
+  // 店名（自动跟随 shop.name）
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 19px -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif';
+  ctx.fillText(shopName || '扫码点餐', W / 2, 38);
+  ctx.globalAlpha = 0.92;
+  ctx.font = '12px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.fillText('微信扫码 · 自助点单', W / 2, 66);
+  ctx.globalAlpha = 1;
+  // QR 主体
+  var qrSize = 208, qrX = (W - qrSize) / 2, qrY = 118;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+  ctx.drawImage(srcCanvas, qrX, qrY, qrSize, qrSize);
+  // 底部标签
+  ctx.fillStyle = '#3A2A1A';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 16px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.fillText(tableNo ? ('桌号 ' + tableNo) : '通用点餐码', W / 2, 358);
+  ctx.fillStyle = '#8A7A66';
+  ctx.font = '11.5px -apple-system, "Microsoft YaHei", sans-serif';
+  ctx.fillText('扫码点单 · 免排队 · 免注册', W / 2, 386);
+  return cv;
+}
+function fillRoundRect(ctx, x, y, w, h, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath(); ctx.fill();
+}
+function fillTopRoundRect(ctx, x, y, w, h, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath(); ctx.fill();
+}
+function openCustomer() { window.open(qrUrlSafe(), '_blank'); }
+function qrUrlSafe() {
+  return location.href.split('#')[0].replace(/admin\.html.*$/, 'customer.html');
+}
+
+/* ---------- 经营数据 ---------- */
+function pgStats() {
+  var valid = D.orders.filter(function (o) { return o.status !== 'canceled'; });
+  var canceled = D.orders.filter(function (o) { return o.status === 'canceled'; });
+  var allOrd = D.orders;
+  var rev = valid.reduce(function (s, o) { return s + o.total; }, 0);
+  var avg = valid.length ? rev / valid.length : 0;
+  var cut = valid.reduce(function (s, o) { return s + (o.discount || 0); }, 0);
+
+  var sales = {};
+  valid.forEach(function (o) { o.items.forEach(function (it) { sales[it.name] = (sales[it.name] || 0) + it.qty; }); });
+  var rank = Object.keys(sales).map(function (k) { return [k, sales[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
+  var max = rank.length ? rank[0][1] : 1;
+
+  var byHour = new Array(24).fill(0);
+  valid.forEach(function (o) { byHour[new Date(o.createdAt).getHours()]++; });
+  var hmax = Math.max.apply(null, byHour) || 1;
+
+  var html = '<div class="stat-grid">'
+    + stat(allOrd.length, '全部订单', 'var(--brand)', "setStatsFilter('all');scrollToTable()")
+    + stat(valid.length, '订单', 'var(--ok)', "setStatsFilter('valid');scrollToTable()")
+    + stat(canceled.length, '取消订单', 'var(--warn)', "setStatsFilter('canceled');scrollToTable()")
+    + stat(money(rev), '累计营业额', 'var(--info)', "setStatsFilter('valid');scrollToTable()")
+    + stat(money(avg), '客单价', 'var(--ok)', "setStatsFilter('valid');scrollToTable()")
+    + stat(money(cut), '优惠券支出', 'var(--warn)', "setStatsFilter('valid');scrollToTable()")
+    + '</div>';
+
+  html += '<div class="card"><h3>🏆 商品销量排行</h3>';
+  if (!rank.length) html += '<div style="color:var(--ink-3);font-size:13px;padding:20px 0;text-align:center">还没有销售数据，去顾客端下几单试试</div>';
+  rank.forEach(function (r, i) {
+    html += '<div style="display:flex;align-items:center;gap:11px;padding:7px 0">'
+      + '<span style="width:20px;font-weight:800;color:' + (i < 3 ? 'var(--brand)' : 'var(--ink-3)') + '">' + (i + 1) + '</span>'
+      + '<span style="width:96px;font-size:13px" class="ell">' + esc(r[0]) + '</span>'
+      + '<div style="flex:1;height:9px;background:#F2ECE8;border-radius:5px;overflow:hidden">'
+      + '<div style="height:100%;width:' + (r[1] / max * 100) + '%;background:var(--grad-warm);border-radius:5px;transition:width .5s"></div></div>'
+      + '<span class="mono" style="width:38px;text-align:right;font-weight:700;font-size:13px">' + r[1] + '</span></div>';
+  });
+  html += '</div>';
+
+  html += '<div class="card"><h3>⏰ 时段分布</h3>'
+    + '<div style="display:flex;align-items:flex-end;gap:2px;height:110px">'
+    + byHour.map(function (v, h) {
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" title="' + h + '点 · ' + v + '单">'
+        + '<div style="width:100%;background:' + (v ? 'var(--grad-warm)' : '#F2ECE8') + ';border-radius:3px 3px 0 0;height:' + Math.max(3, v / hmax * 86) + 'px"></div>'
+        + (h % 3 === 0 ? '<span style="font-size:9px;color:var(--ink-3)">' + h + '</span>' : '<span style="font-size:9px">&nbsp;</span>')
+        + '</div>';
+    }).join('') + '</div></div>';
+
+  html += '<div class="card" id="statsTable"><div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    + '<h3 style="margin:0">📜 订单记录</h3>'
+    + '<div class="kb-tabs" style="margin:0;border:none;padding:0">'
+    + '<span class="kb-tab' + (statsFilter === 'all' ? ' on' : '') + '" onclick="setStatsFilter(\'all\')">全部 <span class="n">' + allOrd.length + '</span></span>'
+    + '<span class="kb-tab' + (statsFilter === 'valid' ? ' on' : '') + '" onclick="setStatsFilter(\'valid\')">订单 <span class="n">' + valid.length + '</span></span>'
+    + '<span class="kb-tab' + (statsFilter === 'canceled' ? ' on' : '') + '" onclick="setStatsFilter(\'canceled\')">取消订单 <span class="n">' + canceled.length + '</span></span>'
+    + '</div></div>'
+    + '<div style="overflow-x:auto"><table class="ptable"><thead><tr>'
+    + '<th>取餐码</th><th>时间</th><th>商品</th><th>方式</th><th>地址</th><th>金额</th><th>状态</th></tr></thead><tbody>';
+  var shown = statsFilter === 'all' ? allOrd : statsFilter === 'valid' ? valid : canceled;
+  if (!shown.length) html += '<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:24px">暂无记录</td></tr>';
+  shown.slice(0, 60).forEach(function (o) {
+    html += '<tr><td style="font-weight:800;color:var(--brand)">' + o.code + '</td>'
+      + '<td style="font-size:12px;color:var(--ink-3)" class="mono">' + new Date(o.createdAt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) + '</td>'
+      + '<td style="font-size:12.5px;max-width:210px" class="ell">' + esc(o.items.map(function (i) { return i.name + '×' + i.qty; }).join('，')) + '</td>'
+      + '<td style="font-size:12px">' + (o.mode === 'pickup' ? '自取' : '外送') + '</td>'
+      + '<td style="font-size:12px;max-width:160px" class="ell">' + (o.address && o.address !== '到店自取' && o.address !== '外送到家' ? esc(o.address) : '-') + '</td>'
+      + '<td class="mono" style="font-weight:700">' + money(o.total) + '</td>'
+      + '<td><span class="tag ' + ({ pending: 'tag-warn', making: 'tag-info', ready: 'tag-ok', done: 'tag-off', canceled: 'tag-off' })[o.status] + '">'
+      + Store.STATUS_TEXT[o.status] + '</span></td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+  $('body').innerHTML = html;
+}
+
+function setStatsFilter(f) { statsFilter = f; render(); }
+function scrollToTable() {
+  var el = $('statsTable');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ================= 模拟来单 ================= */
+function testOrder() {
+  var d = Store.read();
+  var pool = d.products.filter(function (p) { return p.on; });
+  if (!pool.length) { toast('请先上架商品'); return; }
+  var n = 1 + Math.floor(Math.random() * 3);
+  var items = [], g = 0;
+  var specs = ['大杯 / 少冰 / 五分糖', '中杯 / 去冰 / 三分糖 / 珍珠', '大杯 / 热饮 / 全糖', ''];
+  for (var i = 0; i < n; i++) {
+    var p = pool[Math.floor(Math.random() * pool.length)];
+    var q = 1 + Math.floor(Math.random() * 2);
+    var sp = specs[Math.floor(Math.random() * specs.length)];
+    items.push({ name: p.name, spec: sp, price: p.price, qty: q, emoji: p.emoji, color: p.color });
+    g += p.price * q;
+  }
+  var remarks = ['', '', '少冰谢谢', '不要吸管', '打包，放门口'];
+  var isDelivery = Math.random() > .3;
+  var shopAddr = d.shop.address || '中心街 88 号';
+  var deliveryAddrs = ['张三 13800138001 幸福小区 3 栋 202', '李四 13900139002 阳光花园 5 单元 101', '王五 13700137003 大学城 A 区 8 号楼'];
+  Store.createOrder({
+    items: items, goodsTotal: g, deliveryFee: 0, discount: 0, couponName: '',
+    total: g, mode: isDelivery ? 'delivery' : 'pickup',
+    remark: remarks[Math.floor(Math.random() * remarks.length)], table: '',
+    address: isDelivery ? deliveryAddrs[Math.floor(Math.random() * deliveryAddrs.length)] : shopAddr,
+    phone: ''
+  });
+}
+
+/* ================= 实时监听 ================= */
+function checkNew(data) {
+  var news = data.orders.filter(function (o) { return o.isNew && o.status === 'pending'; });
+  var fresh = news.filter(function (o) { return !knownIds[o.id]; });
+  news.forEach(function (o) { knownIds[o.id] = 1; });
+  if (fresh.length) {
+    alertNewOrder(news.length);
+    if (page !== 'orders') { toast('🔔 新订单 ' + fresh[0].code); }
+    else if (kbTab !== 'pending' && kbTab !== 'all') kbTab = 'pending';
+  }
+  if (!news.length) document.title = '商家后台 · ' + data.shop.name;
+}
+
+Store.onChange(function (data) { D = data; checkNew(data); render(); });
+
+Store.initCloud();   // 后台自动从云端/本地拉取数据并实时同步
+
+document.addEventListener('click', function once() {
+  if (!soundReady) { initSound(); }
+  document.removeEventListener('click', once);
+}, { once: true });
+
+/* 首次标记已有订单，避免刷新时误报 */
+D.orders.forEach(function (o) { if (o.isNew) knownIds[o.id] = 1; });
+render();
+showSoundBar();
+setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
+</script>
+<footer style="text-align:center;color:#999;font-size:12px;padding:16px 0 24px;">
+  小淼饭店点餐系统 · 永久访问地址：<a href="https://dusk-collab.github.io/xiaomiao/" target="_blank" style="color:#ff5b4a;">github.io/xiaomiao</a>
+</footer>
+</body>
+</html>
