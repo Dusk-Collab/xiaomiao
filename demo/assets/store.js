@@ -139,6 +139,18 @@
     }
   }
 
+  // GitHub 同步节流推送：把多次写操作合并为一次（3 秒窗口），降低 API 频率并防抖。
+  var _pushTimer = null;
+  function schedulePush() {
+    if (_pushTimer) clearTimeout(_pushTimer);
+    _pushTimer = setTimeout(function () {
+      _pushTimer = null;
+      if (global.CloudSync && global.CloudSync.enabled) {
+        global.CloudSync.push(stripMeta(read()));
+      }
+    }, 3000);
+  }
+
   function write(data, silent) {
     data._ts = Date.now();
     localStorage.setItem(KEY, JSON.stringify(data));
@@ -146,51 +158,78 @@
       if (bc) bc.postMessage({ t: data._ts });
       emit(data);
     }
-    // 云端实时同步：配置云环境后，把整份店铺数据推到 store/main，所有设备 watch 秒级收到
+    // CloudBase 推送（体验版已锁死网页调用，实际不工作，仅作兜底保留）
     if (global.CloudCore && global.CloudCore.ready() && global.CloudCore.db) {
       var db = global.CloudCore.db;
       db.collection('store').doc('main').set(stripMeta(data))
         .catch(function (e) { console.warn('cloud push fail', e); });
     }
+    // GitHub 同步推送（主推·免费永久）：节流合并写操作，3 秒后推一次
+    if (global.CloudSync && global.CloudSync.enabled) {
+      schedulePush();
+    }
   }
 
-  /* 初始化云端：拉取 store/main 作为当前真源，并 watch 实时变更。
-   * 没配置云环境时走本地模式（现有行为，演示照常可用）。 */
+  /* 初始化云端：
+   * - 配置 CloudBase（个人版及以上）：拉取 store/main 作真源并 watch 实时变更。
+   * - 配置 GitHub Token（当前主推·免费永久）：拉取仓库 data.json 作真源。
+   * - 都没配置：走本地模式（演示照常可用）。 */
   function initCloud() {
-    if (!(global.CloudCore && global.CloudCore.ready() && global.CloudCore.db)) {
-      emit(read());   // 本地模式：直接发当前数据
+    var useGithub = !!(global.CloudSync && global.CloudSync.enabled);
+    var useCloudBase = !!(global.CloudCore && global.CloudCore.ready() && global.CloudCore.db);
+
+    if (useCloudBase) {
+      var db = global.CloudCore.db;
+      db.collection('store').doc('main').get().then(function (res) {
+        var cloud = (res.data && res.data[0]) || null;
+        if (cloud && cloud.shop) {
+          var c = stripMeta(cloud);
+          localStorage.setItem(KEY, JSON.stringify(c));
+          emit(c);
+        } else {
+          // 云端还没有数据 → 用本地（或种子）初始化云端
+          var s = read();
+          db.collection('store').doc('main').set(stripMeta(s)).catch(function () {});
+          emit(s);
+        }
+      }).catch(function (e) { console.warn('cloud pull fail', e); emit(read()); });
+
+      // 实时监听：别人/其他设备一改，这里秒级重渲染
+      try {
+        if (storeWatcher && storeWatcher.close) { try { storeWatcher.close(); } catch (e) {} }
+        storeWatcher = db.collection('store').doc('main').watch({
+          onChange: function (snap) {
+            var d = (snap.docs && snap.docs[0]) || null;
+            if (d && d.shop) {
+              var c = stripMeta(d);
+              localStorage.setItem(KEY, JSON.stringify(c));
+              emit(c);
+            }
+          },
+          onError: function (err) { console.warn('store watch error', err); }
+        });
+      } catch (e) { console.warn('store watch start fail', e); }
       return;
     }
-    var db = global.CloudCore.db;
-    db.collection('store').doc('main').get().then(function (res) {
-      var cloud = (res.data && res.data[0]) || null;
-      if (cloud && cloud.shop) {
-        var c = stripMeta(cloud);
-        localStorage.setItem(KEY, JSON.stringify(c));
-        emit(c);
-      } else {
-        // 云端还没有数据 → 用本地（或种子）初始化云端
-        var s = read();
-        db.collection('store').doc('main').set(stripMeta(s)).catch(function () {});
-        emit(s);
-      }
-    }).catch(function (e) { console.warn('cloud pull fail', e); emit(read()); });
 
-    // 实时监听：别人/其他设备一改，这里秒级重渲染
-    try {
-      if (storeWatcher && storeWatcher.close) { try { storeWatcher.close(); } catch (e) {} }
-      storeWatcher = db.collection('store').doc('main').watch({
-        onChange: function (snap) {
-          var d = (snap.docs && snap.docs[0]) || null;
-          if (d && d.shop) {
-            var c = stripMeta(d);
-            localStorage.setItem(KEY, JSON.stringify(c));
-            emit(c);
-          }
-        },
-        onError: function (err) { console.warn('store watch error', err); }
-      });
-    } catch (e) { console.warn('store watch start fail', e); }
+    if (useGithub) {
+      // GitHub 同步模式：拉取远端最新 data.json 作为真源（last-write-wins）
+      CloudSync.pull().then(function (cloud) {
+        if (cloud && cloud.shop) {
+          var c = stripMeta(cloud);
+          localStorage.setItem(KEY, JSON.stringify(c));
+          emit(c);
+        } else {
+          // 远端还没有数据 → 用本地初始化远端
+          var s = read();
+          CloudSync.push(stripMeta(s));
+          emit(s);
+        }
+      }).catch(function (e) { console.warn('github pull fail', e); emit(read()); });
+      return;
+    }
+
+    emit(read());   // 纯本地模式
   }
 
   function update(fn) {
