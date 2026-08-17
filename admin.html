@@ -1573,8 +1573,7 @@ Store.onChange(function (data) { D = data; checkNew(data); render(); });
 
 Store.initCloud();   // 启动时从 GitHub 仓库拉取最新数据（已授权则跨设备同步）
 if (window.CloudSync && CloudSync.enabled) toast('☁️ 云端同步已开启，改动将保存到 GitHub 仓库');
-else toast('⚠️ 云端同步未开启（在 assets/cloud-config.js 填入 token 即可）');
-Store.initSync();
+else toast('⚠️ 云端同步未开启（点左下角「☁ 云端同步设置」填 GitHub 令牌）');
 Store.onSyncStatus(function (s) { renderSyncBadge(s); });
 
 document.addEventListener('click', function once() {
