@@ -1344,7 +1344,22 @@ function pgShop() {
     + '⚠️ 手机锁屏或应用切到后台时，系统会禁止网页/小程序播放声音。真正开店建议加一台<b>云喇叭</b>（约 200 元），订单直达硬件播报，绝不漏单。</div>'
     + '</div>';
 
+  // 账号安全区
+  html += '<div class="card"><h3>🔐 修改密码</h3>'
+    + fRow('当前密码', '输入旧密码验证身份', '<input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码">')
+    + fRow('新密码', '4~20 位', '<input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码">')
+    + fRow('确认新密码', '再次输入新密码', '<input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次">')
+    + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePwd()">保存新密码</button></div>'
+    + '</div>';
+
+  html += '<div class="card"><h3>📱 更换手机号</h3>'
+    + fRow('当前密码', '输入旧密码验证身份', '<input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码">')
+    + fRow('新手机号', '将作为新登录账号', '<input id="chNewPhone" class="field mono" style="width:160px" inputmode="numeric" maxlength="11" placeholder="11 位新手机号">')
+    + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePhone()">保存新手机号</button></div>'
+    + '</div>';
+
   $('body').innerHTML = html;
+  bindAccountSecurity();
 }
 function fRow(label, hint, ctl, wide) {
   return '<div class="form-row"' + (wide ? ' style="flex-wrap:wrap"' : '') + '>'
@@ -1372,6 +1387,54 @@ function changeShopEmoji() {
 }
 function updHours(k, v) { save(function (d) { d.shop.hours[k] = v; }); toast('已保存'); render(); }
 function toggleClose() { save(function (d) { d.shop.manualClose = !d.shop.manualClose; }); toast(D.shop.manualClose ? '已打烊' : '开始营业'); render(); }
+
+/* ---------- 账号安全：修改密码 / 更换手机号 ----------
+ * 均用「当前密码」（即登录密码，adminPwd 为空时回退店铺手机号）验证身份，不再依赖短信/图形验证码。
+ * 修改密码 → 写入 settings.adminPwd（空=回退手机号）。
+ * 更换手机号 → 校验身份后写入 shop.phone。
+ * 数据写入走 save() → Store + CloudSync 自动同步到云。 */
+function getAdminPwd() {
+  try {
+    var d = Store.read();
+    var p = d.settings && d.settings.adminPwd;
+    if (p) return String(p);
+    var ph = (d.shop && d.shop.phone) || '13800138000';
+    return String(ph).replace(/\D/g, '');
+  } catch (e) { return '13800138000'; }
+}
+function bindAccountSecurity() {
+  // 新手机号只允许数字
+  var np = document.getElementById('chNewPhone');
+  if (np) np.addEventListener('input', function () { np.value = np.value.replace(/\D/g, '').slice(0, 11); });
+}
+
+function doChangePwd() {
+  var old = (document.getElementById('cpOld').value || '').trim();
+  var p1 = (document.getElementById('cpNew1').value || '');
+  var p2 = (document.getElementById('cpNew2').value || '');
+  if (!old) { toast('请输入当前密码'); return; }
+  if (old !== getAdminPwd()) { toast('当前密码错误'); return; }
+  if (p1.length < 4 || p1.length > 20) { toast('新密码 4~20 位'); return; }
+  if (p1 !== p2) { toast('两次密码不一致'); return; }
+  save(function (d) { d.settings = d.settings || {}; d.settings.adminPwd = p1; });
+  ['cpOld', 'cpNew1', 'cpNew2'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  toast('✓ 密码已更新');
+}
+
+function doChangePhone() {
+  var old = (document.getElementById('chOld').value || '').trim();
+  var newPhone = (document.getElementById('chNewPhone').value || '').trim();
+  var curPhone = '';
+  try { var d = Store.read(); curPhone = (d.shop && d.shop.phone) || ''; } catch (e) {}
+  if (!old) { toast('请输入当前密码'); return; }
+  if (old !== getAdminPwd()) { toast('当前密码错误'); return; }
+  if (!/^1\d{10}$/.test(newPhone)) { toast('请输入正确的 11 位新手机号'); return; }
+  if (newPhone === curPhone) { toast('新手机号不能与当前相同'); return; }
+  save(function (d) { d.shop.phone = newPhone; });
+  ['chOld', 'chNewPhone'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+  toast('✓ 手机号已更换为 ' + newPhone.slice(0, 3) + '****' + newPhone.slice(-4));
+  setTimeout(function () { render(); }, 800);
+}
 function clearOrders() { /* 已废弃，订单删除请在订单看板操作 */ }
 function resetAll() {
   if (!confirm('恢复到初始演示数据？所有订单和设置将清空。')) return;
@@ -1677,16 +1740,16 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 
       <!-- 验证码登录 -->
       <div class="login-pane" data-pane="code">
-        <div class="login-h">验证码登录</div>
+        <div class="login-h">图形验证登录</div>
         <div class="login-field">
           <div class="login-phone">
             <span class="login-cc">+86</span>
             <input id="codePhone" class="login-input" type="tel" inputmode="numeric" placeholder="请输入手机号" autocomplete="off" maxlength="11">
           </div>
         </div>
+        <div id="codeCap" class="cap-wrap"></div>
         <div class="login-field login-code">
-          <input id="codeInput" class="login-input" type="tel" inputmode="numeric" placeholder="请输入验证码" autocomplete="off" maxlength="6">
-          <button type="button" id="codeGetCode" class="login-codebtn">获取验证码</button>
+          <input id="codeInput" class="login-input" type="text" inputmode="text" placeholder="" autocomplete="off" maxlength="6">
         </div>
         <button id="codeBtn" class="login-btn">登 录</button>
         <div class="login-foot">
@@ -1704,9 +1767,9 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
             <input id="regPhone" class="login-input" type="tel" inputmode="numeric" placeholder="请输入手机号" autocomplete="off" maxlength="11">
           </div>
         </div>
+        <div id="regCap" class="cap-wrap"></div>
         <div class="login-field login-code">
-          <input id="regCode" class="login-input" type="tel" inputmode="numeric" placeholder="请输入验证码" autocomplete="off" maxlength="6">
-          <button type="button" id="regGetCode" class="login-codebtn">获取验证码</button>
+          <input id="regCode" class="login-input" type="text" inputmode="text" placeholder="" autocomplete="off" maxlength="6">
         </div>
         <div class="login-field">
           <input id="regName" class="login-text" type="text" placeholder="管理员昵称（可选）" autocomplete="off" maxlength="16">
@@ -1723,19 +1786,364 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 </div>
 
 <script>
-/* 管理员登录逻辑（单卡切换：密码登录 / 验证码登录 / 注册）
+/* ---------- 图形顺序点选验证码（替代短信）v12 ----------
+ * 布局：
+ *   顶部「提示」：3 个词「长方形 → 圆形 → 三角形」是**点击目标**（纯文字样式、无边框、无背景，仅 hover 时下划线暗示）。
+ *   下方「图形区」：10 种基础几何（圆/方/三角/菱形/椭圆/正方/平行四边形/五边/六边/五角星）乱序散落，**也可点击**——
+ *                  点了给反馈（抖动 + 临时淡化），但不通过（真正的通过只能按顺序点 3 个词）。
+ *   通过后：提示里"请把下方动态码"几个字变成动态码本身（红字 + 边框背景）+ 📋 复制按钮，30s 刷新、5 分钟有效。
+ * 校验：ShapeCaptcha.mount(container).validate(用户输入) → 比对当前 3 位串。
+ * 纯前端、零成本、无需短信后端。 */
+window.ShapeCaptcha = (function () {
+  var SEQ = ['长方形', '圆形', '三角形'];
+  var SALT = 7919;
+  var CHARS = '0123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+  // v17：精简到 6 种最经典的基础几何（去掉五边形/六边形/平行四边形/五角星 —— 太花哨不像严肃验证码）
+  // + 给每个形状加 0.8px 白色描边让边缘发光 + drop-shadow 阴影让形状有浮起感
+  var SHAPES = [
+    { n: '三角形', c: '#E8352E', s: '<polygon points="18,4 33,32 3,32" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' },
+    { n: '圆形',   c: '#4A90E2', s: '<circle cx="18" cy="18" r="13" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' },
+    { n: '椭圆',   c: '#52C41A', s: '<ellipse cx="18" cy="18" rx="15" ry="9" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' },
+    { n: '正方形', c: '#7B61FF', s: '<rect x="5" y="5" width="26" height="26" rx="2" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' },
+    { n: '长方形', c: '#FA8C16', s: '<rect x="2" y="11" width="32" height="14" rx="2" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' },
+    { n: '菱形',   c: '#13C2C2', s: '<polygon points="18,4 32,18 18,32 4,18" fill="currentColor" stroke="currentColor" stroke-width="0.6"/>' }
+  ];
+
+  // 把每种形状打包为完整 inline SVG（含 viewBox），用 color 控制着色
+  function wrapSVG(shape) {
+    return '<svg viewBox="0 0 36 36" style="width:100%;height:100%;color:' + shape.c + '">' + shape.s + '</svg>';
+  }
+
+  function rnd(min, max) { return Math.random() * (max - min) + min; }
+  // 基于 30 秒时间窗口生成确定性的 3 位码
+  function genCode(ts) {
+    var win = Math.floor(ts / 30000);
+    var seed = ((win * 2654435761) + SALT) >>> 0;
+    var s = '';
+    for (var i = 0; i < 3; i++) {
+      seed = (seed * 1103515245 + 12345) >>> 0;
+      s += CHARS[seed % CHARS.length];
+    }
+    return s;
+  }
+  function injectStyle() {
+    if (document.getElementById('shapecap-style')) return;
+    var css = [
+      // v18：补回 .cap 主容器样式（v17 加的 box-shadow/radius 保留）
+      '.cap{font-size:13px;color:#444;border:1px solid #EFE9E2;border-radius:14px;padding:16px 14px 14px;background:#FBFAF8;box-sizing:border-box;box-shadow:0 2px 8px rgba(80,60,40,.04)}',
+      // v19：整句缩小单行（white-space:nowrap 防换行；字号压到 10.5px + 去字间距，让含"来获取验证码"的长句完整一行放下不溢出）
+      '.cap-tip{font-size:10.5px;color:#5A5048;margin-bottom:14px;line-height:1.5;letter-spacing:0;text-align:center;white-space:nowrap}',
+      '.cap-tip b{color:#E8352E;font-weight:700}',
+      // v18：形状画布不变（沿用 v17 的画布/阴影/描边）
+      '.cap-field{position:relative;height:280px;background:linear-gradient(135deg,#FDFBF6 0%,#F7F1E6 100%);border:1px dashed rgba(232,53,46,.18);border-radius:10px;margin-bottom:14px;overflow:hidden}',
+      '.cap-shape{position:absolute;display:inline-flex;align-items:center;justify-content:center;opacity:.95;cursor:pointer;user-select:none;transition:opacity .15s,transform .15s;filter:drop-shadow(0 2px 3px rgba(0,0,0,.18))}',
+      '.cap-shape:hover{opacity:1;transform:scale(1.08) translateY(-2px)}',
+      '.cap-shape.wrong{animation:capShake .32s;opacity:.35}',
+      // v18：词块字号 15.5→14、weight 800→700，回到稍明显的层级而非抢眼
+      '.cap-word{position:relative;color:#E8352E;font-weight:700;font-size:14px;cursor:pointer;padding:0 2px;margin:0 1px;transition:all .15s;user-select:none;font-family:inherit;display:inline-block}',
+      '.cap-word:hover{color:#C0282A}',
+      '.cap-word.hit{color:#1e8a4d}',
+      '.cap-tip-arrow{color:#BBB1A8;font-size:13px;margin:0 2px;font-weight:400}',
+      // 下方真文字按钮
+      '.cap-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px}',
+      // 通过后：单行大字符动态码（无边框/无背景/无框）
+      '.cap-code{display:flex;justify-content:center;align-items:center;gap:18px;padding:14px 8px;margin-top:4px;font-family:ui-monospace,Menlo,Consolas,monospace}',
+      '.cap-code-ch{font-size:32px;font-weight:800;color:#E8352E;letter-spacing:6px;line-height:1;text-shadow:0 1px 0 rgba(0,0,0,.04)}',
+      '.cap-btn{appearance:none;border:1.5px solid #E6DDD2;background:#fff;color:#5A5048;font-size:15px;font-weight:600;padding:10px 22px;border-radius:10px;cursor:pointer;transition:all .12s;user-select:none;font-family:inherit;min-width:96px;letter-spacing:1px}',
+      '.cap-btn:hover{border-color:#E8352E;color:#E8352E;transform:translateY(-1px);box-shadow:0 2px 6px rgba(232,53,46,.15)}',
+      '.cap-btn .ch{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;font-weight:800;letter-spacing:2px;color:#E8352E}',
+      '.cap-btn.hit{border-color:#3CB371;background:#EAF7EF;color:#1e8a4d}',
+      '.cap-btn[data-passed]{border-color:#E8352E;background:#FFF1ED;color:#E8352E;cursor:default}',
+      '.cap-btn[data-passed]:hover{transform:none;box-shadow:none}',
+      '.cap-btn.wrong{animation:capShake .32s;border-color:#E8352E;background:#FFF0EE;color:#E8352E}',
+      '.cap-msg{margin-top:10px;font-size:12px;min-height:16px;color:#E8352E;text-align:center;line-height:1.5}',
+      '.cap-msg.ok{color:#1e8a4d}',
+      '@keyframes capShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}',
+      '.cap-meta{font-size:11.5px;color:#8a8a8a;margin-top:5px;line-height:1.5}',
+      '.cap-meta b{color:#E8352E}',
+      '.cap-retry{margin-top:9px;font-size:12px;color:#E8352E;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit}',
+      // 通过后：动态码以「红色字体」显示在原"请把下方动态码"位置 + 复制按钮
+      '.cap-code-inline{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:24px;font-weight:800;letter-spacing:5px;color:#E8352E;background:#FFF1ED;padding:3px 14px;border-radius:6px;margin:0 4px;display:inline-block;vertical-align:middle;line-height:1.1;text-shadow:0 1px 0 rgba(0,0,0,.04);user-select:all}',
+      '.cap-copy-btn{appearance:none;border:1px solid #E8352E;background:#fff;color:#E8352E;font-size:12px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;vertical-align:middle;margin-left:2px;font-family:inherit;transition:all .12s}',
+      '.cap-copy-btn:hover{background:#E8352E;color:#fff;transform:translateY(-1px);box-shadow:0 2px 5px rgba(232,53,46,.2)}',
+      '.cap-copy-btn.copied{background:#1e8a4d;border-color:#1e8a4d;color:#fff}'
+    ].join('\n');
+    var st = document.createElement('style');
+    st.id = 'shapecap-style';
+    st.textContent = css;
+    document.head.appendChild(st);
+  }
+
+  function mount(container, opts) {
+    opts = opts || {};
+    injectStyle();
+    var state = { passedAt: 0, clicks: [], clickedEls: {}, tick: null, btns: [], shapeWrongClicks: 0, shapeWrongTimer: null };
+
+    function stopTick() { if (state.tick) { clearInterval(state.tick); state.tick = null; } }
+
+    function renderOpen() {
+      stopTick();
+      state.clicks = [];
+      state.shapeWrongClicks = 0;
+      if (state.shapeWrongTimer) { clearTimeout(state.shapeWrongTimer); state.shapeWrongTimer = null; }
+      // 重新渲染：清空旧 .cap-code 残留
+      var oldCode = container.querySelector('.cap-code');
+      if (oldCode && oldCode.parentNode) oldCode.parentNode.removeChild(oldCode);
+      // v14：图形数 14 → 8（3 目标 + 5 干扰），尺寸 24-38 → 42-58，碰撞检测避免重叠
+      // v15：N 从 8 降到 6（少而精）、sz 固定 46（更整齐）、rot ±12°（温和姿态而非乱角度）
+      var N = 6;
+      // 先把 3 个目标形状塞进 chosen，剩下的从非目标池里随机补
+      var targets = [];
+      var decoyPool = [];
+      for (var t = 0; t < SHAPES.length; t++) {
+        if (SEQ.indexOf(SHAPES[t].n) >= 0) targets.push(SHAPES[t]);
+        else decoyPool.push(SHAPES[t]);
+      }
+      // 干扰池洗牌
+      for (var k = decoyPool.length - 1; k > 0; k--) {
+        var j = Math.floor(Math.random() * (k + 1));
+        var tmp = decoyPool[k]; decoyPool[k] = decoyPool[j]; decoyPool[j] = tmp;
+      }
+      // v14：每个目标固定 1 份（不再 1-2 重复）
+      var targetChoices = targets.slice();
+      // 打散目标形状
+      for (var k2 = targetChoices.length - 1; k2 > 0; k2--) {
+        var j2 = Math.floor(Math.random() * (k2 + 1));
+        var tmp2 = targetChoices[k2]; targetChoices[k2] = targetChoices[j2]; targetChoices[j2] = tmp2;
+      }
+      // 凑齐 N 个：3 目标 + (N-3) 干扰
+      var chosen = targetChoices.slice();
+      var needMore = N - chosen.length;
+      for (var m = 0; m < needMore && m < decoyPool.length; m++) chosen.push(decoyPool[m]);
+      // 最终打散位置
+      for (var k3 = chosen.length - 1; k3 > 0; k3--) {
+        var j3 = Math.floor(Math.random() * (k3 + 1));
+        var tmp3 = chosen[k3]; chosen[k3] = chosen[j3]; chosen[j3] = tmp3;
+      }
+      // v14：碰撞检测。参考 400×220 网格；每个图形用 0.71×size 作为"旋转后等效半径" + 18px 缓冲（v15 加大缓冲）
+      // v15 加 FIELD_H 220→260（更松）+ sz 固定 46（更整齐）+ rot ±12°（减少乱角度）+ N 8→6（更少更疏）
+      var FIELD_W = 400, FIELD_H = 280;
+      function placeShape(sz, placed) {
+        var maxA = 140;
+        for (var a = 0; a < maxA; a++) {
+          var topPx = rnd(8, FIELD_H - sz - 8);
+          var leftPx = rnd(4, FIELD_W - sz - 4);
+          var collides = false;
+          for (var e = 0; e < placed.length; e++) {
+            var dx = (leftPx + sz / 2) - (placed[e].leftPx + placed[e].size / 2);
+            var dy = (topPx + sz / 2) - (placed[e].topPx + placed[e].size / 2);
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            var r1 = sz * 0.45, r2 = placed[e].size * 0.45;
+            if (dist < r1 + r2 + 16) { collides = true; break; }
+          }
+          if (!collides) return { topPx: topPx, leftPx: leftPx, size: sz };
+        }
+        return null;
+      }
+      // 图形也恢复可点击（点了给反馈但不通过）+ 3 个红字按钮（按 SEQ 顺序点通过）
+      var shapesHTML = '';
+      var placed = [];
+      for (var i = 0; i < chosen.length; i++) {
+        var sh = chosen[i];
+        // v16：size 46 → 64（再大点）+ 把 SVG viewBox 从 36×36 改为 30×30 让形状本身"撑满方块"、少留边距；需同步更新 SHAPES polygon 缩放到 30 grid
+      // 简单方案：保持 SHAPES polygon 不变，把 wrapSVG 的 viewBox 缩小到让形状看起来更大（fill=currentColor，无 padding）
+      // v16: 实际修复办法 = 增加 svg 嵌入层 width/height 100% + 收紧 padding
+      var sz = 64;
+      var pos = placeShape(sz, placed);
+        if (!pos) {
+          // 实在塞不下时降级：仍按可用区域随便放一个（用更小的 sz 让它容易找到空位）
+          sz = 38;
+          pos = { topPx: rnd(8, FIELD_H - sz - 8), leftPx: rnd(4, FIELD_W - sz - 4), size: sz };
+        } else {
+          pos.size = sz;
+        }
+        placed.push(pos);
+        var topPct = (pos.topPx / FIELD_H * 100).toFixed(1);
+        var leftPct = (pos.leftPx / FIELD_W * 100).toFixed(1);
+        var rot = rnd(-12, 12).toFixed(1);
+        shapesHTML += '<span class="cap-shape" data-name="' + sh.n + '" style="top:' + topPct + '%;left:' + leftPct + '%;transform:rotate(' + rot + 'deg);width:' + sz + 'px;height:' + sz + 'px" title="' + sh.n + '">' + wrapSVG(sh) + '</span>';
+      }
+      // 提示里 3 个可点的红字（顺序：长方形 → 圆形 → 三角形）—— v12：纯文字样式
+      var wordHTML = SEQ.map(function (n) {
+        return '<span class="cap-word" data-name="' + n + '">' + n + '</span>';
+      }).join('<span class="cap-tip-arrow">&rarr;</span>');
+      container.innerHTML =
+        '<div class="cap">' +
+        // v19：保留全部字，整句缩小单行（含"来获取验证码"）
+        '<div class="cap-tip">请依次点击下方：' + wordHTML + ' 来获取验证码</div>' +
+        // 图形区：可点，点了有反馈（抖动+淡化），但不通过
+        '<div class="cap-field">' + shapesHTML + '</div>' +
+        '<div class="cap-msg" data-cap-msg></div></div>';
+      // 3 个红字按钮绑点击（按 SEQ 顺序点中通过）
+      state.btns = Array.prototype.slice.call(container.querySelectorAll('.cap-word'));
+      state.btns.forEach(function (b) {
+        b.addEventListener('click', function () { onClickWord(b); });
+      });
+      // 图形绑点击（点了给反馈但不通过）
+      Array.prototype.slice.call(container.querySelectorAll('.cap-shape')).forEach(function (s) {
+        s.addEventListener('click', function () { onShapeClick(s); });
+      });
+    }
+
+    // 点图形：点的目标形态可能跟当前 SEQ 一致也可能不一致——v13：前2次不弹"无效"
+    // 文案，仅抖动；第3次起才更新提示行。2 秒无点击自动重置计数。
+    function onShapeClick(el) {
+      if (state.passedAt) return;
+      // 反馈：抖动 + 临时淡化
+      el.classList.add('wrong');
+      setTimeout(function () { el.classList.remove('wrong'); }, 360);
+      state.shapeWrongClicks = (state.shapeWrongClicks || 0) + 1;
+      if (state.shapeWrongTimer) clearTimeout(state.shapeWrongTimer);
+      state.shapeWrongTimer = setTimeout(function () {
+        state.shapeWrongClicks = 0;
+      }, 2000);
+      // 第 3 次起才显示"无效"提示
+      if (state.shapeWrongClicks >= 3) {
+        var msg = container.querySelector('[data-cap-msg]');
+        var name = el.getAttribute('data-name');
+        var idx = state.clicks.length;
+        if (msg) {
+          if (name === SEQ[idx]) {
+            msg.textContent = '形状「' + name + '」需要按顺序才有效——请按下方三个词的顺序点击';
+          } else {
+            msg.textContent = '图形无效，请按下方三个词顺序点击：' + SEQ.join(' → ');
+          }
+        }
+      }
+    }
+
+    // 点红字按钮：按 SEQ 顺序比对
+    function onClickWord(el) {
+      if (state.passedAt) return;
+      var name = el.getAttribute('data-name');
+      var idx = state.clicks.length;
+      if (name !== SEQ[idx]) {
+        el.classList.add('wrong');
+        var msg = container.querySelector('[data-cap-msg]');
+        if (msg) msg.textContent = '顺序不对！当前应点：「' + SEQ[idx] + '」（已选 ' + state.clicks.length + '/' + SEQ.length + '）';
+        setTimeout(function () { el.classList.remove('wrong'); }, 360);
+        return;
+      }
+      state.clicks.push(name);
+      state.clickedEls[name] = el;
+      el.classList.add('hit');
+      // 正确点中一个红字，重置图形错误计数 & 隐藏可能残留的"无效"提示
+      state.shapeWrongClicks = 0;
+      if (state.shapeWrongTimer) { clearTimeout(state.shapeWrongTimer); state.shapeWrongTimer = null; }
+      var msg2 = container.querySelector('[data-cap-msg]');
+      if (msg2) { msg2.textContent = ''; }
+      if (state.clicks.length === SEQ.length) { pass(); }
+      else {
+        var m = container.querySelector('[data-cap-msg]');
+        if (m) m.textContent = '已点中「' + name + '」，下一个：' + SEQ[state.clicks.length];
+      }
+    }
+
+    function pass() {
+      state.passedAt = Date.now();
+      var code = genCode(state.passedAt);
+      // 红色字体的"请把下方动态码"这几个字 → 变成验证码本身 + 复制按钮
+      var tip = container.querySelector('.cap-tip');
+      if (tip) tip.innerHTML = '✅ 验证通过，<b class="cap-code-inline" data-cap-code-inline>' + code + '</b> <button type="button" class="cap-copy-btn" data-cap-copy>📋 复制</button>（按顺序填入下方输入框）';
+      // 复制按钮点击：复制当前动态码到剪贴板
+      var copyBtn = container.querySelector('[data-cap-copy]');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+          var span = container.querySelector('[data-cap-code-inline]');
+          var text = span ? span.textContent.trim() : '';
+          var done = function () {
+            copyBtn.textContent = '✓ 已复制';
+            copyBtn.classList.add('copied');
+            setTimeout(function () {
+              copyBtn.textContent = '📋 复制';
+              copyBtn.classList.remove('copied');
+            }, 1500);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(function () {
+              fallbackCopy(text); done();
+            });
+          } else {
+            fallbackCopy(text); done();
+          }
+          function fallbackCopy(t) {
+            var ta = document.createElement('textarea');
+            ta.value = t;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus(); ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+          }
+        });
+      }
+      // 下方状态行
+      var msg = container.querySelector('[data-cap-msg]');
+      if (msg) {
+        msg.classList.add('ok');
+        msg.innerHTML = '动态码每 30 秒自动刷新 · 验证通过后 <b data-cap-cd>300</b> 秒（5 分钟）内有效 ' +
+          '<button type="button" class="cap-retry" data-cap-retry>重新验证</button>';
+      }
+      var rb = container.querySelector('[data-cap-retry]');
+      if (rb) rb.addEventListener('click', renderOpen);
+      startTick();
+      if (typeof opts.onPass === 'function') opts.onPass();
+    }
+
+    function startTick() {
+      stopTick();
+      state.tick = setInterval(function () {
+        if (!state.passedAt) return;
+        var elapsed = Date.now() - state.passedAt;
+        if (elapsed > 300000) { stopTick(); renderExpired(); return; }
+        var code = genCode(Date.now());
+        // 刷新内联动态码
+        var inline = container.querySelector('[data-cap-code-inline]');
+        if (inline) inline.textContent = code;
+        var cd = container.querySelector('[data-cap-cd]');
+        if (cd) cd.textContent = Math.ceil((300000 - elapsed) / 1000);
+      }, 1000);
+    }
+
+    function renderExpired() {
+      stopTick();
+      state.passedAt = 0;
+      container.innerHTML = '<div class="cap" style="color:#E8352E;font-weight:600">⏰ 验证已过期（超过 5 分钟），请重新验证' +
+        '<div style="margin-top:8px"><button type="button" class="cap-retry" data-cap-retry>重新验证</button></div></div>';
+      var rb = container.querySelector('[data-cap-retry]');
+      if (rb) rb.addEventListener('click', renderOpen);
+    }
+
+    renderOpen();
+    return {
+      validate: function (input) {
+        input = (input || '').trim().toUpperCase();
+        if (!state.passedAt) return false;
+        if (Date.now() - state.passedAt > 300000) return false;
+        return input === genCode(Date.now());
+      },
+      getCurrent: function () { return state.passedAt ? genCode(Date.now()) : ''; },
+      reset: function () { renderOpen(); },
+      destroy: function () { stopTick(); container.innerHTML = ''; }
+    };
+  }
+  return { mount: mount, _gen: genCode, _seq: SEQ };
+})();
+
+/* 管理员登录逻辑（单卡切换：密码登录 / 图形验证登录 / 注册）
  * 默认=密码登录（手机号 + 店铺后台密码，默认 = 店铺手机号）。
- * 左下角「验证码登录」切到验证码模式；右下角「注册账号」切到注册页。
+ * 左下角「图形验证登录」切到图形模式；右下角「注册账号」切到注册页。
+ * 图形验证登录 / 注册：用 window.ShapeCaptcha 顺序点选图形 → 输入动态码，不再依赖短信。
  * 两人（A、B）都可登录，共享同一店铺数据；A 改保存后 B 每 3 秒自动看到（store.js 轮询）。
- * 登录态仅存本机 sessionStorage，关浏览器即失效。
- * 演示环境无短信后端：点「获取验证码」时本地生成 6 位验证码，以 toast 气泡显示；
- * 接真实短信需后端（如腾讯云短信），在 sendCode 内改为调用短信接口即可。 */
+ * 登录态仅存本机 sessionStorage，关浏览器即失效。 */
 (function () {
   var AUTH_KEY = 'admin_auth';
   var PHONE_KEY = 'admin_phone';
   var NAME_KEY = 'admin_name';
-  var _codes = {};   // phone -> { code, exp }
-  var _timers = {};  // phone -> countdown interval id
+  var codeCapCtrl = null;  // 验证码登录面板的图形验证实例
+  var regCapCtrl = null;   // 注册面板的图形验证实例
 
   function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
   function closeLogin() { var m = document.getElementById('loginMask'); if (m) m.style.display = 'none'; }
@@ -1777,33 +2185,13 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     var sub = document.getElementById('loginSub');
     if (sub) {
       sub.textContent = (v === 'reg') ? '商家后台 · 注册新管理员'
-        : (v === 'code') ? '商家后台 · 验证码登录'
+        : (v === 'code') ? '商家后台 · 图形验证登录'
         : '商家后台 · 密码登录';
     }
   }
 
-  function sendCode(phone, btn) {
-    var phoneInput = document.getElementById(btn.getAttribute('data-phone'));
-    if (!validPhone(phone)) { markErr(phoneInput); if (typeof toast === 'function') toast('请输入正确的 11 位手机号'); return; }
-    var code = String(Math.floor(100000 + Math.random() * 900000));
-    _codes[phone] = { code: code, exp: Date.now() + 5 * 60 * 1000 };
-    if (typeof toast === 'function') toast('【小淼饭店】验证码 ' + code + '（演示）');
-    var left = 60; btn.disabled = true; btn.textContent = left + 's';
-    clearInterval(_timers[phone]);
-    _timers[phone] = setInterval(function () {
-      left--;
-      if (left <= 0) { clearInterval(_timers[phone]); btn.disabled = false; btn.textContent = '获取验证码'; }
-      else btn.textContent = left + 's';
-    }, 1000);
-  }
-
-  function checkCode(phone, code) {
-    var rec = _codes[phone];
-    if (!rec) return 'nocode';
-    if (rec.exp < Date.now()) return 'exp';
-    if (rec.code !== String(code)) return 'wrong';
-    return 'ok';
-  }
+  // 验证码已改为「图形顺序点选」人机验证（window.ShapeCaptcha），不再使用短信。
+  // 登录/注册面板的图形验证实例在 bind() 中挂载；店铺设置页在 bindAccountSecurity() 中挂载。
 
   function auth(phone, name) {
     try {
@@ -1834,10 +2222,11 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     var phone = (document.getElementById('codePhone').value || '').trim();
     var code = (document.getElementById('codeInput').value || '').trim();
     if (!validPhone(phone)) { markErr(document.getElementById('codePhone')); if (typeof toast === 'function') toast('手机号格式错误'); return; }
-    var r = checkCode(phone, code);
-    if (r === 'nocode') { markErr(document.getElementById('codeInput')); if (typeof toast === 'function') toast('请先获取验证码'); return; }
-    if (r === 'exp') { markErr(document.getElementById('codeInput')); if (typeof toast === 'function') toast('验证码已过期，请重新获取'); return; }
-    if (r === 'wrong') { markErr(document.getElementById('codeInput')); document.getElementById('codeInput').value = ''; if (typeof toast === 'function') toast('验证码错误'); return; }
+    if (!codeCapCtrl || !codeCapCtrl.validate(code)) {
+      markErr(document.getElementById('codeInput'));
+      if (typeof toast === 'function') toast('请先按顺序点选图形，并填入当前动态码');
+      return;
+    }
     auth(phone, '');
   }
 
@@ -1846,10 +2235,11 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     var code = (document.getElementById('regCode').value || '').trim();
     var name = (document.getElementById('regName').value || '').trim();
     if (!validPhone(phone)) { markErr(document.getElementById('regPhone')); if (typeof toast === 'function') toast('手机号格式错误'); return; }
-    var r = checkCode(phone, code);
-    if (r === 'nocode') { markErr(document.getElementById('regCode')); if (typeof toast === 'function') toast('请先获取验证码'); return; }
-    if (r === 'exp') { markErr(document.getElementById('regCode')); if (typeof toast === 'function') toast('验证码已过期，请重新获取'); return; }
-    if (r === 'wrong') { markErr(document.getElementById('regCode')); document.getElementById('regCode').value = ''; if (typeof toast === 'function') toast('验证码错误'); return; }
+    if (!regCapCtrl || !regCapCtrl.validate(code)) {
+      markErr(document.getElementById('regCode'));
+      if (typeof toast === 'function') toast('请先按顺序点选图形，并填入当前动态码');
+      return;
+    }
     auth(phone, name || '管理员');
   }
 
@@ -1865,11 +2255,15 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       if (pwd.type === 'password') { pwd.type = 'text'; eye.textContent = '🙈'; }
       else { pwd.type = 'password'; eye.textContent = '👁'; }
     });
-    // 获取验证码
-    var cg = document.getElementById('codeGetCode');
-    if (cg) { cg.setAttribute('data-phone', 'codePhone'); cg.addEventListener('click', function () { sendCode((document.getElementById('codePhone').value || '').trim(), cg); }); }
-    var rg = document.getElementById('regGetCode');
-    if (rg) { rg.setAttribute('data-phone', 'regPhone'); rg.addEventListener('click', function () { sendCode((document.getElementById('regPhone').value || '').trim(), rg); }); }
+    // 图形顺序点选验证码实例挂载（替代短信获取验证码）
+    if (window.ShapeCaptcha) {
+      codeCapCtrl = window.ShapeCaptcha.mount(document.getElementById('codeCap'), {
+        onPass: function () { if (typeof toast === 'function') toast('图形验证通过，请把动态码填入验证码框'); }
+      });
+      regCapCtrl = window.ShapeCaptcha.mount(document.getElementById('regCap'), {
+        onPass: function () { if (typeof toast === 'function') toast('图形验证通过，请把动态码填入验证码框'); }
+      });
+    }
     // 提交
     var lb = document.getElementById('loginBtn'); if (lb) lb.addEventListener('click', doLoginPwd);
     var cb = document.getElementById('codeBtn'); if (cb) cb.addEventListener('click', doLoginCode);
@@ -1890,9 +2284,10 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       var el = document.getElementById(id);
       if (el) el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, ''); });
     });
+    // 动态验证码含字母，不做纯数字过滤（仅去除空格）
     ['codeInput', 'regCode'].forEach(function (id) {
       var el = document.getElementById(id);
-      if (el) el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, ''); });
+      if (el) el.addEventListener('input', function () { el.value = el.value.replace(/\s/g, '').toUpperCase(); });
     });
   }
 
