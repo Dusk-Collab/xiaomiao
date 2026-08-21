@@ -2365,9 +2365,11 @@ window.ShapeCaptcha = (function () {
   }
 
   window.doLogout = function () {
-    try { sessionStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(PHONE_KEY); sessionStorage.removeItem(NAME_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) {}
+    // 仅清当前会话标记；保留 localStorage 里的 admin_auth_token（7天免登录）
+    // 这样「退出登录」= 锁屏当前会话，7天内重新打开仍自动进后台，符合勾选的意图
+    try { sessionStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(PHONE_KEY); sessionStorage.removeItem(NAME_KEY); } catch (e) {}
     showLogin();
-    if (typeof toast === 'function') toast('已退出登录');
+    if (typeof toast === 'function') toast('已退出登录（7天内重开自动登录）');
   };
 
   // 监听 Store 数据变化：店铺 logo/名称改了同步刷新登录卡
@@ -2383,7 +2385,7 @@ window.ShapeCaptcha = (function () {
     }
   });
 
-  function boot() { bind(); setView('pwd'); if (!isAuthed()) showLogin(); }
+  function boot() { bind(); setView('pwd'); if (isAuthed()) closeLogin(); else showLogin(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
