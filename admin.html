@@ -74,6 +74,10 @@ body { background: #F7EFE3; }
 .login-pwd-wrap { position: relative; }
 .login-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; padding: 8px; color: #bbb; line-height: 1; border-radius: 8px; transition: color .15s, background .15s; }
 .login-eye:hover { color: #666; background: #f3f3f3; }
+.pwd-wrap { position: relative; display: inline-block; }
+.pwd-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; padding: 6px; color: #bbb; line-height: 1; border-radius: 6px; transition: color .15s, background .15s; }
+.pwd-eye:hover { color: #666; background: #f3f3f3; }
+.pwd-eye.showing { color: #E8352E; }
 .login-code { display: flex; align-items: center; gap: 10px; }
 .login-code .login-input { background: #fafafa; border: 1.5px solid #ececec; border-radius: 12px; height: 50px; padding: 0 14px; transition: border-color .15s, box-shadow .15s; box-sizing: border-box; }
 .login-code .login-input:focus { border-color: #E8352E; background: #fff; box-shadow: 0 0 0 3px rgba(232,53,46,.1); }
@@ -1346,14 +1350,14 @@ function pgShop() {
 
   // 账号安全区
   html += '<div class="card"><h3>🔐 修改密码</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码">')
-    + fRow('新密码', '4~20 位', '<input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码">')
-    + fRow('确认新密码', '再次输入新密码', '<input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次">')
+    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="cpOld" class="field" type="password" style="width:180px;padding-right:36px" placeholder="旧密码"><button type="button" class="pwd-eye" data-target="cpOld" tabindex="-1" aria-label="显示密码">👁</button></div>')
+    + fRow('新密码', '4~20 位', '<div class="pwd-wrap"><input id="cpNew1" class="field" type="password" style="width:180px;padding-right:36px" placeholder="新密码"><button type="button" class="pwd-eye" data-target="cpNew1" tabindex="-1" aria-label="显示密码">👁</button></div>')
+    + fRow('确认新密码', '再次输入新密码', '<div class="pwd-wrap"><input id="cpNew2" class="field" type="password" style="width:180px;padding-right:36px" placeholder="再输一次"><button type="button" class="pwd-eye" data-target="cpNew2" tabindex="-1" aria-label="显示密码">👁</button></div>')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePwd()">保存新密码</button></div>'
     + '</div>';
 
   html += '<div class="card"><h3>📱 更换手机号</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码">')
+    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="chOld" class="field" type="password" style="width:180px;padding-right:36px" placeholder="旧密码"><button type="button" class="pwd-eye" data-target="chOld" tabindex="-1" aria-label="显示密码">👁</button></div>')
     + fRow('新手机号', '将作为新登录账号', '<input id="chNewPhone" class="field mono" style="width:160px" inputmode="numeric" maxlength="11" placeholder="11 位新手机号">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePhone()">保存新手机号</button></div>'
     + '</div>';
@@ -1406,6 +1410,19 @@ function bindAccountSecurity() {
   // 新手机号只允许数字
   var np = document.getElementById('chNewPhone');
   if (np) np.addEventListener('input', function () { np.value = np.value.replace(/\D/g, '').slice(0, 11); });
+  // 密码框小眼睛：点击切换显示/隐藏
+  document.querySelectorAll('.pwd-eye').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-target');
+      var inp = document.getElementById(id);
+      if (!inp) return;
+      var showing = inp.type === 'text';
+      inp.type = showing ? 'password' : 'text';
+      btn.classList.toggle('showing', !showing);
+      btn.textContent = showing ? '👁' : '🙈';
+      btn.setAttribute('aria-label', showing ? '显示密码' : '隐藏密码');
+    });
+  });
 }
 
 function doChangePwd() {
