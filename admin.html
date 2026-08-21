@@ -112,6 +112,19 @@ body { background: #F7EFE3; }
 .sec-back:hover { color: #B82922; }
 .sec-back::before { content: '← '; margin-right: 2px; }
 
+/* ---- 密码框小眼睛（后端管理密码框） ---- */
+.pwd-wrap { position: relative; display: inline-block; }
+.pwd-wrap > input { padding-right: 38px; }
+.pwd-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; border-radius: 8px; transition: background .15s, color .15s; user-select: none; padding: 0; }
+.pwd-eye:hover { background: #FAF7F4; color: var(--brand); }
+.pwd-eye.showing { color: var(--brand); }
+
+/* ---- 登录面板密码框小眼睛 ---- */
+.login-field { position: relative; }
+.login-pwd-eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer; font-size: 16px; line-height: 1; border-radius: 8px; transition: background .15s, color .15s; user-select: none; padding: 0; }
+.login-pwd-eye:hover { background: rgba(232,53,46,.08); color: var(--brand); }
+.login-pwd-eye.showing { color: var(--brand); }
+
 /* ---- 顶部同步状态徽标 ---- */
 .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
 .sync-badge.connecting { background: #FFF7EA; color: #C58A1A; }
@@ -497,6 +510,15 @@ function toast(m) {
   clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 1600);
 }
 function save(fn) { Store.update(fn); D = Store.read(); }
+// 密码框小眼睛：点击切换 type=password/text
+function toggleEye(btn) {
+  var inp = btn.parentElement && btn.parentElement.querySelector('input');
+  if (!inp) return;
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; btn.classList.add('showing'); }
+  else { inp.type = 'password'; btn.textContent = '👁'; btn.classList.remove('showing'); }
+  // 光标停在末尾
+  try { inp.focus(); var v = inp.value; inp.setSelectionRange(v.length, v.length); } catch (e) {}
+}
 
 /* ---------- 自定义模态弹窗 ---------- */
 var _modalCb = null;
@@ -1387,16 +1409,16 @@ function pgShop() {
   html += '<div id="secPwd" class="card" style="display:none">'
     + '<div class="sec-back" onclick="showSecurityView(\'list\')">返回账号安全</div>'
     + '<h3>🔐 修改密码</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
-    + fRow('新密码', '4~20 位', '<input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码" autocomplete="off">')
-    + fRow('确认新密码', '再次输入新密码', '<input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次" autocomplete="off">')
+    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off"><button type="button" class="pwd-eye" onclick="toggleEye(this)" aria-label="显示密码">👁</button></div>')
+    + fRow('新密码', '4~20 位', '<div class="pwd-wrap"><input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码" autocomplete="off"><button type="button" class="pwd-eye" onclick="toggleEye(this)" aria-label="显示密码">👁</button></div>')
+    + fRow('确认新密码', '再次输入新密码', '<div class="pwd-wrap"><input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次" autocomplete="off"><button type="button" class="pwd-eye" onclick="toggleEye(this)" aria-label="显示密码">👁</button></div>')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePwd()">保存新密码</button></div>'
     + '</div>';
 
   html += '<div id="secPhone" class="card" style="display:none">'
     + '<div class="sec-back" onclick="showSecurityView(\'list\')">返回账号安全</div>'
     + '<h3>📱 更换手机号</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
+    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off"><button type="button" class="pwd-eye" onclick="toggleEye(this)" aria-label="显示密码">👁</button></div>')
     + fRow('新手机号', '将作为新登录账号', '<input id="chNewPhone" class="field mono" style="width:160px" inputmode="numeric" maxlength="11" placeholder="11 位新手机号">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePhone()">保存新手机号</button></div>'
     + '</div>';
@@ -1811,6 +1833,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
         </div>
         <div class="login-field">
           <input id="loginPwd" class="login-text" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
+          <button type="button" class="login-pwd-eye" onclick="toggleEye(this)" aria-label="显示密码">👁</button>
         </div>
         <label class="login-remember"><input id="loginRemember" type="checkbox" checked> 7天免登录</label>
         <button id="loginBtn" class="login-btn">登 录</button>
