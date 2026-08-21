@@ -99,8 +99,9 @@ body { background: #F7EFE3; }
 }
 
 /* ---- 账号安全（列表/子页式导航） ---- */
-.sec-info { padding: 4px 4px 14px; border-bottom: 1px dashed #EFE9E2; margin-bottom: 4px; font-size: 13px; color: var(--ink-2); }
-.sec-phone { display: block; font-weight: 800; color: #E8352E; font-size: 22px; margin-top: 6px; letter-spacing: 0.5px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.sec-info { padding: 4px 4px 14px; border-bottom: 1px dashed #EFE9E2; margin-bottom: 4px; font-size: 13px; color: var(--ink-2); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sec-info-label { font-weight: 500; }
+.sec-phone { color: var(--ink); font-size: 14.5px; font-weight: 600; letter-spacing: 0.3px; }
 .sec-menu-item { display: flex; align-items: center; padding: 16px 6px; border-bottom: 1px solid #F5F0E8; cursor: pointer; transition: background .15s; user-select: none; }
 .sec-menu-item:last-child { border-bottom: none; }
 .sec-menu-item:hover { background: #FAF7F4; }
@@ -1369,9 +1370,16 @@ function pgShop() {
     try { _curPhone = localStorage.getItem('xm_last_phone') || ''; } catch (e) {}
   }
   if (!_curPhone) _curPhone = (D.shop && D.shop.phone) || '13800138000';
+  // 中间 4 位用 * 隐藏（11 位手机号 -> 156****892；其他长度同样逻辑）
+  var _maskPhone = (function (p) {
+    if (!p) return '';
+    p = String(p).replace(/[^0-9]/g, '');
+    if (p.length >= 7) return p.slice(0, 3) + '****' + p.slice(-4);
+    return p; // 太短则原样
+  })(_curPhone);
   html += '<div id="secList" class="card">'
     + '<h3>🔐 账号安全</h3>'
-    + '<div class="sec-info">当前绑定手机号<span class="sec-phone">' + esc(_curPhone) + '</span></div>'
+    + '<div class="sec-info"><span class="sec-info-label">当前绑定手机号</span><span class="sec-phone">' + esc(_maskPhone) + '</span></div>'
     + '<div class="sec-menu-item" onclick="showSecurityView(\'changepwd\')"><span class="sec-menu-icon">🔐</span><span class="sec-menu-label">修改密码</span><span class="sec-menu-arrow">›</span></div>'
     + '<div class="sec-menu-item" onclick="showSecurityView(\'changephone\')"><span class="sec-menu-icon">📱</span><span class="sec-menu-label">更换手机号</span><span class="sec-menu-arrow">›</span></div>'
     + '</div>';
