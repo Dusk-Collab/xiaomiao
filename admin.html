@@ -71,16 +71,9 @@ body { background: #F7EFE3; }
 .login-input { flex: 1; border: none; background: transparent; outline: none; font-size: 15px; color: #1a1a1a; height: 100%; min-width: 0; }
 .login-text { width: 100%; height: 50px; border: 1.5px solid #ececec; border-radius: 12px; padding: 0 14px; font-size: 15px; outline: none; background: #fafafa; color: #1a1a1a; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; }
 .login-text:focus { border-color: #E8352E; background: #fff; box-shadow: 0 0 0 3px rgba(232,53,46,.1); }
-.login-pwd-wrap { position: relative; }
-.login-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; padding: 8px; color: #bbb; line-height: 1; border-radius: 8px; transition: color .15s, background .15s; }
-.login-eye:hover { color: #666; background: #f3f3f3; }
 .login-remember { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #777; margin: -2px 4px 14px; cursor: pointer; user-select: none; }
 .login-remember input { width: 14px; height: 14px; accent-color: #E8352E; cursor: pointer; }
 .login-remember:hover { color: #444; }
-.pwd-wrap { position: relative; display: inline-block; }
-.pwd-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; padding: 6px; color: #bbb; line-height: 1; border-radius: 6px; transition: color .15s, background .15s; }
-.pwd-eye:hover { color: #666; background: #f3f3f3; }
-.pwd-eye.showing { color: #E8352E; }
 .login-code { display: flex; align-items: center; gap: 10px; }
 .login-code .login-input { background: #fafafa; border: 1.5px solid #ececec; border-radius: 12px; height: 50px; padding: 0 14px; transition: border-color .15s, box-shadow .15s; box-sizing: border-box; }
 .login-code .login-input:focus { border-color: #E8352E; background: #fff; box-shadow: 0 0 0 3px rgba(232,53,46,.1); }
@@ -1353,14 +1346,14 @@ function pgShop() {
 
   // 账号安全区
   html += '<div class="card"><h3>🔐 修改密码</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="cpOld" class="field" type="password" style="width:180px;padding-right:36px" placeholder="旧密码"><button type="button" class="pwd-eye" data-target="cpOld" tabindex="-1" aria-label="显示密码">👁</button></div>')
-    + fRow('新密码', '4~20 位', '<div class="pwd-wrap"><input id="cpNew1" class="field" type="password" style="width:180px;padding-right:36px" placeholder="新密码"><button type="button" class="pwd-eye" data-target="cpNew1" tabindex="-1" aria-label="显示密码">👁</button></div>')
-    + fRow('确认新密码', '再次输入新密码', '<div class="pwd-wrap"><input id="cpNew2" class="field" type="password" style="width:180px;padding-right:36px" placeholder="再输一次"><button type="button" class="pwd-eye" data-target="cpNew2" tabindex="-1" aria-label="显示密码">👁</button></div>')
+    + fRow('当前密码', '输入旧密码验证身份', '<input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
+    + fRow('新密码', '4~20 位', '<input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码" autocomplete="off">')
+    + fRow('确认新密码', '再次输入新密码', '<input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次" autocomplete="off">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePwd()">保存新密码</button></div>'
     + '</div>';
 
   html += '<div class="card"><h3>📱 更换手机号</h3>'
-    + fRow('当前密码', '输入旧密码验证身份', '<div class="pwd-wrap"><input id="chOld" class="field" type="password" style="width:180px;padding-right:36px" placeholder="旧密码"><button type="button" class="pwd-eye" data-target="chOld" tabindex="-1" aria-label="显示密码">👁</button></div>')
+    + fRow('当前密码', '输入旧密码验证身份', '<input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
     + fRow('新手机号', '将作为新登录账号', '<input id="chNewPhone" class="field mono" style="width:160px" inputmode="numeric" maxlength="11" placeholder="11 位新手机号">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePhone()">保存新手机号</button></div>'
     + '</div>';
@@ -1413,19 +1406,6 @@ function bindAccountSecurity() {
   // 新手机号只允许数字
   var np = document.getElementById('chNewPhone');
   if (np) np.addEventListener('input', function () { np.value = np.value.replace(/\D/g, '').slice(0, 11); });
-  // 密码框小眼睛：点击切换显示/隐藏
-  document.querySelectorAll('.pwd-eye').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var id = btn.getAttribute('data-target');
-      var inp = document.getElementById(id);
-      if (!inp) return;
-      var showing = inp.type === 'text';
-      inp.type = showing ? 'password' : 'text';
-      btn.classList.toggle('showing', !showing);
-      btn.textContent = showing ? '👁' : '🙈';
-      btn.setAttribute('aria-label', showing ? '显示密码' : '隐藏密码');
-    });
-  });
 }
 
 function doChangePwd() {
@@ -1747,9 +1727,8 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
             <input id="loginPhone" class="login-input" type="tel" inputmode="numeric" placeholder="请输入手机号" autocomplete="off" maxlength="11">
           </div>
         </div>
-        <div class="login-field login-pwd-wrap">
-          <input id="loginPwd" class="login-text" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32" style="padding-right:46px;">
-          <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+        <div class="login-field">
+          <input id="loginPwd" class="login-text" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
         </div>
         <label class="login-remember"><input id="loginRemember" type="checkbox" checked> 7天免登录</label>
         <button id="loginBtn" class="login-btn">登 录</button>
@@ -2212,6 +2191,11 @@ window.ShapeCaptcha = (function () {
       var name = document.getElementById('loginShopName');
       if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
       if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+      // 强制密码框空白：每次弹登录面板都清空，不让人瞄见
+      try {
+        var pwd = document.getElementById('loginPwd');
+        if (pwd) { pwd.value = ''; pwd.type = 'password'; }
+      } catch (e) {}
       // 自动回填上次登录的手机号（密码登录面板）
       try {
         var ph = document.getElementById('loginPhone');
@@ -2321,13 +2305,6 @@ window.ShapeCaptcha = (function () {
     document.querySelectorAll('[data-go]').forEach(function (a) {
       a.addEventListener('click', function () { setView(a.getAttribute('data-go')); });
     });
-    // 密码眼睛
-    var eye = document.getElementById('loginEye');
-    var pwd = document.getElementById('loginPwd');
-    if (eye && pwd) eye.addEventListener('click', function () {
-      if (pwd.type === 'password') { pwd.type = 'text'; eye.textContent = '🙈'; }
-      else { pwd.type = 'password'; eye.textContent = '👁'; }
-    });
     // 图形顺序点选验证码实例挂载（替代短信获取验证码）
     if (window.ShapeCaptcha) {
       codeCapCtrl = window.ShapeCaptcha.mount(document.getElementById('codeCap'), {
@@ -2365,11 +2342,16 @@ window.ShapeCaptcha = (function () {
   }
 
   window.doLogout = function () {
-    // 仅清当前会话标记；保留 localStorage 里的 admin_auth_token（7天免登录）
-    // 这样「退出登录」= 锁屏当前会话，7天内重新打开仍自动进后台，符合勾选的意图
-    try { sessionStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(PHONE_KEY); sessionStorage.removeItem(NAME_KEY); } catch (e) {}
+    // 主动点退出登录 = 强制下次重输密码：清当前会话 + 清 7天免登录 token
+    // 但保留 xm_last_phone，让登录面板自动回填上次登录的手机号
+    try {
+      sessionStorage.removeItem(AUTH_KEY);
+      sessionStorage.removeItem(PHONE_KEY);
+      sessionStorage.removeItem(NAME_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    } catch (e) {}
     showLogin();
-    if (typeof toast === 'function') toast('已退出登录（7天内重开自动登录）');
+    if (typeof toast === 'function') toast('已退出登录，下次需要重新输入密码');
   };
 
   // 监听 Store 数据变化：店铺 logo/名称改了同步刷新登录卡
