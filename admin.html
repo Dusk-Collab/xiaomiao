@@ -74,6 +74,9 @@ body { background: #F7EFE3; }
 .login-pwd-wrap { position: relative; }
 .login-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 17px; padding: 8px; color: #bbb; line-height: 1; border-radius: 8px; transition: color .15s, background .15s; }
 .login-eye:hover { color: #666; background: #f3f3f3; }
+.login-remember { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #777; margin: -2px 4px 14px; cursor: pointer; user-select: none; }
+.login-remember input { width: 14px; height: 14px; accent-color: #E8352E; cursor: pointer; }
+.login-remember:hover { color: #444; }
 .pwd-wrap { position: relative; display: inline-block; }
 .pwd-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 15px; padding: 6px; color: #bbb; line-height: 1; border-radius: 6px; transition: color .15s, background .15s; }
 .pwd-eye:hover { color: #666; background: #f3f3f3; }
@@ -1748,6 +1751,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
           <input id="loginPwd" class="login-text" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32" style="padding-right:46px;">
           <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
         </div>
+        <label class="login-remember"><input id="loginRemember" type="checkbox" checked> 7天免登录</label>
         <button id="loginBtn" class="login-btn">登 录</button>
         <div class="login-foot">
           <a data-go="code">验证码登录</a>
@@ -2159,10 +2163,33 @@ window.ShapeCaptcha = (function () {
   var AUTH_KEY = 'admin_auth';
   var PHONE_KEY = 'admin_phone';
   var NAME_KEY = 'admin_name';
+  var LAST_PHONE_KEY = 'xm_last_phone';   // 上次登录手机号（密码登录面板自动回填）
+  var AUTH_TOKEN_KEY = 'admin_auth_token'; // 7天免登录 token（手机号|过期时间戳）
   var codeCapCtrl = null;  // 验证码登录面板的图形验证实例
   var regCapCtrl = null;   // 注册面板的图形验证实例
 
-  function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
+  function isAuthed() {
+    try { if (sessionStorage.getItem(AUTH_KEY) === '1') return true; } catch (e) {}
+    // 7天免登录：localStorage 里有过期时间未到的 token，自动恢复一个 session 视为已登录
+    try {
+      var raw = localStorage.getItem(AUTH_TOKEN_KEY);
+      if (raw) {
+        var parts = raw.split('|');
+        var phone = parts[0] || '';
+        var exp = parseInt(parts[1], 10) || 0;
+        if (phone && exp > Date.now()) {
+          try {
+            sessionStorage.setItem(AUTH_KEY, '1');
+            sessionStorage.setItem(PHONE_KEY, phone);
+          } catch (e) {}
+          return true;
+        }
+        // 过期则清掉
+        try { localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) {}
+      }
+    } catch (e) {}
+    return false;
+  }
   function closeLogin() { var m = document.getElementById('loginMask'); if (m) m.style.display = 'none'; }
   function validPhone(p) { return /^1\d{10}$/.test(p || ''); }
 
@@ -2185,6 +2212,23 @@ window.ShapeCaptcha = (function () {
       var name = document.getElementById('loginShopName');
       if (logo && d.shop && d.shop.logo) logo.textContent = d.shop.logo;
       if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
+      // 自动回填上次登录的手机号（密码登录面板）
+      try {
+        var ph = document.getElementById('loginPhone');
+        if (ph && !ph.value) {
+          var saved = localStorage.getItem(LAST_PHONE_KEY);
+          if (saved) ph.value = saved;
+        }
+      } catch (e) {}
+      // 如果有 7天 token 在有效期内，默认勾选「7天免登录」
+      try {
+        var raw = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (raw) {
+          var exp = parseInt(raw.split('|')[1], 10) || 0;
+          var rm = document.getElementById('loginRemember');
+          if (rm) rm.checked = exp > Date.now();
+        }
+      } catch (e) {}
     } catch (e) {}
     mask.style.display = 'grid';
   }
@@ -2215,6 +2259,18 @@ window.ShapeCaptcha = (function () {
       sessionStorage.setItem(AUTH_KEY, '1');
       sessionStorage.setItem(PHONE_KEY, phone);
       if (name) sessionStorage.setItem(NAME_KEY, name);
+      try {
+        // 记忆手机号，下次打开直接回填
+        localStorage.setItem(LAST_PHONE_KEY, phone);
+        // 7天免登录：仅在勾选了复选框时落盘 token
+        var rm = document.getElementById('loginRemember');
+        if (rm && rm.checked) {
+          var exp = Date.now() + 7 * 86400 * 1000;
+          localStorage.setItem(AUTH_TOKEN_KEY, phone + '|' + exp);
+        } else {
+          localStorage.removeItem(AUTH_TOKEN_KEY);
+        }
+      } catch (e) {}
       var phones = JSON.parse(localStorage.getItem('xm_phones') || '[]');
       if (phones.indexOf(phone) < 0) { phones.push(phone); localStorage.setItem('xm_phones', JSON.stringify(phones)); }
     } catch (e) {}
@@ -2309,7 +2365,7 @@ window.ShapeCaptcha = (function () {
   }
 
   window.doLogout = function () {
-    try { sessionStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(PHONE_KEY); sessionStorage.removeItem(NAME_KEY); } catch (e) {}
+    try { sessionStorage.removeItem(AUTH_KEY); sessionStorage.removeItem(PHONE_KEY); sessionStorage.removeItem(NAME_KEY); localStorage.removeItem(AUTH_TOKEN_KEY); } catch (e) {}
     showLogin();
     if (typeof toast === 'function') toast('已退出登录');
   };
