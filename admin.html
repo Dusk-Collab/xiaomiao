@@ -98,6 +98,19 @@ body { background: #F7EFE3; }
   .login-body { padding: 22px 22px 18px; }
 }
 
+/* ---- 账号安全（列表/子页式导航） ---- */
+.sec-info { padding: 4px 4px 14px; border-bottom: 1px dashed #EFE9E2; margin-bottom: 4px; font-size: 13px; color: var(--ink-2); }
+.sec-phone { display: block; font-weight: 800; color: #E8352E; font-size: 22px; margin-top: 6px; letter-spacing: 0.5px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.sec-menu-item { display: flex; align-items: center; padding: 16px 6px; border-bottom: 1px solid #F5F0E8; cursor: pointer; transition: background .15s; user-select: none; }
+.sec-menu-item:last-child { border-bottom: none; }
+.sec-menu-item:hover { background: #FAF7F4; }
+.sec-menu-icon { font-size: 20px; margin-right: 14px; width: 28px; text-align: center; }
+.sec-menu-label { flex: 1; font-size: 14.5px; color: var(--ink); font-weight: 600; }
+.sec-menu-arrow { color: #C0B8AC; font-size: 22px; line-height: 1; }
+.sec-back { display: inline-block; color: #E8352E; font-size: 13px; cursor: pointer; padding: 4px 0 12px; user-select: none; font-weight: 600; }
+.sec-back:hover { color: #B82922; }
+.sec-back::before { content: '← '; margin-right: 2px; }
+
 /* ---- 顶部同步状态徽标 ---- */
 .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
 .sync-badge.connecting { background: #FFF7EA; color: #C58A1A; }
@@ -1344,15 +1357,37 @@ function pgShop() {
     + '⚠️ 手机锁屏或应用切到后台时，系统会禁止网页/小程序播放声音。真正开店建议加一台<b>云喇叭</b>（约 200 元），订单直达硬件播报，绝不漏单。</div>'
     + '</div>';
 
-  // 账号安全区
-  html += '<div class="card"><h3>🔐 修改密码</h3>'
+  // 账号安全区 - 列表/子页式导航（点击进入子页面，不同时显示）
+  // 当前绑定手机号：优先用 7天免登录 token 里的手机号 > 上次登录手机号 > 店铺设置里的联系电话
+  // 注意：AUTH_TOKEN_KEY / LAST_PHONE_KEY 在下面 IIFE 闭包里，pgShop 在外面，改用字面量
+  var _curPhone = '';
+  try {
+    var raw = localStorage.getItem('admin_auth_token');
+    if (raw) _curPhone = (raw.split('|')[0]) || '';
+  } catch (e) {}
+  if (!_curPhone) {
+    try { _curPhone = localStorage.getItem('xm_last_phone') || ''; } catch (e) {}
+  }
+  if (!_curPhone) _curPhone = (D.shop && D.shop.phone) || '13800138000';
+  html += '<div id="secList" class="card">'
+    + '<h3>🔐 账号安全</h3>'
+    + '<div class="sec-info">当前绑定手机号<span class="sec-phone">' + esc(_curPhone) + '</span></div>'
+    + '<div class="sec-menu-item" onclick="showSecurityView(\'changepwd\')"><span class="sec-menu-icon">🔐</span><span class="sec-menu-label">修改密码</span><span class="sec-menu-arrow">›</span></div>'
+    + '<div class="sec-menu-item" onclick="showSecurityView(\'changephone\')"><span class="sec-menu-icon">📱</span><span class="sec-menu-label">更换手机号</span><span class="sec-menu-arrow">›</span></div>'
+    + '</div>';
+
+  html += '<div id="secPwd" class="card" style="display:none">'
+    + '<div class="sec-back" onclick="showSecurityView(\'list\')">返回账号安全</div>'
+    + '<h3>🔐 修改密码</h3>'
     + fRow('当前密码', '输入旧密码验证身份', '<input id="cpOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
     + fRow('新密码', '4~20 位', '<input id="cpNew1" class="field" type="password" style="width:180px" placeholder="新密码" autocomplete="off">')
     + fRow('确认新密码', '再次输入新密码', '<input id="cpNew2" class="field" type="password" style="width:180px" placeholder="再输一次" autocomplete="off">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePwd()">保存新密码</button></div>'
     + '</div>';
 
-  html += '<div class="card"><h3>📱 更换手机号</h3>'
+  html += '<div id="secPhone" class="card" style="display:none">'
+    + '<div class="sec-back" onclick="showSecurityView(\'list\')">返回账号安全</div>'
+    + '<h3>📱 更换手机号</h3>'
     + fRow('当前密码', '输入旧密码验证身份', '<input id="chOld" class="field" type="password" style="width:180px" placeholder="旧密码" autocomplete="off">')
     + fRow('新手机号', '将作为新登录账号', '<input id="chNewPhone" class="field mono" style="width:160px" inputmode="numeric" maxlength="11" placeholder="11 位新手机号">')
     + '<div style="display:flex;justify-content:flex-end;padding-top:10px;border-top:1px dashed #EFE9E2;margin-top:6px"><button class="btn btn-primary" onclick="doChangePhone()">保存新手机号</button></div>'
@@ -1360,6 +1395,8 @@ function pgShop() {
 
   $('body').innerHTML = html;
   bindAccountSecurity();
+  // 恢复账号安全子视图（list/changepwd/changephone）
+  if (typeof _securityView !== 'undefined') showSecurityView(_securityView);
 }
 function fRow(label, hint, ctl, wide) {
   return '<div class="form-row"' + (wide ? ' style="flex-wrap:wrap"' : '') + '>'
@@ -1408,6 +1445,37 @@ function bindAccountSecurity() {
   if (np) np.addEventListener('input', function () { np.value = np.value.replace(/\D/g, '').slice(0, 11); });
 }
 
+// 账号安全列表/子页面导航：'list' / 'changepwd' / 'changephone'
+var _securityView = 'list';
+function showSecurityView(v) {
+  _securityView = v;
+  ['secList','secPwd','secPhone'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  var map = {list:'secList', changepwd:'secPwd', changephone:'secPhone'};
+  var el = document.getElementById(map[v]);
+  if (el) el.style.display = '';
+  // 切到子页面时滚动到顶，便于操作
+  if (v !== 'list' && el && el.scrollIntoView) try { el.scrollIntoView({block:'start', behavior:'smooth'}); } catch (e) {}
+}
+// 更换手机号后，同步 7天免登录 token 里的手机号（保留过期时间），
+// 这样下次免登录直接进的也是新号，不会出现「手机号已换但 token 还是旧号」的错位
+function _syncAuthToken(newPhone) {
+  try {
+    var raw = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!raw) return;
+    var parts = raw.split('|');
+    var exp = parseInt(parts[1] || '0', 10);
+    if (exp && Date.now() < exp) {
+      localStorage.setItem(AUTH_TOKEN_KEY, newPhone + '|' + exp);
+    } else {
+      // token 已过期，清掉让用户下次重新登录
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+  } catch (e) {}
+}
+
 function doChangePwd() {
   var old = (document.getElementById('cpOld').value || '').trim();
   var p1 = (document.getElementById('cpNew1').value || '');
@@ -1419,6 +1487,9 @@ function doChangePwd() {
   save(function (d) { d.settings = d.settings || {}; d.settings.adminPwd = p1; });
   ['cpOld', 'cpNew1', 'cpNew2'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
   toast('✓ 密码已更新');
+  // 保存成功后自动返回账号安全列表
+  _securityView = 'list';
+  render();
 }
 
 function doChangePhone() {
@@ -1433,6 +1504,9 @@ function doChangePhone() {
   save(function (d) { d.shop.phone = newPhone; });
   ['chOld', 'chNewPhone'].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
   toast('✓ 手机号已更换为 ' + newPhone.slice(0, 3) + '****' + newPhone.slice(-4));
+  // 保存成功后自动返回账号安全列表（顺便同步 token 里的手机号，确保 7天免登录 也跟着新号走）
+  _securityView = 'list';
+  try { _syncAuthToken(newPhone); localStorage.setItem('xm_last_phone', newPhone); } catch (e) {}
   setTimeout(function () { render(); }, 800);
 }
 function clearOrders() { /* 已废弃，订单删除请在订单看板操作 */ }
