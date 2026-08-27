@@ -74,6 +74,34 @@ body { background: #F7EFE3; }
 .login-btn:disabled { opacity: .6; cursor: wait; }
 .login-foot { font-size: 12px; color: #b0b0b0; margin-top: 16px; }
 .login-foot b { color: #888; font-weight: 600; }
+/* ---- 登录双 tab ---- */
+.login-tabs { display: flex; gap: 8px; margin: 14px 0 12px; }
+.login-tab { flex: 1; text-align: center; padding: 9px 0; font-size: 13.5px; color: #999; border: 1px solid #ece6df; border-radius: 10px; cursor: pointer; transition: .15s; user-select: none; }
+.login-tab.on { color: #E8352E; border-color: #E8352E; background: #FFF5F4; font-weight: 700; }
+.login-field { margin-bottom: 10px; }
+.login-text { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #e3ddd5; border-radius: 12px; font-size: 15px; outline: none; transition: border-color .15s; }
+.login-text:focus { border-color: #E8352E; }
+.login-code-row { display: flex; gap: 8px; }
+.login-code-row .login-text { flex: 1; }
+.login-code-btn { flex: 0 0 auto; padding: 0 14px; border: none; background: #E8352E; color: #fff; border-radius: 12px; font-size: 13.5px; cursor: pointer; transition: opacity .15s; }
+.login-code-btn:active { opacity: .85; }
+.captcha-box { margin-top: 12px; border: 1px solid #eee; border-radius: 12px; padding: 12px; background: #FAFAFA; }
+.captcha-tip { font-size: 12.5px; color: #555; margin-bottom: 10px; line-height: 1.5; }
+.captcha-tip b { color: #E8352E; }
+.captcha-stage { position: relative; height: 152px; background: #fff; border-radius: 10px; overflow: hidden; }
+.cap-shape { position: absolute; width: 42px; height: 42px; cursor: pointer; transition: transform .12s; box-shadow: 0 2px 6px rgba(0,0,0,.14); }
+.cap-shape:active { transform: scale(.9); }
+.cap-rect { border-radius: 5px; }
+.cap-circle { border-radius: 50%; }
+.cap-square { border-radius: 3px; }
+.cap-diamond { border-radius: 3px; transform: rotate(45deg); }
+.cap-triangle { width: 44px; height: 40px; background: #21A35A; clip-path: polygon(50% 0, 100% 100%, 0 100%); box-shadow: none; }
+.cap-done { outline: 3px solid #21A35A; outline-offset: 2px; }
+.cap-err { animation: capShake .35s; }
+@keyframes capShake { 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
+.captcha-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; }
+.captcha-foot span { color: #21A35A; font-weight: 600; }
+.captcha-foot a { color: #999; cursor: pointer; }
 
 /* ---- 顶部同步状态徽标 ---- */
 .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
@@ -386,7 +414,7 @@ canvas.qr { border-radius: 8px; }
       <div class="page-title" id="pageTitle">订单看板</div>
       <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <span class="tag" id="liveTag" style="background:#E7F6EC;color:var(--ok)">● 实时同步中</span>
-        <span class="sync-badge" id="syncBadge">☁ 连接中…</span>
+        <span class="sync-badge" id="syncBadge" onclick="openCloudSettings()" style="cursor:pointer">☁ 连接中…</span>
         <button class="btn btn-ghost btn-sm" onclick="openCustomer()">👀 顾客视角</button>
         <button class="btn btn-ghost btn-sm" onclick="testOrder()">🧪 模拟来单</button>
       </div>
@@ -1293,6 +1321,14 @@ function pgShop() {
     + '<button class="btn ' + (s.manualClose ? 'btn-primary' : 'btn-ghost') + '" style="margin-left:auto" onclick="toggleClose()">'
     + (s.manualClose ? '▶ 开始营业' : '⏸ 一键打烊') + '</button></div></div>';
 
+  var cloudOn = !!(window.CloudSync && CloudSync.enabled);
+  html += '<div class="card" style="border:1.5px solid ' + (cloudOn ? '#B7E4C7' : '#F0C9C2') + ';background:' + (cloudOn ? '#F4FBF6' : '#FFF6F4') + '">'
+    + '<div style="display:flex;align-items:center;gap:12px">'
+    + '<div style="font-size:30px">☁️</div>'
+    + '<div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:800">' + (cloudOn ? '云端同步已开启' : '云端同步未开启') + '</div>'
+    + '<div style="font-size:12px;color:var(--ink-2);margin-top:3px">' + (cloudOn ? '改动实时保存到 GitHub，手机顾客端自动更新' : '开启后你后台的数据（含刚新上的链接）会自动同步到手机顾客端') + '</div></div>'
+    + '<button class="btn ' + (cloudOn ? 'btn-ghost' : 'btn-primary') + '" style="margin-left:auto;white-space:nowrap" onclick="openCloudSettings()">' + (cloudOn ? '管理' : '☁ 开启同步') + '</button></div></div>';
+
   html += '<div class="card"><h3>🏪 店铺信息</h3>'
     + fRow('店铺名称', '显示在顾客点餐页顶部', '<input class="field" value="' + esc(s.name) + '" onchange="updShop(\'name\',this.value)">', 1)
     + fRow('店铺标语', '', '<input class="field" value="' + esc(s.slogan) + '" onchange="updShop(\'slogan\',this.value)">', 1)
@@ -1624,15 +1660,40 @@ render();
 showSoundBar();
 setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 </script>
-<!-- 管理员登录（干净版：仅密码登录，去掉创建账户/扫码迁移/本地模式/验证码/忘记密码） -->
+<!-- 管理员登录（密码登录 / 验证码登录 双 tab；验证码登录用图形点选代替短信） -->
 <div id="loginMask" class="login-mask">
   <div class="login-card">
     <div class="login-logo" id="loginLogo">🥐</div>
     <div class="login-name" id="loginShopName">小淼饭店</div>
     <div class="login-title">管理员登录</div>
-    <div class="login-pwd-wrap">
-      <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
-      <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+    <div class="login-tabs">
+      <div class="login-tab on" id="ltPwd">密码登录</div>
+      <div class="login-tab" id="ltCode">验证码登录</div>
+    </div>
+    <!-- 密码登录 -->
+    <div id="lpPwd">
+      <div class="login-field">
+        <input id="loginPhone" class="login-text" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号" autocomplete="off">
+      </div>
+      <div class="login-pwd-wrap">
+        <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
+        <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+      </div>
+    </div>
+    <!-- 验证码登录 -->
+    <div id="lpCode" style="display:none">
+      <div class="login-field">
+        <input id="codePhone" class="login-text" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号" autocomplete="off">
+      </div>
+      <div class="login-code-row">
+        <input id="codeInput" class="login-text" type="tel" inputmode="numeric" maxlength="6" placeholder="验证码" autocomplete="off">
+        <button type="button" id="btnGetCode" class="login-code-btn">获取验证码</button>
+      </div>
+      <div id="captchaBox" class="captcha-box" style="display:none">
+        <div class="captcha-tip" id="captchaTip">请依次点击：<b>红色长方形</b> → <b>蓝色圆形</b> → <b>绿色三角形</b></div>
+        <div class="captcha-stage" id="captchaStage"></div>
+        <div class="captcha-foot"><span id="captchaMsg"></span><a id="captchaCancel">取消</a></div>
+      </div>
     </div>
     <button id="loginBtn" class="login-btn">登 录</button>
     <div class="login-foot">默认密码 <b>店铺手机号</b> · 在「店铺设置」修改</div>
@@ -1640,26 +1701,40 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 </div>
 
 <script>
-/* 管理员登录逻辑（干净版·仅密码）
- * 密码取自 data.json.settings.adminPwd；首次未设置时默认 = 店铺手机号。
- * 两人（A、B）都可以用同一密码登录，A 改保存后 B 每 3 秒自动看到（store.js 轮询）。
- * 登录态仅存本机 sessionStorage，关浏览器即失效，下次需重新输入。 */
+/* 管理员登录逻辑（密码登录 / 验证码登录 双 tab）
+ * 密码登录：手机号(记忆) + 后台密码；密码取自 data.json.settings.adminPwd，默认=店铺手机号。
+ * 验证码登录：手机号 + 图形点选验证码(点 红长方形→蓝圆形→绿三角形 通过即生成 6 位码)，纯前端无短信。
+ * 登录态仅存本机 sessionStorage，关浏览器即失效。
+ * 注意：本段只改 UI/登录逻辑，不读写 data.json 任何业务数据（符合"不动用户数据"红线）。 */
 (function () {
   var AUTH_KEY = 'admin_auth';
+  var curTab = 'pwd';
+  var validCode = '';
+  var codeVerified = false;
+  var TARGETS = ['rect', 'circle', 'triangle'];
+  var clicks = [];
+
   function getPwd() {
     try {
       var d = (window.Store && Store.read) ? Store.read() : null;
       var p = d && d.settings && d.settings.adminPwd;
       if (p) return String(p);
-      // 默认：店铺手机号（去非数字）
       var phone = (d && d.shop && d.shop.phone) || '13800138000';
       return String(phone).replace(/\D/g, '');
     } catch (e) { return '13800138000'; }
   }
+  function rememberPhone(ph) {
+    try { if (ph) localStorage.setItem('xm_last_phone', ph); } catch (e) {}
+  }
+  function fillLastPhone() {
+    try {
+      var last = localStorage.getItem('xm_last_phone');
+      if (last) { var lp = document.getElementById('loginPhone'); if (lp) lp.value = last; }
+    } catch (e) {}
+  }
   function showLogin() {
     var mask = document.getElementById('loginMask');
     if (!mask) return;
-    // 同步店铺 logo + 名称
     try {
       var d = Store.read();
       var logo = document.getElementById('loginLogo');
@@ -1668,11 +1743,88 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       if (name && d.shop && d.shop.name) name.textContent = d.shop.name;
     } catch (e) {}
     mask.style.display = 'grid';
-    var p = document.getElementById('loginPwd');
-    if (p) { p.value = ''; setTimeout(function () { try { p.focus(); } catch (e) {} }, 120); }
+    curTab = 'pwd'; codeVerified = false; validCode = '';
+    switchLoginTab('pwd');
+    fillLastPhone();
+    var pp = document.getElementById('loginPwd'); if (pp) pp.value = '';
+    var ci = document.getElementById('codeInput'); if (ci) ci.value = '';
+    hideCaptcha();
+    setTimeout(function () { try { (pp || document.getElementById('loginPhone')).focus(); } catch (e) {} }, 120);
   }
   function hideLogin() {
     var m = document.getElementById('loginMask'); if (m) m.style.display = 'none';
+  }
+  function switchLoginTab(t) {
+    curTab = t;
+    var tp = document.getElementById('ltPwd'), tc = document.getElementById('ltCode');
+    if (tp) tp.classList.toggle('on', t === 'pwd');
+    if (tc) tc.classList.toggle('on', t === 'code');
+    var lp = document.getElementById('lpPwd'), lc = document.getElementById('lpCode');
+    if (lp) lp.style.display = t === 'pwd' ? '' : 'none';
+    if (lc) lc.style.display = t === 'code' ? '' : 'none';
+    if (t === 'code') hideCaptcha();
+  }
+  // ---- 图形点选验证码（代替短信）----
+  function buildCaptcha() {
+    var stage = document.getElementById('captchaStage');
+    if (!stage) return;
+    stage.innerHTML = '';
+    clicks = [];
+    var shapes = [
+      { t: 'rect', color: '#E8352E' },
+      { t: 'circle', color: '#2E7BE8' },
+      { t: 'triangle', color: '#21A35A' },
+      { t: 'square', color: '#E0A82E' },
+      { t: 'diamond', color: '#8E44C9' }
+    ];
+    for (var i = shapes.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = shapes[i]; shapes[i] = shapes[j]; shapes[j] = tmp;
+    }
+    shapes.forEach(function (s) {
+      var el = document.createElement('div');
+      el.className = 'cap-shape cap-' + s.t;
+      el.style.background = s.color;
+      el.style.top = (6 + Math.random() * 64) + '%';
+      el.style.left = (6 + Math.random() * 60) + '%';
+      el.addEventListener('click', function () { onShape(s.t, el); });
+      stage.appendChild(el);
+    });
+  }
+  function onShape(t, el) {
+    var isTarget = TARGETS.indexOf(t) >= 0;
+    if (!isTarget || clicks.length >= TARGETS.length || TARGETS[clicks.length] !== t) {
+      el.classList.add('cap-err');
+      setTimeout(function () { el.classList.remove('cap-err'); }, 400);
+      clicks = [];
+      var done = document.querySelectorAll('.cap-done');
+      for (var k = 0; k < done.length; k++) done[k].classList.remove('cap-done');
+      var msg = document.getElementById('captchaMsg');
+      if (msg) msg.textContent = '顺序不对，请重来';
+      return;
+    }
+    clicks.push(t);
+    el.classList.add('cap-done');
+    if (clicks.length === TARGETS.length) {
+      validCode = String(Math.floor(100000 + Math.random() * 900000));
+      var m = document.getElementById('captchaMsg');
+      if (m) m.textContent = '验证通过！验证码：' + validCode;
+      codeVerified = true;
+      setTimeout(function () { hideCaptcha(); var ci = document.getElementById('codeInput'); if (ci) ci.focus(); }, 1400);
+    }
+  }
+  function openCaptcha() {
+    var ph = (document.getElementById('codePhone').value || '').trim();
+    if (!/^\d{11}$/.test(ph)) { if (typeof toast === 'function') toast('请输入 11 位手机号'); return; }
+    codeVerified = false; validCode = '';
+    buildCaptcha();
+    var box = document.getElementById('captchaBox');
+    if (box) box.style.display = 'block';
+    var m = document.getElementById('captchaMsg'); if (m) m.textContent = '';
+  }
+  function hideCaptcha() {
+    var box = document.getElementById('captchaBox');
+    if (box) box.style.display = 'none';
   }
   function bind() {
     var btn = document.getElementById('loginBtn');
@@ -1684,19 +1836,37 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       if (pwd.type === 'password') { pwd.type = 'text'; eye.textContent = '🙈'; }
       else { pwd.type = 'password'; eye.textContent = '👁'; }
     });
+    var lp = document.getElementById('ltPwd'); if (lp) lp.addEventListener('click', function () { switchLoginTab('pwd'); });
+    var lc = document.getElementById('ltCode'); if (lc) lc.addEventListener('click', function () { switchLoginTab('code'); });
+    var gc = document.getElementById('btnGetCode'); if (gc) gc.addEventListener('click', openCaptcha);
+    var cc = document.getElementById('captchaCancel'); if (cc) cc.addEventListener('click', hideCaptcha);
+    var ci = document.getElementById('codeInput');
+    if (ci) ci.addEventListener('keydown', function (e) { if (e.key === 'Enter') tryLogin(); });
   }
   function tryLogin() {
-    var pwd = document.getElementById('loginPwd');
-    var entered = (pwd.value || '').trim();
-    var stored = getPwd();
-    if (entered === stored) {
+    if (curTab === 'pwd') {
+      var pwd = document.getElementById('loginPwd');
+      var entered = (pwd.value || '').trim();
+      var stored = getPwd();
+      if (entered === stored) {
+        rememberPhone((document.getElementById('loginPhone').value || '').trim());
+        try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
+        hideLogin();
+        if (typeof toast === 'function') toast('✓ 登录成功');
+      } else {
+        pwd.classList.remove('err'); void pwd.offsetWidth; pwd.classList.add('err');
+        pwd.value = ''; setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 50);
+        if (typeof toast === 'function') toast('密码错误');
+      }
+    } else {
+      var ph = (document.getElementById('codePhone').value || '').trim();
+      var code = (document.getElementById('codeInput').value || '').trim();
+      if (!/^\d{11}$/.test(ph)) { if (typeof toast === 'function') toast('请输入 11 位手机号'); return; }
+      if (!codeVerified || code !== validCode) { if (typeof toast === 'function') toast('请先获取并输入正确验证码'); return; }
+      rememberPhone(ph);
       try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
       hideLogin();
       if (typeof toast === 'function') toast('✓ 登录成功');
-    } else {
-      pwd.classList.remove('err'); void pwd.offsetWidth; pwd.classList.add('err');
-      pwd.value = ''; setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 50);
-      if (typeof toast === 'function') toast('密码错误');
     }
   }
   function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
@@ -1706,7 +1876,6 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     if (typeof toast === 'function') toast('已退出登录');
   };
 
-  // 监听 Store 数据变化，店铺 logo/名称改了同步刷新登录卡
   if (window.Store && Store.onChange) Store.onChange(function () {
     if (!isAuthed()) {
       try {
@@ -1719,7 +1888,6 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     }
   });
 
-  // 启动：等 Store 就绪后判断
   function boot() {
     bind();
     if (!isAuthed()) showLogin();
