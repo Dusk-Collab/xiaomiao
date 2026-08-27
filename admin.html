@@ -86,10 +86,36 @@ body { background: #F7EFE3; }
 .login-code-btn { flex: 0 0 auto; padding: 0 14px; border: none; background: #E8352E; color: #fff; border-radius: 12px; font-size: 13.5px; cursor: pointer; transition: opacity .15s; }
 .login-code-btn:active { opacity: .85; }
 .captcha-box { margin-top: 12px; border: 1px solid #eee; border-radius: 12px; padding: 14px; background: #FAFAFA; }
-.captcha-tip { font-size: 12.5px; color: #555; margin: 0 0 10px; line-height: 1.5; pointer-events: none; }
+.captcha-tip { font-size: 13px; color: #555; margin: 0 0 10px; line-height: 1.9; pointer-events: auto; user-select: none; }
 .captcha-tip b { color: #E8352E; }
+/* 文字按钮（点字验证主路径） */
+.cap-chip {
+  display: inline-block;
+  padding: 1px 9px;
+  margin: 0 2px;
+  border: 1.5px solid currentColor;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #fff;
+  transition: transform .12s, background .12s, color .12s, box-shadow .12s;
+  user-select: none;
+}
+.cap-chip:hover { box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.cap-chip:active { transform: scale(.95); }
+.cap-chip.done {
+  background: currentColor;
+  color: #fff !important;
+  border-color: currentColor;
+}
+.cap-chip.err { animation: chipShake .35s; }
+@keyframes chipShake {
+  20%,60% { transform: translateX(-3px); }
+  40%,80% { transform: translateX(3px); }
+}
+.cap-chip.disabled { pointer-events: none; opacity: .45; }
 .captcha-stage { display: flex; justify-content: space-around; align-items: center; gap: 6px; height: 64px; background: #fff; border-radius: 10px; padding: 0 8px; box-sizing: border-box; }
-.cap-shape { position: relative; width: 42px; height: 42px; flex: 0 0 auto; cursor: pointer; transition: transform .12s, box-shadow .12s; box-shadow: 0 2px 6px rgba(0,0,0,.14); }
+.cap-shape { position: relative; width: 42px; height: 42px; flex: 0 0 auto; cursor: pointer; transition: transform .12s, box-shadow .12s, opacity .12s; box-shadow: 0 2px 6px rgba(0,0,0,.14); }
 .cap-shape:active { transform: scale(.9); }
 .cap-rect { border-radius: 5px; }
 .cap-circle { border-radius: 50%; }
@@ -97,9 +123,8 @@ body { background: #F7EFE3; }
 .cap-diamond { border-radius: 3px; transform: rotate(45deg); }
 .cap-diamond:active { transform: scale(.9) rotate(45deg); }
 .cap-triangle { width: 44px; height: 40px; background: #21A35A; clip-path: polygon(50% 0, 100% 100%, 0 100%); box-shadow: none; }
-.cap-done { outline: 3px solid #21A35A; outline-offset: 2px; }
-.cap-err { animation: capShake .35s; }
-@keyframes capShake { 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
+.cap-shape.disabled { pointer-events: none; opacity: .5; }
+.cap-shape.err { animation: chipShake .35s; }
 .captcha-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; }
 .captcha-foot span { color: #21A35A; font-weight: 600; }
 .captcha-foot a { color: #999; cursor: pointer; }
@@ -1687,7 +1712,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
         <button type="button" id="btnGetCode" class="login-code-btn">获取验证码</button>
       </div>
       <div id="captchaBox" class="captcha-box" style="display:none">
-        <div class="captcha-tip" id="captchaTip">请依次点击：<b>红色长方形</b> → <b>蓝色圆形</b> → <b>绿色三角形</b></div>
+        <div class="captcha-tip" id="captchaTip">请依次点击：<span class="cap-chip" data-idx="0" data-color="#E8352E" style="color:#E8352E">红长方形</span> → <span class="cap-chip" data-idx="1" data-color="#2E7BE8" style="color:#2E7BE8">蓝圆形</span> → <span class="cap-chip" data-idx="2" data-color="#21A35A" style="color:#21A35A">绿三角形</span><span style="color:#999;font-weight:400;margin-left:6px">（图形是干扰，点错 3 次失效）</span></div>
         <div class="captcha-stage" id="captchaStage"></div>
         <div class="captcha-foot"><span id="captchaMsg"></span><a id="captchaCancel">取消</a></div>
       </div>
@@ -1710,6 +1735,9 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
   var codeVerified = false;
   var TARGETS = ['rect', 'circle', 'triangle'];
   var clicks = [];
+  var errors = 0;
+  var MAX_ERRORS = 3;
+  var lockTimer = null;
 
   function getPwd() {
     try {
@@ -1761,12 +1789,19 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     if (cr) cr.style.display = t === 'code' ? '' : 'none';
     if (t === 'code') hideCaptcha();
   }
-  // ---- 图形点选验证码（代替短信）----
+  // ---- 图形点选验证码（点文字 + 图形干扰；点错累计 3 次无效）----
+  // 主路径：依次点击 3 个文字 chip（红长方形 → 蓝圆形 → 绿三角形）
+  // 干扰：5 个图形色块可点，但点一下算错（+1/3 失效）
   function buildCaptcha() {
     var stage = document.getElementById('captchaStage');
     if (!stage) return;
     stage.innerHTML = '';
     clicks = [];
+    errors = 0;
+    if (lockTimer) { clearTimeout(lockTimer); lockTimer = null; }
+    var m = document.getElementById('captchaMsg'); if (m) m.textContent = '';
+
+    // 5 个图形（装饰 + 干扰点）
     var shapes = [
       { t: 'rect', color: '#E8352E' },
       { t: 'circle', color: '#2E7BE8' },
@@ -1782,30 +1817,83 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       var el = document.createElement('div');
       el.className = 'cap-shape cap-' + s.t;
       el.style.background = s.color;
-      el.addEventListener('click', function () { onShape(s.t, el); });
+      el.style.opacity = '';
+      el.style.pointerEvents = 'auto';
+      el.classList.remove('disabled', 'err');
+      el.addEventListener('click', function (ev) { onWrong(ev); });
       stage.appendChild(el);
     });
-  }
-  function onShape(t, el) {
-    var isTarget = TARGETS.indexOf(t) >= 0;
-    if (!isTarget || clicks.length >= TARGETS.length || TARGETS[clicks.length] !== t) {
-      el.classList.add('cap-err');
-      setTimeout(function () { el.classList.remove('cap-err'); }, 400);
-      clicks = [];
-      var done = document.querySelectorAll('.cap-done');
-      for (var k = 0; k < done.length; k++) done[k].classList.remove('cap-done');
-      var msg = document.getElementById('captchaMsg');
-      if (msg) msg.textContent = '顺序不对，请重来';
-      return;
+
+    // 文字 chip 重置 + 绑事件
+    var chips = document.querySelectorAll('.cap-chip');
+    for (var k = 0; k < chips.length; k++) {
+      (function (chip) {
+        var idx = parseInt(chip.dataset.idx, 10);
+        chip.classList.remove('done', 'err', 'disabled');
+        chip.style.opacity = '';
+        chip.style.pointerEvents = 'auto';
+        chip.style.background = '#fff';
+        chip.style.color = chip.dataset.color || '#E8352E';
+        chip.onclick = function (ev) { onChip(idx, chip, ev); };
+      })(chips[k]);
     }
-    clicks.push(t);
-    el.classList.add('cap-done');
-    if (clicks.length === TARGETS.length) {
-      validCode = String(Math.floor(100000 + Math.random() * 900000));
-      var m = document.getElementById('captchaMsg');
-      if (m) m.textContent = '验证通过！验证码：' + validCode;
-      codeVerified = true;
-      setTimeout(function () { hideCaptcha(); var ci = document.getElementById('codeInput'); if (ci) ci.focus(); }, 1400);
+  }
+  // 点中正确的下一个文字 chip
+  function onChip(idx, chip, ev) {
+    if (errors >= MAX_ERRORS) return;
+    if (idx === clicks.length) {
+      // 顺序正确 → 标记 done
+      clicks.push(idx);
+      chip.classList.add('done');
+      chip.style.background = chip.style.color; // 颜色 = currentColor 已被 inline style 覆盖为具体色值
+      chip.style.color = '#fff';
+      if (clicks.length === TARGETS.length) {
+        validCode = String(Math.floor(100000 + Math.random() * 900000));
+        var m = document.getElementById('captchaMsg');
+        if (m) m.textContent = '✓ 验证通过！验证码：' + validCode;
+        codeVerified = true;
+        // 锁住防止再点
+        var chips2 = document.querySelectorAll('.cap-chip');
+        chips2.forEach(function (c) { c.style.pointerEvents = 'none'; });
+        var shapes2 = document.querySelectorAll('.cap-shape');
+        shapes2.forEach(function (s) { s.style.pointerEvents = 'none'; });
+        setTimeout(function () { hideCaptcha(); var ci = document.getElementById('codeInput'); if (ci) ci.focus(); }, 1400);
+      }
+    } else {
+      // 顺序不对（重复点已选 / 跳过）
+      chip.classList.add('err');
+      setTimeout(function () { chip.classList.remove('err'); }, 400);
+      addError();
+    }
+    if (ev) { ev.stopPropagation(); }
+  }
+  // 点图形（干扰）= 错点 +1
+  function onWrong(ev) {
+    if (errors >= MAX_ERRORS) return;
+    if (ev && ev.currentTarget) {
+      ev.currentTarget.classList.add('err');
+      setTimeout(function () { try { ev.currentTarget.classList.remove('err'); } catch (e) {} }, 400);
+    }
+    addError();
+    if (ev) { ev.stopPropagation(); }
+  }
+  function addError() {
+    errors++;
+    var m = document.getElementById('captchaMsg');
+    if (errors >= MAX_ERRORS) {
+      // 失效 → 锁住所有交互 + 自动重建
+      codeVerified = false; validCode = '';
+      if (m) m.textContent = '✗ 已点击 3 次无效，请刷新重试';
+      var chips = document.querySelectorAll('.cap-chip');
+      chips.forEach(function (c) { c.classList.add('disabled'); });
+      var shapes = document.querySelectorAll('.cap-shape');
+      shapes.forEach(function (s) { s.classList.add('disabled'); });
+      lockTimer = setTimeout(function () {
+        var box = document.getElementById('captchaBox');
+        if (box && box.style.display !== 'none') buildCaptcha();
+      }, 1800);
+    } else {
+      if (m) m.textContent = '点击无效  ' + errors + ' / ' + MAX_ERRORS;
     }
   }
   function openCaptcha() {
