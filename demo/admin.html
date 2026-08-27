@@ -74,10 +74,10 @@ body { background: #F7EFE3; }
 .login-btn:disabled { opacity: .6; cursor: wait; }
 .login-foot { font-size: 12px; color: #b0b0b0; margin-top: 16px; }
 .login-foot b { color: #888; font-weight: 600; }
-/* ---- 登录双 tab ---- */
-.login-tabs { display: flex; gap: 8px; margin: 14px 0 12px; }
-.login-tab { flex: 1; text-align: center; padding: 9px 0; font-size: 13.5px; color: #999; border: 1px solid #ece6df; border-radius: 10px; cursor: pointer; transition: .15s; user-select: none; }
-.login-tab.on { color: #E8352E; border-color: #E8352E; background: #FFF5F4; font-weight: 700; }
+/* ---- 登录双 tab（分段控件，恢复历史样式）---- */
+.login-tabs { display: flex; gap: 6px; margin: 4px 0 14px; background: #f3f3f5; border-radius: 10px; padding: 4px; }
+.login-tab { flex: 1; text-align: center; padding: 8px 0; font-size: 13px; border-radius: 8px; cursor: pointer; color: #777; font-weight: 700; transition: .15s; user-select: none; }
+.login-tab.on { background: #fff; color: #E8352E; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
 .login-field { margin-bottom: 10px; }
 .login-text { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #e3ddd5; border-radius: 12px; font-size: 15px; outline: none; transition: border-color .15s; }
 .login-text:focus { border-color: #E8352E; }
@@ -1670,21 +1670,17 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       <div class="login-tab on" id="ltPwd">密码登录</div>
       <div class="login-tab" id="ltCode">验证码登录</div>
     </div>
-    <!-- 密码登录 -->
-    <div id="lpPwd">
-      <div class="login-field">
-        <input id="loginPhone" class="login-text" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号" autocomplete="off">
-      </div>
-      <div class="login-pwd-wrap">
-        <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
-        <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
-      </div>
+    <!-- 手机号共享 -->
+    <div class="login-field">
+      <input id="loginPhone" class="login-text" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号" autocomplete="off">
     </div>
-    <!-- 验证码登录 -->
-    <div id="lpCode" style="display:none">
-      <div class="login-field">
-        <input id="codePhone" class="login-text" type="tel" inputmode="numeric" maxlength="11" placeholder="手机号" autocomplete="off">
-      </div>
+    <!-- 密码登录：密码框（默认显示） -->
+    <div class="login-pwd-wrap" id="pwdRow">
+      <input id="loginPwd" class="login-pwd" type="password" placeholder="请输入后台密码" autocomplete="off" maxlength="32">
+      <button type="button" id="loginEye" class="login-eye" tabindex="-1" aria-label="显示密码">👁</button>
+    </div>
+    <!-- 验证码登录：验证码行（切 tab 同位替换密码框） -->
+    <div id="codeRow" style="display:none">
       <div class="login-code-row">
         <input id="codeInput" class="login-text" type="tel" inputmode="numeric" maxlength="6" placeholder="验证码" autocomplete="off">
         <button type="button" id="btnGetCode" class="login-code-btn">获取验证码</button>
@@ -1759,9 +1755,9 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     var tp = document.getElementById('ltPwd'), tc = document.getElementById('ltCode');
     if (tp) tp.classList.toggle('on', t === 'pwd');
     if (tc) tc.classList.toggle('on', t === 'code');
-    var lp = document.getElementById('lpPwd'), lc = document.getElementById('lpCode');
-    if (lp) lp.style.display = t === 'pwd' ? '' : 'none';
-    if (lc) lc.style.display = t === 'code' ? '' : 'none';
+    var pw = document.getElementById('pwdRow'), cr = document.getElementById('codeRow');
+    if (pw) pw.style.display = t === 'pwd' ? '' : 'none';
+    if (cr) cr.style.display = t === 'code' ? '' : 'none';
     if (t === 'code') hideCaptcha();
   }
   // ---- 图形点选验证码（代替短信）----
@@ -1814,7 +1810,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
     }
   }
   function openCaptcha() {
-    var ph = (document.getElementById('codePhone').value || '').trim();
+    var ph = (document.getElementById('loginPhone').value || '').trim();
     if (!/^\d{11}$/.test(ph)) { if (typeof toast === 'function') toast('请输入 11 位手机号'); return; }
     codeVerified = false; validCode = '';
     buildCaptcha();
@@ -1859,7 +1855,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
         if (typeof toast === 'function') toast('密码错误');
       }
     } else {
-      var ph = (document.getElementById('codePhone').value || '').trim();
+      var ph = (document.getElementById('loginPhone').value || '').trim();
       var code = (document.getElementById('codeInput').value || '').trim();
       if (!/^\d{11}$/.test(ph)) { if (typeof toast === 'function') toast('请输入 11 位手机号'); return; }
       if (!codeVerified || code !== validCode) { if (typeof toast === 'function') toast('请先获取并输入正确验证码'); return; }
