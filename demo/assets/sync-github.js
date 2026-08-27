@@ -23,6 +23,10 @@
     if (_lsTok && _lsTok.indexOf('__') !== 0) TOKEN = _lsTok;
   } catch (e) {}
   var PROXY = (cfg.proxyBase && cfg.proxyBase.indexOf('http') === 0) ? cfg.proxyBase : '';
+  // 2026-08-27 修复：一旦浏览器里有有效 token（后台「云端同步设置」粘贴），
+  // 一律走 api.github.com 直连，忽略 proxyBase——原 Worker 代理域名在大陆网络
+  // 已被 DNS 污染不可达，若继续优先代理会导致"贴了 token 也推不上去"。
+  if (TOKEN && TOKEN.indexOf('__') !== 0) PROXY = '';
   var ENABLED = !!(cfg.repo && cfg.branch && cfg.dataPath) &&
     ((!!TOKEN && TOKEN.indexOf('__') !== 0) || !!PROXY);
   var API_BASE = cfg.apiBase || 'https://api.github.com';
@@ -71,7 +75,15 @@
         if (!res.ok) return null;
         return res.json();
       })
-      .catch(function () { return null; });
+      .catch(function () { return null; })
+      .then(function (j) {
+        if (j && j.shop) return j;
+        // raw.githubusercontent 被墙/DNS 污染时兜底：直接读本站同目录下的
+        // data.json（站点本身能打开就一定能读到，最多滞后 Pages CDN ~10 分钟）。
+        return fetch('assets/' + (cfg.dataPath || '').split('/').pop() + '?t=' + Date.now(), { cache: 'no-store' })
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .catch(function () { return null; });
+      });
   }
 
   function push(data) {
