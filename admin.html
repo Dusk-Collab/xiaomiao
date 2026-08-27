@@ -130,6 +130,15 @@ body { background: #F7EFE3; }
 .captcha-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; }
 .captcha-foot span { color: #21A35A; font-weight: 600; }
 .captcha-foot a { color: #999; cursor: pointer; }
+/* 验证码数字 + 复制按钮 */
+#captchaMsg b { color: #E8352E; font-size: 16px; letter-spacing: 1.5px; }
+.cap-copy {
+  margin-left: 6px; padding: 2px 10px; border: none; border-radius: 4px;
+  background: #E8352E; color: #fff; font-size: 12px; font-weight: 600;
+  cursor: pointer; vertical-align: 1px;
+}
+.cap-copy:active { transform: scale(.95); }
+.cap-copy.copied { background: #21A35A; }
 
 /* ---- 顶部同步状态徽标 ---- */
 .sync-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: #F5F5F5; color: #999; transition: all .25s; }
@@ -1920,14 +1929,18 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       if (clicks.length === TARGETS.length) {
         validCode = String(Math.floor(100000 + Math.random() * 900000));
         var m = document.getElementById('captchaMsg');
-        if (m) m.textContent = '✓ 验证通过！验证码：' + validCode;
+        if (m) {
+          m.innerHTML = '✓ 验证通过！验证码：<b>' + validCode + '</b><button type="button" class="cap-copy" id="capCopyBtn">复制</button>';
+          var btn = document.getElementById('capCopyBtn');
+          if (btn) btn.addEventListener('click', copyValidCode);
+        }
         codeVerified = true;
         // 锁住防止再点
         var chips2 = document.querySelectorAll('.cap-chip');
         chips2.forEach(function (c) { c.style.pointerEvents = 'none'; });
         var shapes2 = document.querySelectorAll('.cap-shape');
         shapes2.forEach(function (s) { s.style.pointerEvents = 'none'; });
-        setTimeout(function () { hideCaptcha(); var ci = document.getElementById('codeInput'); if (ci) ci.focus(); }, 1400);
+        // 不自动关闭：停在当前页让用户看清/复制验证码，点「取消」或输入后登录
       }
     } else {
       // 顺序不对（重复点已选 / 跳过）
@@ -1978,6 +1991,30 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
   function hideCaptcha() {
     var box = document.getElementById('captchaBox');
     if (box) box.style.display = 'none';
+  }
+  // 复制验证码（clipboard API + execCommand 兜底）
+  function copyValidCode() {
+    var code = validCode;
+    if (!code) return;
+    var btn = document.getElementById('capCopyBtn');
+    function done() {
+      if (typeof toast === 'function') toast('验证码已复制：' + code);
+      if (btn) { btn.textContent = '已复制'; btn.classList.add('copied'); }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done, function () { fallbackCopy(code); done(); });
+    } else {
+      fallbackCopy(code); done();
+    }
+  }
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
   }
   function bind() {
     var btn = document.getElementById('loginBtn');
