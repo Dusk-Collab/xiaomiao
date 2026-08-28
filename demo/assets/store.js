@@ -127,13 +127,45 @@
   function stripMeta(d) { var c = Object.assign({}, d); delete c._id; delete c._openid; return c; }
 
   /* ---------- 读写 ---------- */
+  // 坏数据修复（不丢用户字段）：关键字段缺失/类型错误时用种子补齐，坏订单/商品条目兜底，
+  // 保证任何脏数据都不会让页面白屏。只补不删——用户录入的业务字段一律保留。
+  function sanitize(d) {
+    var s = seed();
+    var out = d || {};
+    ['products', 'orders', 'categories', 'coupons'].forEach(function (k) {
+      if (!Array.isArray(out[k])) out[k] = s[k];
+    });
+    if (!out.shop || typeof out.shop !== 'object') out.shop = s.shop;
+    if (!out.settings || typeof out.settings !== 'object') out.settings = s.settings;
+    if (typeof out.codeSeq !== 'number' || !isFinite(out.codeSeq)) out.codeSeq = 0;
+    if (typeof out.codeDate !== 'string') out.codeDate = today();
+    out.products = out.products.filter(function (p) { return p && p.id; }).map(function (p) {
+      if (typeof p.name !== 'string') p.name = '未命名商品';
+      if (typeof p.price !== 'number' || !isFinite(p.price)) p.price = 0;
+      return p;
+    });
+    out.orders = out.orders.map(function (o) {
+      if (!o || typeof o !== 'object') return null;
+      if (!Array.isArray(o.items)) o.items = [];
+      o.items = o.items.filter(function (it) { return it && typeof it === 'object'; }).map(function (it) {
+        if (typeof it.name !== 'string') it.name = '';
+        if (typeof it.qty !== 'number' || !isFinite(it.qty)) it.qty = 1;
+        return it;
+      });
+      return o;
+    }).filter(Boolean);
+    return out;
+  }
+
   function read() {
     try {
       var raw = localStorage.getItem(KEY);
       if (!raw) { var s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); return s; }
       var d = JSON.parse(raw);
       if (!d.products || !d.shop) { var s2 = seed(); localStorage.setItem(KEY, JSON.stringify(s2)); return s2; }
-      return d;
+      var clean = sanitize(d);
+      if (JSON.stringify(clean) !== raw) localStorage.setItem(KEY, JSON.stringify(clean));
+      return clean;
     } catch (e) {
       var s3 = seed(); localStorage.setItem(KEY, JSON.stringify(s3)); return s3;
     }
@@ -178,14 +210,18 @@
    * B 端每 3 秒自动拉一次远端 data.json。若 _ts 比本地新则采用并触发 emit（页面自动重渲染），
    * 实现"A 改了 B 不用刷新也能看到"。正在输入框里敲字时跳过本次轮询，避免抢光标。 */
   var _pollTimer = null;
+  var _pollBusy = false;   // 防重叠：上一次拉取未返回时跳过本次（弱网下避免请求雪崩）
   function startPolling() {
     if (_pollTimer) return;
     _pollTimer = setInterval(function () {
       if (!(global.CloudSync && global.CloudSync.enabled)) return;
+      if (_pollBusy) return;
       // 若用户正在输入，跳过本次（不打断编辑）
       var ae = (typeof document !== 'undefined') && document.activeElement;
       if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+      _pollBusy = true;
       CloudSync.pull().then(function (cloud) {
+        _pollBusy = false;
         if (!cloud || !cloud.shop) return;
         var local = read();
         if ((cloud._ts || 0) > (local._ts || 0)) {
@@ -194,7 +230,7 @@
           emit(c);
           emitSyncStatus('online');
         }
-      }).catch(function () {});
+      }).catch(function () { _pollBusy = false; });
     }, 3000);
   }
   function stopPolling() {
@@ -315,19 +351,32 @@
   }
 
   function createOrder(payload) {
+    payload = payload || {};
     return update(function (d) {
       var code = nextCode(d);
+      // 金额/数量数字兜底：缺字段或 NaN 一律归 0/1，绝不把 NaN 写进 data.json
+      var n = function (v) { var x = Number(v); return isFinite(x) ? x : 0; };
+      var items = Array.isArray(payload.items)
+        ? payload.items.filter(function (it) { return it && it.name; }).map(function (it) {
+            return {
+              name: String(it.name),
+              qty: Math.max(1, Math.round(n(it.qty)) || 1),
+              price: n(it.price),
+              spec: typeof it.spec === 'string' ? it.spec : ''
+            };
+          })
+        : [];
       var order = {
         id: 'o' + Date.now() + Math.floor(Math.random() * 900 + 100),
         code: code,
         customerId: payload.customerId || '',
         customerName: payload.customerName || '',
-        items: payload.items,
-        goodsTotal: payload.goodsTotal,
-        deliveryFee: payload.deliveryFee,
-        discount: payload.discount,
+        items: items,
+        goodsTotal: n(payload.goodsTotal),
+        deliveryFee: n(payload.deliveryFee),
+        discount: n(payload.discount),
         couponName: payload.couponName || '',
-        total: payload.total,
+        total: n(payload.total),
         mode: payload.mode,            // pickup | delivery
         remark: payload.remark || '',
         phone: payload.phone || '',
@@ -367,7 +416,11 @@
   var STATUS_TEXT = { pending: '待接单', making: '制作中', ready: '待取餐', done: '已完成', canceled: '已取消' };
   var STATUS_NEXT = { pending: 'making', making: 'ready', ready: 'done' };
 
-  function money(n) { return '¥' + (Math.round(n * 100) / 100).toFixed(2); }
+  function money(n) {
+    var x = Number(n);
+    if (!isFinite(x)) x = 0;   // 防 NaN 显示
+    return '¥' + (Math.round(x * 100) / 100).toFixed(2);
+  }
   function timeStr(ts) {
     var d = new Date(ts);
     return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
