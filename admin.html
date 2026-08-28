@@ -2160,7 +2160,8 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
 
   function boot() {
     bind();
-    if (!isAuthed()) showLogin();
+    // 已登录（含 7 天免登录）→ 隐藏登录框直接进后台；未登录 → 显示登录框
+    if (!isAuthed()) showLogin(); else hideLogin();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
