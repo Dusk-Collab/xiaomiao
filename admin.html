@@ -1771,7 +1771,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
    * 安全红线：密码绝不存明文、绝不回显、绝不打印。
    * Web Crypto 不可用时返回 null——宁可拒绝登录，也不降级明文比较/明文写回。 ---- */
   function hashPwd(pwd) {
-    if (global.crypto && global.crypto.subtle) {
+    if (window.crypto && window.crypto.subtle) {
       return crypto.subtle.digest('SHA-256', new TextEncoder().encode(PWD_SALT + '|' + pwd))
         .then(function (buf) {
           return 'sha256:' + Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
@@ -2093,6 +2093,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
         rememberPhone((document.getElementById('loginPhone').value || '').trim());
         rememberSet(remember);
         try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
+        var pf = document.getElementById('loginPwd'); if (pf) pf.value = '';   // 密码绝不残留
         hideLogin();
         if (typeof toast === 'function') toast('✓ 登录成功');
       }
@@ -2113,7 +2114,7 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       // 其他字段一律不动（符合"不覆盖用户数据"红线）。升级后线上再也不会出现明文密码。
       if (entered === stored) {
         ok();
-        if (global.crypto && global.crypto.subtle) {
+        if (window.crypto && window.crypto.subtle) {
           hashPwd(entered).then(function (h) {
             if (h && window.Store && Store.update) {
               try {
