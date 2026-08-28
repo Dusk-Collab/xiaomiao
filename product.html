@@ -7,55 +7,70 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%9E%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-  body { background: var(--bg); }
+  /* ================= 中国风·江南小馆 ================= */
+  body { background: #F5EBD8; }
+  body, .cn {
+    font-family: "STKaiti", "KaiTi", "STSong", "SimSun", "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+  }
   #app {
-    max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--bg);
+    max-width: 480px; margin: 0 auto; min-height: 100vh;
     position: relative; overflow-x: hidden;
     padding-bottom: calc(74px + env(safe-area-inset-bottom));
+    background:
+      radial-gradient(ellipse 80% 60% at 12% 6%, rgba(201,53,43,.04), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 88% 92%, rgba(184,149,106,.08), transparent 60%),
+      linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 100%);
   }
 
-  /* 顶部 Hero（店招背景，返回按钮叠在上面） */
+  /* 顶部 Hero：宣纸色 + 屋檐渐变 + 梅花装饰 */
   .prod-hero {
-    background: var(--grad);
-    color: #fff; padding: 14px 16px 20px; position: relative;
+    color: #1a1a1a; padding: 14px 16px 22px; position: relative;
     display: flex; align-items: center; gap: 12px;
+    background:
+      linear-gradient(180deg, rgba(245,235,216,.0) 0%, rgba(232,213,179,.55) 100%),
+      radial-gradient(ellipse 70% 50% at 30% 95%, rgba(110,91,67,.10), transparent 70%),
+      linear-gradient(180deg, #F5EBD8 0%, #ECDFC1 100%);
   }
-  .prod-hero::before {
-    content: ''; position: absolute; right: -30px; top: -40px; width: 160px; height: 160px;
-    border-radius: 50%; background: rgba(255,255,255,.10);
+  .prod-hero::after {
+    content: ''; position: absolute; right: -8px; top: 4px; width: 100px; height: 86px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 86'><g fill='none' stroke='%23432' stroke-width='1.4' stroke-linecap='round' opacity='.5'><path d='M92 6 Q70 24 58 44 Q48 64 38 82'/><path d='M72 22 Q64 30 56 40'/><path d='M62 44 Q52 50 44 60'/></g><g fill='%23C9352B'><circle cx='72' cy='22' r='2.6'/><circle cx='78' cy='26' r='2'/><circle cx='62' cy='44' r='2.6'/><circle cx='68' cy='48' r='2'/><circle cx='50' cy='64' r='2.2'/><circle cx='54' cy='70' r='1.8'/></g></svg>") no-repeat right top;
+    background-size: contain; pointer-events: none; opacity: .6;
   }
   .prod-back {
     width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(255,255,255,.22); color: #fff; border: none;
-    display: grid; place-items: center; font-size: 18px; line-height: 1; cursor: pointer;
-    backdrop-filter: blur(4px); flex: none;
+    background: rgba(255,253,247,.85); color: #C9352B; border: 1px solid rgba(201,53,43,.3);
+    display: grid; place-items: center; font-size: 20px; line-height: 1; cursor: pointer;
+    flex: none; font-family: serif;
   }
+  .prod-back:active { background: #FBF3DF; }
   .prod-shop-name {
-    font-size: 16px; font-weight: 800; letter-spacing: .3px; min-width: 0; flex: 1;
+    font-size: 16px; font-weight: 800; letter-spacing: 1px; min-width: 0; flex: 1;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: "STKaiti", "KaiTi", serif; color: #1a1a1a;
   }
   .prod-shop-name small {
-    display: block; font-size: 11px; font-weight: 500; opacity: .82; margin-top: 2px;
+    display: block; font-size: 11px; font-weight: 500; color: #6E5B43; margin-top: 2px;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 1px;
   }
 
-  /* 轮播 */
+  /* 轮播：白底宣纸 + 淡金描边 */
   .prod-pics {
-    margin: -16px 12px 12px; border-radius: var(--r-l); overflow: hidden;
-    background: #fff; box-shadow: var(--sh-m); position: relative;
+    margin: -16px 12px 12px; border-radius: 8px; overflow: hidden;
+    background: #FFFCF4; box-shadow: 0 4px 14px rgba(110,91,67,.10); position: relative;
     aspect-ratio: 1 / 1; max-height: 380px;
+    border: 1px solid rgba(184,149,106,.25);
   }
-  .prod-track {
-    display: flex; height: 100%; transition: transform .42s cubic-bezier(.25,.8,.25,1);
-  }
+  .prod-track { display: flex; height: 100%; transition: transform .42s cubic-bezier(.25,.8,.25,1); }
   .prod-slide {
     min-width: 100%; height: 100%; position: relative;
     background-size: cover; background-position: center; cursor: zoom-in;
   }
   .prod-slide-zoom {
     position: absolute; right: 12px; bottom: 12px;
-    background: rgba(0,0,0,.5); color: #fff; font-size: 11px; font-weight: 700;
-    padding: 4px 9px; border-radius: 999px; backdrop-filter: blur(4px);
+    background: rgba(28,20,16,.55); color: #F5EBD8; font-size: 11px; font-weight: 700;
+    padding: 4px 9px; border-radius: 4px; backdrop-filter: blur(4px);
     display: flex; align-items: center; gap: 4px; pointer-events: none;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 1px;
   }
   .prod-dots {
     position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
@@ -65,186 +80,185 @@
     width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.6);
     transition: all .25s;
   }
-  .prod-dot.active { background: var(--brand); width: 18px; border-radius: 4px; }
+  .prod-dot.active { background: #C9352B; width: 18px; border-radius: 3px; }
 
-  /* 价格区（白底卡片） */
+  /* 价格区：宣纸白 + 淡金边 */
   .prod-info {
-    margin: 0 12px 14px; background: #fff; border-radius: var(--r-m);
-    padding: 14px 14px 16px; box-shadow: var(--sh-s);
+    margin: 0 12px 14px; background: #FFFCF4; border-radius: 8px;
+    padding: 14px 14px 16px; box-shadow: 0 1px 3px rgba(110,91,67,.06);
+    border: 1px solid rgba(184,149,106,.25);
   }
   .prod-price-row { display: flex; align-items: baseline; gap: 8px; }
   .prod-price {
-    font-size: 26px; font-weight: 900; color: var(--brand); letter-spacing: -.5px;
+    font-size: 28px; font-weight: 900; color: #C9352B; letter-spacing: -.5px;
+    font-family: "STKaiti", "KaiTi", "STSong", serif;
   }
   .prod-price small { font-size: 15px; font-weight: 800; margin-right: 1px; }
-  .prod-old {
-    font-size: 13px; color: var(--ink-3); text-decoration: line-through;
-  }
+  .prod-old { font-size: 13px; color: #6E5B43; text-decoration: line-through; }
   .prod-tag-disc {
-    background: #FFEDE8; color: var(--brand); font-size: 11px; font-weight: 700;
-    padding: 2px 7px; border-radius: 5px;
+    background: rgba(201,53,43,.1); color: #C9352B; font-size: 11px; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 1px;
+    border: 1px solid rgba(201,53,43,.25);
   }
   .prod-name {
-    font-size: 18px; font-weight: 800; margin-top: 8px; line-height: 1.4; color: var(--ink);
+    font-size: 18px; font-weight: 800; margin-top: 8px; line-height: 1.4; color: #1a1a1a;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 1px;
   }
   .prod-name .tag { margin-left: 4px; vertical-align: middle; }
-  .prod-stats {
-    display: flex; gap: 14px; margin-top: 10px; font-size: 12px; color: var(--ink-2);
-  }
-  .prod-stats b { color: var(--ink); font-weight: 800; }
+  .prod-stats { display: flex; gap: 14px; margin-top: 10px; font-size: 12px; color: #6E5B43; }
+  .prod-stats b { color: #1a1a1a; font-weight: 800; }
 
-  /* Tab */
+  /* Tab：宣纸白 + 朱红选中 */
   .prod-tabs {
-    margin: 0 12px; background: #fff; border-radius: var(--r-m);
-    box-shadow: var(--sh-s); display: flex; padding: 4px; position: sticky; top: 6px; z-index: 5;
+    margin: 0 12px; background: #FFFCF4; border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(110,91,67,.06); display: flex; padding: 4px; position: sticky; top: 6px; z-index: 5;
+    border: 1px solid rgba(184,149,106,.2);
   }
   .prod-tab {
     flex: 1; text-align: center; padding: 10px 6px; font-size: 14px; font-weight: 700;
-    color: var(--ink-3); border-radius: 10px; cursor: pointer; transition: all .15s;
+    color: #6E5B43; border-radius: 5px; cursor: pointer; transition: all .15s;
     display: flex; align-items: center; justify-content: center; gap: 5px;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 2px;
   }
-  .prod-tab.active {
-    background: var(--brand-soft); color: var(--brand);
-  }
+  .prod-tab.active { background: #C9352B; color: #F5EBD8; }
   .prod-tab .n {
-    background: var(--brand); color: #fff; font-size: 10px;
+    background: rgba(28,20,16,.6); color: #F5EBD8; font-size: 10px;
     padding: 1px 6px; border-radius: 999px; font-weight: 700;
   }
-  .prod-tab:not(.active) .n { background: #DCD2C7; color: #fff; }
+  .prod-tab.active .n { background: rgba(245,235,216,.25); }
+  .prod-tab:not(.active) .n { background: rgba(184,149,106,.3); color: #6E5B43; }
 
   /* 详情面板 */
   .prod-panel {
-    margin: 14px 12px 0; background: #fff; border-radius: var(--r-m);
-    padding: 16px 16px 18px; box-shadow: var(--sh-s);
+    margin: 14px 12px 0; background: #FFFCF4; border-radius: 8px;
+    padding: 16px 16px 18px; box-shadow: 0 1px 3px rgba(110,91,67,.06);
+    border: 1px solid rgba(184,149,106,.2);
   }
   .prod-panel.hide { display: none; }
   .prod-panel h3 {
-    margin: 0 0 12px; font-size: 14px; font-weight: 800; color: var(--ink);
+    margin: 0 0 12px; font-size: 14px; font-weight: 800; color: #1a1a1a;
     display: flex; align-items: center; gap: 6px;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 2px;
   }
   .prod-panel h3::before {
-    content: ''; width: 3px; height: 14px; background: var(--brand-2); border-radius: 2px;
+    content: ''; width: 3px; height: 14px; background: #C9352B; border-radius: 1px;
   }
 
   /* 商品描述 */
   .prod-desc {
-    background: var(--brand-soft); border-radius: var(--r-s); padding: 11px 12px;
-    font-size: 13px; color: var(--ink-2); line-height: 1.65;
+    background: rgba(232,213,179,.35); border-radius: 4px; padding: 11px 12px;
+    font-size: 13px; color: #1a1a1a; line-height: 1.65;
     margin-bottom: 14px;
+    border-left: 3px solid #C9352B;
   }
 
   /* 详情表格 */
   .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .detail-table tr { border-bottom: 1px solid #F4EEE8; }
+  .detail-table tr { border-bottom: 1px dashed rgba(184,149,106,.25); }
   .detail-table tr:last-child { border-bottom: none; }
   .detail-table th, .detail-table td {
     padding: 10px 0; vertical-align: top; line-height: 1.55;
   }
-  .detail-table th {
-    color: var(--ink-3); font-weight: 600; width: 78px; flex: none;
-  }
-  .detail-table td { color: var(--ink); font-weight: 500; }
-  .detail-table .ico {
-    display: inline-block; margin-right: 4px; vertical-align: middle;
-  }
+  .detail-table th { color: #6E5B43; font-weight: 600; width: 78px; flex: none; }
+  .detail-table td { color: #1a1a1a; font-weight: 500; }
+  .detail-table .ico { display: inline-block; margin-right: 4px; vertical-align: middle; color: #C9352B; }
 
-  /* 评价概览 */
+  /* 评价概览：宣纸渐变 */
   .review-summary {
     display: flex; align-items: center; gap: 14px;
-    background: linear-gradient(135deg, #FFF1DD, #FFE4BD);
-    border-radius: var(--r-m); padding: 14px 14px; margin-bottom: 14px;
+    background: linear-gradient(135deg, #FBF3DF, #F5EBD8);
+    border-radius: 8px; padding: 14px 14px; margin-bottom: 14px;
+    border: 1px solid rgba(184,149,106,.25);
   }
   .review-score {
-    font-size: 36px; font-weight: 900; color: var(--brand);
+    font-size: 36px; font-weight: 900; color: #C9352B;
     line-height: 1; letter-spacing: -.5px; flex: none;
+    font-family: "STKaiti", "KaiTi", "STSong", serif;
   }
   .review-score-info { flex: 1; min-width: 0; }
-  .review-score-info .stars { font-size: 16px; color: #F5A623; letter-spacing: 1px; }
-  .review-score-info .meta {
-    font-size: 12px; color: var(--ink-2); margin-top: 3px;
-  }
-  .review-score-info .meta b { color: var(--brand); font-weight: 800; }
+  .review-score-info .stars { font-size: 16px; color: #B8956A; letter-spacing: 1px; }
+  .review-score-info .meta { font-size: 12px; color: #6E5B43; margin-top: 3px; }
+  .review-score-info .meta b { color: #C9352B; font-weight: 800; }
 
   /* 评价列表 */
-  .review-list .review-item {
-    padding: 13px 0; border-bottom: 1px solid #F4EEE8;
-  }
+  .review-list .review-item { padding: 13px 0; border-bottom: 1px dashed rgba(184,149,106,.25); }
   .review-list .review-item:last-child { border-bottom: none; }
-  .review-head {
-    display: flex; align-items: center; gap: 10px;
-  }
+  .review-head { display: flex; align-items: center; gap: 10px; }
   .review-avatar {
     width: 36px; height: 36px; border-radius: 50%;
-    display: grid; place-items: center; color: #fff;
+    display: grid; place-items: center; color: #F5EBD8;
     font-size: 14px; font-weight: 800; flex: none;
+    background: #C9352B;
   }
-  .review-name { font-size: 13px; font-weight: 700; color: var(--ink); }
-  .review-stars { font-size: 12px; color: #F5A623; letter-spacing: .5px; margin-top: 1px; }
-  .review-time { font-size: 11px; color: var(--ink-3); margin-left: auto; }
-  .review-text {
-    font-size: 13px; color: var(--ink-2); line-height: 1.7;
-    margin-top: 8px; word-break: break-word;
-  }
-  /* 评价图片（点开进 Lightbox 放大） */
+  .review-name { font-size: 13px; font-weight: 700; color: #1a1a1a; font-family: "STKaiti", "KaiTi", serif; }
+  .review-stars { font-size: 12px; color: #B8956A; letter-spacing: .5px; margin-top: 1px; }
+  .review-time { font-size: 11px; color: #6E5B43; margin-left: auto; }
+  .review-text { font-size: 13px; color: #1a1a1a; line-height: 1.7; margin-top: 8px; word-break: break-word; }
   .review-imgs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .review-img {
-    width: 72px; height: 72px; object-fit: cover; border-radius: 8px;
+    width: 72px; height: 72px; object-fit: cover; border-radius: 6px;
     background: #f3f3f3; cursor: pointer; flex: none;
   }
   .review-more {
     width: 100%; padding: 11px; margin-top: 14px;
-    background: var(--bg); border: 1px dashed var(--line);
-    border-radius: var(--r-m); color: var(--ink-2); font-size: 13px; font-weight: 600;
-    cursor: pointer;
+    background: rgba(232,213,179,.35); border: 1px dashed rgba(184,149,106,.4);
+    border-radius: 6px; color: #6E5B43; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: "STKaiti", "KaiTi", serif; letter-spacing: 2px;
   }
-  .review-more:active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand); }
+  .review-more:active { background: #FBF3DF; border-color: #C9352B; color: #C9352B; }
 
-  /* 底部固定栏 */
+  /* 底部固定栏：宣纸 + 朱红印章按钮 */
   .prod-foot {
     position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
     width: 100%; max-width: 480px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(255, 252, 247, .98); backdrop-filter: blur(14px);
-    border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px;
-    z-index: 50;
-    box-shadow: 0 -4px 20px rgba(120, 70, 20, .08);
+    background: rgba(248,239,217,.98); backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(184,149,106,.3); display: flex; align-items: center; gap: 10px;
+    z-index: 50; box-shadow: 0 -4px 18px rgba(110,91,67,.12);
   }
   .prod-foot-cart {
-    width: 44px; height: 44px; border-radius: 50%; position: relative; flex: none;
-    background: linear-gradient(135deg, #F4A340, #DA6E0C); color: #fff;
-    display: grid; place-items: center; border: 2px solid #FFFBF3; cursor: pointer;
+    width: 46px; height: 46px; border-radius: 50%; position: relative; flex: none;
+    background: #C9352B; color: #F5EBD8;
+    display: grid; place-items: center; border: 2px solid #F5EBD8; cursor: pointer;
+    box-shadow: 0 0 0 1.5px #C9352B;
   }
-  .prod-foot-cart svg { width: 24px; height: 24px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .prod-foot-cart svg { width: 24px; height: 24px; stroke: #F5EBD8; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .prod-foot-cart .dot {
     position: absolute; top: -3px; right: -3px; min-width: 19px; height: 19px; padding: 0 5px;
-    border-radius: 999px; background: #E54A2B; color: #fff; font-size: 11px; font-weight: 800;
-    display: grid; place-items: center; border: 2px solid #FFFBF3;
+    border-radius: 999px; background: #1a1a1a; color: #F5EBD8; font-size: 11px; font-weight: 800;
+    display: grid; place-items: center; border: 2px solid #F5EBD8;
+    font-family: "STKaiti", "KaiTi", serif;
   }
   .prod-foot-cart .dot.hide { display: none; }
   .prod-foot-info { flex: 1; min-width: 0; line-height: 1.3; }
-  .prod-foot-info .total { font-size: 16px; font-weight: 800; color: var(--brand); }
-  .prod-foot-info .tip { font-size: 11px; color: var(--ink-3); }
+  .prod-foot-info .total { font-size: 17px; font-weight: 800; color: #C9352B; font-family: "STKaiti", "KaiTi", "STSong", serif; }
+  .prod-foot-info .tip { font-size: 11px; color: #6E5B43; }
   .prod-foot-add {
-    padding: 12px 26px; border-radius: 999px; background: var(--grad); color: #fff;
+    padding: 11px 26px; border-radius: 4px; background: #C9352B; color: #F5EBD8;
     font-weight: 700; font-size: 15px; flex: none;
-    box-shadow: 0 4px 14px rgba(232, 132, 28, .35);
-    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(201,53,43,.32), 0 0 0 1px rgba(184,149,106,.3) inset;
+    cursor: pointer; font-family: "STKaiti", "KaiTi", serif; letter-spacing: 4px;
+    border: 1px solid rgba(184,149,106,.3);
   }
   .prod-foot-add:active { transform: scale(.96); }
-  .prod-foot-add.dis { background: #D9C9B6; box-shadow: none; cursor: not-allowed; }
+  .prod-foot-add.dis { background: #C8B8A7; color: #F5EBD8; box-shadow: none; cursor: not-allowed; }
 
   /* 规格弹窗 */
   .spec-head-prod { display: flex; gap: 12px; margin-bottom: 14px; }
   .spec-pic-prod {
-    width: 64px; height: 64px; border-radius: 12px; flex: none;
+    width: 64px; height: 64px; border-radius: 6px; flex: none;
     background-size: cover; background-position: center; display: grid; place-items: center;
-    font-size: 30px;
+    font-size: 30px; border: 1px solid rgba(184,149,106,.25);
   }
 
   /* 加载/空状态 */
-  .empty-prod { text-align: center; padding: 80px 20px; color: var(--ink-3); }
+  .empty-prod { text-align: center; padding: 80px 20px; color: #6E5B43; }
   .empty-prod .icon { font-size: 52px; opacity: .35; margin-bottom: 10px; }
-  .empty-prod .go-back { margin-top: 16px; display: inline-block; padding: 9px 22px;
-    background: var(--grad); color: #fff; border-radius: 999px; font-weight: 700; font-size: 13px; }
+  .empty-prod .go-back {
+    margin-top: 16px; display: inline-block; padding: 9px 22px;
+    background: #C9352B; color: #F5EBD8; border-radius: 4px; font-weight: 700; font-size: 13px;
+    font-family: "STKaiti", "KaiTi", serif; letter-spacing: 2px;
+  }
 </style>
 </head>
 <body>
