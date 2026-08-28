@@ -292,15 +292,19 @@
       "phone": "",
       "address": "杭州",
       "table": "1787913613647",
-      "status": "pending",
+      "status": "canceled",
       "createdAt": 1787913622310,
       "timeline": [
         {
           "s": "pending",
           "t": 1787913622310
+        },
+        {
+          "s": "canceled",
+          "t": 1787914214363
         }
       ],
-      "isNew": true
+      "isNew": false
     },
     {
       "id": "o1787912911690913",
@@ -337,18 +341,22 @@
       "phone": "",
       "address": "杭州",
       "table": "1787912902642",
-      "status": "pending",
+      "status": "canceled",
       "createdAt": 1787912911690,
       "timeline": [
         {
           "s": "pending",
           "t": 1787912911690
+        },
+        {
+          "s": "canceled",
+          "t": 1787914214924
         }
       ],
-      "isNew": true
+      "isNew": false
     }
   ],
   "codeSeq": 2,
   "codeDate": "2026-08-28",
-  "_ts": 1787913622310
+  "_ts": 1787914214924
 }
