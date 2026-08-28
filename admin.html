@@ -72,6 +72,8 @@ body { background: #F7EFE3; }
 .login-btn:hover { box-shadow: 0 10px 26px rgba(232,53,46,.4); }
 .login-btn:active { transform: scale(.98); }
 .login-btn:disabled { opacity: .6; cursor: wait; }
+.login-remember { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 2px 0 12px; font-size: 12.5px; color: #8a8a8a; cursor: pointer; user-select: none; }
+.login-remember input { width: 15px; height: 15px; accent-color: #E8352E; cursor: pointer; margin: 0; }
 .login-foot { font-size: 12px; color: #b0b0b0; margin-top: 16px; }
 .login-foot b { color: #888; font-weight: 600; }
 /* ---- 登录双 tab（分段控件，恢复历史样式）---- */
@@ -768,12 +770,24 @@ function stat(v, l, c, onClick) {
 }
 
 function orderCard(o) {
+  o = o || {};
+  var items = Array.isArray(o.items) ? o.items : [];
   var NEXT = { pending: ['接单', 'making'], making: ['出餐', 'ready'], ready: ['完成', 'done'] };
   var nx = NEXT[o.status];
-  var mins = Math.floor((Date.now() - o.createdAt) / 60000);
+  var mins = isFinite(o.createdAt) ? Math.floor((Date.now() - o.createdAt) / 60000) : null;
   var STC = { pending: 'tag-warn', making: 'tag-info', ready: 'tag-ok', done: 'tag-off', canceled: 'tag-off' };
   var checked = orderSelIds[o.id] ? 'checked' : '';
   var custName = o.customerName || (o.customer && o.customer.name) || '';
+  var oPhone = o.phone || (o.customer && o.customer.phone) || '';
+  var oAddr = (o.address && o.address !== '到店自取' && o.address !== '外送到家') ? o.address : '';
+  var itemsHtml = items.map(function (it) {
+    it = it || {};
+    var q = isFinite(Number(it.qty)) ? it.qty : 1;
+    var nm = typeof it.name === 'string' && it.name ? it.name : '商品';
+    var sp = typeof it.spec === 'string' && it.spec ? '<span class="s"> · ' + esc(it.spec) + '</span>' : '';
+    return '<div class="o-line"><span class="q">×' + q + '</span><span style="flex:1;min-width:0">'
+      + esc(nm) + sp + '</span></div>';
+  }).join('');
 
   return '<div class="owrap">'
     + (nx ? '<div class="act-r">' + nx[0] + ' ✓</div>' : '')
@@ -782,21 +796,18 @@ function orderCard(o) {
     + '<div class="o-head">'
     + '<input type="checkbox" class="sel-box" ' + checked + ' onclick="event.stopPropagation();toggleOrderSel(\'' + o.id + '\',this.checked)" style="flex:none;margin-top:4px">'
     + '<div><div class="o-code">' + o.code + '</div>'
-    + '<div class="o-meta">' + Store.timeStr(o.createdAt) + ' · ' + (mins < 1 ? '刚刚' : mins + ' 分钟前')
+    + '<div class="o-meta">' + Store.timeStr(o.createdAt || 0) + ' · ' + (mins === null ? '--' : (mins < 1 ? '刚刚' : mins + ' 分钟前'))
     + (custName ? ' · 👤 ' + esc(custName) : '') + '</div></div>'
     + '<div style="margin-left:auto;text-align:right">'
     + '<span class="tag ' + STC[o.status] + '">' + Store.STATUS_TEXT[o.status] + '</span>'
     + '<div style="font-size:11px;color:var(--ink-3);margin-top:5px">'
     + (o.mode === 'pickup' ? '🏪 自取' : '🛵 外送')
     + (o.table ? ' · ' + esc(o.table) : '')
-    + (o.phone || (o.customer && o.customer.phone) ? ' · ' + esc(o.phone || o.customer.phone) : '') + '</div></div></div>'
+    + (oPhone ? ' · ' + esc(oPhone) : '') + '</div></div></div>'
 
-    + (o.address && o.address !== '到店自取' && o.address !== '外送到家' ? '<div style="font-size:12px;color:var(--ink-2);padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer" onclick="openMap(\'' + esc(o.address).replace(/'/g, "\\'") + '\')">📍 ' + esc(o.address) + '</div>' : '')
+    + (oAddr ? '<div style="font-size:12px;color:var(--ink-2);padding:8px 0;border-bottom:1px dashed var(--line);cursor:pointer" onclick="openMap(\'' + esc(oAddr).replace(/'/g, "\\'") + '\')">📍 ' + esc(oAddr) + '</div>' : '')
 
-    + '<div class="o-items">' + o.items.map(function (it) {
-      return '<div class="o-line"><span class="q">×' + it.qty + '</span><span style="flex:1;min-width:0">'
-        + esc(it.name) + (it.spec ? '<span class="s"> · ' + esc(it.spec) + '</span>' : '') + '</span></div>';
-    }).join('') + '</div>'
+    + '<div class="o-items">' + itemsHtml + '</div>'
 
     + (o.remark ? '<div class="o-remark">📝 ' + esc(o.remark) + '</div>' : '')
 
@@ -1569,7 +1580,7 @@ function pgStats() {
   var cut = valid.reduce(function (s, o) { return s + (o.discount || 0); }, 0);
 
   var sales = {};
-  valid.forEach(function (o) { o.items.forEach(function (it) { sales[it.name] = (sales[it.name] || 0) + it.qty; }); });
+  valid.forEach(function (o) { (Array.isArray(o.items) ? o.items : []).forEach(function (it) { if (it && it.name) sales[it.name] = (sales[it.name] || 0) + (isFinite(Number(it.qty)) ? Number(it.qty) : 0); }); });
   var rank = Object.keys(sales).map(function (k) { return [k, sales[k]]; }).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 8);
   var max = rank.length ? rank[0][1] : 1;
 
@@ -1728,6 +1739,9 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
         <div class="captcha-foot"><span id="captchaMsg"></span><a id="captchaCancel">取消</a></div>
       </div>
     </div>
+    <label class="login-remember" title="勾选后本机 7 天内免输密码；手动退出后需重新登录">
+      <input type="checkbox" id="loginRemember"> 7 天内免登录
+    </label>
     <button id="loginBtn" class="login-btn">登 录</button>
     <div class="login-foot">默认密码 <b>店铺手机号</b> · 在「店铺设置」修改</div>
   </div>
@@ -1741,6 +1755,9 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
  * 注意：本段只改 UI/登录逻辑，不读写 data.json 任何业务数据（符合"不动用户数据"红线）。 */
 (function () {
   var AUTH_KEY = 'admin_auth';
+  var REMEMBER_KEY = 'admin_auth7';      // 7 天免登录凭证：localStorage 存过期时间戳(ms)
+  var REMEMBER_DAYS = 7;
+  var PWD_SALT = 'xiaomiao@2026';        // 与 cloud-core.js 同一盐值，保证兼容
   var curTab = 'pwd';
   var validCode = '';
   var codeVerified = false;
@@ -1749,6 +1766,39 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
   var errors = 0;
   var MAX_ERRORS = 3;
   var lockTimer = null;
+
+  /* ---- 密码哈希（SHA-256 + 固定盐，格式 sha256:<hex>；与 cloud-core.js 一致）
+   * 安全红线：密码绝不存明文、绝不回显、绝不打印。
+   * Web Crypto 不可用时返回 null——宁可拒绝登录，也不降级明文比较/明文写回。 ---- */
+  function hashPwd(pwd) {
+    if (global.crypto && global.crypto.subtle) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(PWD_SALT + '|' + pwd))
+        .then(function (buf) {
+          return 'sha256:' + Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+        })
+        .catch(function () { return null; });
+    }
+    return Promise.resolve(null);
+  }
+  /* ---- 7 天免登录：勾选后本机 7 天内自动登录；手动退出即清除，必须重新输密码 ---- */
+  function rememberSet(on) {
+    try {
+      if (on) localStorage.setItem(REMEMBER_KEY, String(Date.now() + REMEMBER_DAYS * 86400000));
+      else localStorage.removeItem(REMEMBER_KEY);
+    } catch (e) {}
+  }
+  function rememberValid() {
+    try {
+      var exp = parseInt(localStorage.getItem(REMEMBER_KEY), 10);
+      return isFinite(exp) && exp > Date.now();
+    } catch (e) { return false; }
+  }
+  function rememberChecked() {
+    try {
+      var cb = document.getElementById('loginRemember');
+      return !!(cb && cb.checked);
+    } catch (e) { return false; }
+  }
 
   function getPwd() {
     try {
@@ -2038,30 +2088,60 @@ setInterval(function () { if (page === 'orders') pgOrders(); }, 60000);
       var pwd = document.getElementById('loginPwd');
       var entered = (pwd.value || '').trim();
       var stored = getPwd();
-      if (entered === stored) {
+      var remember = rememberChecked();
+      function ok() {
         rememberPhone((document.getElementById('loginPhone').value || '').trim());
+        rememberSet(remember);
         try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
         hideLogin();
         if (typeof toast === 'function') toast('✓ 登录成功');
-      } else {
+      }
+      function fail() {
         pwd.classList.remove('err'); void pwd.offsetWidth; pwd.classList.add('err');
         pwd.value = ''; setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 50);
         if (typeof toast === 'function') toast('密码错误');
       }
+      if (!entered) { fail(); return; }
+      if (stored && stored.indexOf('sha256:') === 0) {
+        // 哈希存储：只接受哈希比对。Web Crypto 不可用则拒绝登录（绝不降级明文比较）
+        hashPwd(entered).then(function (h) {
+          if (h === stored) ok(); else fail();
+        });
+        return;
+      }
+      // 明文存储（历史数据）：比对明文；成功后仅把 settings.adminPwd 升级为哈希并自动推送，
+      // 其他字段一律不动（符合"不覆盖用户数据"红线）。升级后线上再也不会出现明文密码。
+      if (entered === stored) {
+        ok();
+        if (global.crypto && global.crypto.subtle) {
+          hashPwd(entered).then(function (h) {
+            if (h && window.Store && Store.update) {
+              try {
+                Store.update(function (d) { if (d.settings) d.settings.adminPwd = h; });
+              } catch (e) {}
+            }
+          });
+        }
+      } else fail();
     } else {
       var ph = (document.getElementById('loginPhone').value || '').trim();
       var code = (document.getElementById('codeInput').value || '').trim();
       if (!/^\d{11}$/.test(ph)) { if (typeof toast === 'function') toast('请输入 11 位手机号'); return; }
       if (!codeVerified || code !== validCode) { if (typeof toast === 'function') toast('请先获取并输入正确验证码'); return; }
       rememberPhone(ph);
+      rememberSet(rememberChecked());
       try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
       hideLogin();
       if (typeof toast === 'function') toast('✓ 登录成功');
     }
   }
-  function isAuthed() { try { return sessionStorage.getItem(AUTH_KEY) === '1'; } catch (e) { return false; } }
+  function isAuthed() {
+    try { if (sessionStorage.getItem(AUTH_KEY) === '1') return true; } catch (e) {}
+    return rememberValid();
+  }
   window.doLogout = function () {
     try { sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+    rememberSet(false);   // 手动退出 = 清除 7 天免登录凭证，下次必须重新输密码
     showLogin();
     if (typeof toast === 'function') toast('已退出登录');
   };
