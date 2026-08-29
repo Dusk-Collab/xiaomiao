@@ -157,12 +157,18 @@
     return out;
   }
 
+  /* 【数据安全】标记本次 read() 是否刚"凭空生成"了种子数据（此前本地没有数据）。
+     新设备/清缓存/测试环境都会走到这里，此时数据里的 _ts 是"现在"，比云端还新，
+     若照常 last-write-wins 回推，就会用演示种子数据覆盖商家的真实数据（2026-08-29 事故）。*/
+  var _freshSeed = false;
+
   function read() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (!raw) { var s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); return s; }
+      if (!raw) { var s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); _freshSeed = true; return s; }
       var d = JSON.parse(raw);
-      if (!d.products || !d.shop) { var s2 = seed(); localStorage.setItem(KEY, JSON.stringify(s2)); return s2; }
+      if (!d.products || !d.shop) { var s2 = seed(); localStorage.setItem(KEY, JSON.stringify(s2)); _freshSeed = true; return s2; }
+      _freshSeed = false;
       var clean = sanitize(d);
       if (JSON.stringify(clean) !== raw) localStorage.setItem(KEY, JSON.stringify(clean));
       return clean;
@@ -284,6 +290,15 @@
       CloudSync.pull().then(function (cloud) {
         var local = read();
         if (cloud && cloud.shop) {
+          /* 【数据安全·核心】本地是刚生成的种子数据（本机从未存过真实数据）
+             → 无条件采用云端，绝不回推。否则演示种子会覆盖商家真实数据。*/
+          if (_freshSeed) {
+            var c0 = stripMeta(cloud);
+            localStorage.setItem(KEY, JSON.stringify(c0));
+            _freshSeed = false;
+            emit(c0);
+            return;
+          }
           if ((cloud._ts || 0) >= (local._ts || 0)) {
             var c = stripMeta(cloud);
             localStorage.setItem(KEY, JSON.stringify(c));
