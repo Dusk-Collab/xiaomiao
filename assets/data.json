@@ -258,6 +258,51 @@
   ],
   "orders": [
     {
+      "id": "o1787974146798334",
+      "code": "A002",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "把子肉加炒饭",
+          "qty": 1,
+          "price": 14.8,
+          "spec": ""
+        },
+        {
+          "name": "半只手撕鸭（米饭）",
+          "qty": 1,
+          "price": 14.3,
+          "spec": ""
+        },
+        {
+          "name": "郑恩强黏糊麻辣烫",
+          "qty": 1,
+          "price": 12.68,
+          "spec": ""
+        }
+      ],
+      "goodsTotal": 41.78,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 41.78,
+      "mode": "pickup",
+      "remark": "",
+      "phone": "",
+      "address": "杭州",
+      "table": "1787974139140",
+      "status": "pending",
+      "createdAt": 1787974146798,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1787974146798
+        }
+      ],
+      "isNew": true
+    },
+    {
       "id": "o1787966697991316",
       "code": "A001",
       "customerId": "",
@@ -401,7 +446,7 @@
       "isNew": false
     }
   ],
-  "codeSeq": 1,
+  "codeSeq": 2,
   "codeDate": "2026-08-29",
-  "_ts": 1787966697991
+  "_ts": 1787974146798
 }
