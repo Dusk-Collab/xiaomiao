@@ -9,16 +9,27 @@
 <style>
 /* ================= 中国风·江南小馆 ================= */
 /* 宣纸色 #F5EBD8 · 朱砂红 #C9352B · 墨黑 #1a1a1a · 淡金 #B8956A · 竹青绿 #5B7A6A */
-body { background: var(--bg); overflow-x: hidden; max-width: 100%; }
+body { background: #E8D9B5; overflow-x: hidden; max-width: 100%; }
+
+/* 中国风水墨背景：宣纸 + 远山 + 屋檐 + 孤舟 + 梅花 + 印章 */
 #app {
   max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow-x: hidden;
   display: flex; flex-direction: column;
-  /* 宣纸底色 + 极淡墨山水纹理（SVG 噪点） */
   background:
-    radial-gradient(ellipse 80% 60% at 12% 6%, rgba(201,53,43,.04), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 88% 92%, rgba(184,149,106,.08), transparent 60%),
-    linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 100%);
-  box-shadow: 0 0 60px rgba(80,60,50,.10);
+    /* 中段右下：朱红"福"印章 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect x='6' y='6' width='68' height='68' fill='none' stroke='%23C9352B' stroke-width='4' opacity='.20'/><text x='40' y='58' font-family='STKaiti,KaiTi,serif' font-size='52' font-weight='900' fill='%23C9352B' opacity='.25' text-anchor='middle'>福</text></svg>") no-repeat right 380px / 64px 64px,
+    /* 中段左下：水墨远山+孤舟 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 160' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='m2' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.22'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.03'/></linearGradient></defs><g fill='url(%23m2)'><path d='M0 80 Q30 50 60 70 Q90 40 130 60 Q170 35 200 55 Q220 45 240 55 L240 160 L0 160 Z'/><path d='M0 110 Q40 95 80 105 Q120 90 160 110 Q200 95 240 105 L240 160 L0 160 Z' opacity='.7'/></g><g stroke='%236E5B43' stroke-width='0.5' fill='none' opacity='.35'><path d='M0 130 Q40 128 80 131 T160 130 T240 130'/><path d='M0 145 Q60 143 120 145 T240 145'/></g><g fill='%231a1a1a' opacity='.4'><path d='M170 115 L188 115 L184 113 L192 110 L184 107 L188 105 L170 105 Z'/><line x1='178' y1='105' x2='183' y2='93' stroke='%231a1a1a' stroke-width='0.6' opacity='.6'/></g></svg>") no-repeat left 600px / 220px 150px,
+    /* 中段右上：梅花枝 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 180'><g fill='none' stroke='%23432' stroke-width='1.5' stroke-linecap='round' opacity='.30'><path d='M115 5 Q90 35 65 70 Q45 100 25 160'/><path d='M95 40 Q80 55 65 75'/><path d='M75 80 Q60 90 48 105'/><path d='M55 130 Q40 140 28 160'/></g><g fill='%23C9352B' opacity='.38'><circle cx='95' cy='40' r='3.4'/><circle cx='103' cy='45' r='2.6'/><circle cx='75' cy='80' r='3.4'/><circle cx='83' cy='85' r='2.4'/><circle cx='55' cy='130' r='3'/><circle cx='62' cy='135' r='2.2'/><circle cx='35' cy='155' r='2.4'/></g><g fill='%23C9352B' opacity='.30'><circle cx='90' cy='37' r='1.6'/><circle cx='78' cy='83' r='1.6'/><circle cx='58' cy='133' r='1.4'/></g></svg>") no-repeat right 220px / 100px 160px,
+    /* 顶部屋檐+远日 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 80' preserveAspectRatio='xMidYMin slice'><defs><radialGradient id='s' cx='0.5' cy='1' r='0.5'><stop offset='0' stop-color='%23C9352B' stop-opacity='.14'/><stop offset='1' stop-color='%23C9352B' stop-opacity='0'/></radialGradient></defs><circle cx='380' cy='10' r='55' fill='url(%23s)'/><g fill='%236E5B43' opacity='.18'><path d='M0 60 L40 60 L48 65 L120 65 L128 60 L260 60 L268 65 L340 65 L348 60 L480 60 L480 80 L0 80 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.28'><path d='M30 60 Q60 50 90 60 Q120 50 150 60 Q180 50 210 60 Q240 50 270 60 Q300 50 330 60 Q360 50 390 60'/><path d='M0 72 Q60 68 120 72 T240 72 T360 72 T480 72'/></g></svg>") no-repeat top center / 100% 80px,
+    /* 宣纸纹理（噪点） */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.43 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.08 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"),
+    /* 宣纸主底色 */
+    linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 50%, #E8D9B5 100%);
+  background-attachment: scroll, scroll, scroll, scroll, scroll, scroll, scroll;
+  box-shadow: 0 0 60px rgba(80,60,50,.12);
 }
 
 /* 字体：楷体优先，所有中文渲染用书法感字 */
