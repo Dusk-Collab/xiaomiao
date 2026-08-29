@@ -182,13 +182,20 @@ body, .cn {
   display: grid; place-items: center; position: relative; flex: none;
   margin-top: -14px; box-shadow: 0 2px 8px rgba(201,53,43,.35);
   border: 2px solid #F5EBD8;
+  padding: 0;
+  text-align: left;
+}
+/* 用更高特异性（双选择器）压过全局 .empty 的 padding:50px 20px */
+.cart-icon.empty,
+.cart-icon.cart-icon {
+  padding: 0 !important;
+  text-align: left !important;
+  background: rgba(110,91,67,.4);
+  border: 2px solid rgba(110,91,67,.2);
 }
 .cart-icon svg { width: 26px; height: 26px; stroke: #F5EBD8; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s; }
 .cart-icon.bump svg { animation: cartBump .4s; }
 @keyframes cartBump { 0%,100%{transform:scale(1)} 40%{transform:scale(1.18)} 70%{transform:scale(.96)} }
-.cart-icon.empty {
-  background: rgba(110,91,67,.4); border: 2px solid rgba(110,91,67,.2);
-}
 .cart-icon.empty svg { stroke: #F5EBD8; }
 .cart-dot {
   position: absolute; top: -3px; right: -3px; min-width: 19px; height: 19px; padding: 0 5px;
