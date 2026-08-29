@@ -459,6 +459,39 @@
   ],
   "orders": [
     {
+      "id": "o1787975538500598",
+      "code": "A003",
+      "customerId": "",
+      "customerName": "",
+      "items": [
+        {
+          "name": "豆浆油条套餐",
+          "qty": 1,
+          "price": 6,
+          "spec": ""
+        }
+      ],
+      "goodsTotal": 6,
+      "deliveryFee": 0,
+      "discount": 0,
+      "couponName": "",
+      "total": 6,
+      "mode": "pickup",
+      "remark": "",
+      "phone": "",
+      "address": "中心街 88 号 1 楼",
+      "table": "1787975530714",
+      "status": "pending",
+      "createdAt": 1787975538500,
+      "timeline": [
+        {
+          "s": "pending",
+          "t": 1787975538500
+        }
+      ],
+      "isNew": true
+    },
+    {
       "id": "o1787975357778683",
       "code": "A002",
       "customerId": "",
@@ -525,7 +558,7 @@
       "isNew": true
     }
   ],
-  "codeSeq": 2,
+  "codeSeq": 3,
   "codeDate": "2026-08-29",
-  "_ts": 1787975357778
+  "_ts": 1787975538500
 }
