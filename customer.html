@@ -455,9 +455,9 @@ body, .cn {
 .page.active { display: flex; }
 .page-scroll { flex: 1; overflow-y: auto; padding-bottom: 90px; position: relative; }
 
-/* ===== 每个页面独立的水墨背景层（互不重样） ===== */
+/* ===== 每个页面独立的水墨背景层（视口固定，不随内容滚动） ===== */
 .page-scroll::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image: var(--page-bg, none);
   background-repeat: no-repeat;
   background-position: bottom center;
@@ -466,6 +466,7 @@ body, .cn {
 }
 /* 内容必须浮在背景层之上 */
 .page-scroll > * { position: relative; z-index: 1; }
+/* 但 .page-order 的 .main 在 .page-scroll 之外，由 .main 内部的 ::before 覆盖 */
 
 /* 【首页】屋檐 + 朝阳 + 远山 + 孤舟 + 垂柳 + 飞鸟 */
 #page-home .page-scroll {
@@ -478,14 +479,26 @@ body, .cn {
 }
 #page-order .main { position: relative; }
 #page-order .main::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image: var(--page-bg, none);
   background-repeat: no-repeat; background-position: bottom center; background-size: 100% 380px;
 }
 #page-order .cats, #page-order .goods { position: relative; z-index: 1; }
-/* 【订单列表】寒梅 + 印章 */
+/* 【订单列表】居中大幅水墨山水 + 左右对联 + 灯笼 + 多个印章 + 寒梅 */
 #page-orders .page-scroll {
-  --page-bg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 380' preserveAspectRatio='xMidYMax slice'><g fill='none' stroke='%23432' stroke-width='3' stroke-linecap='round' opacity='.55'><path d='M30 380 Q46 300 40 240 Q36 190 50 140'/><path d='M40 240 Q80 220 118 232'/><path d='M50 140 Q92 124 130 140'/><path d='M44 290 Q86 276 124 292'/></g><g fill='none' stroke='%23432' stroke-width='2' stroke-linecap='round' opacity='.45'><path d='M40 240 Q62 210 86 200'/><path d='M50 140 Q74 112 100 106'/><path d='M44 290 Q66 264 90 256'/></g><g fill='%23C9352B' opacity='.55'><circle cx='118' cy='232' r='11'/><circle cx='86' cy='200' r='9'/><circle cx='130' cy='140' r='11'/><circle cx='100' cy='106' r='9'/><circle cx='124' cy='292' r='10'/><circle cx='90' cy='256' r='8'/></g><g fill='%23F5EBD8' opacity='.7'><circle cx='118' cy='232' r='3'/><circle cx='130' cy='140' r='3'/><circle cx='124' cy='292' r='3'/></g><g fill='%23C9352B' opacity='.22'><rect x='350' y='250' width='80' height='80' rx='4'/></g><text x='390' y='308' font-family='STKaiti,KaiTi,serif' font-size='60' font-weight='900' fill='%23F5EBD8' opacity='.85' text-anchor='middle'>囍</text></svg>");
+  --page-bg:
+    /* 1. 左上角"客"小印章 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><rect x='3' y='3' width='54' height='54' fill='none' stroke='%23C9352B' stroke-width='3' opacity='.28'/><text x='30' y='44' font-family='STKaiti,KaiTi,serif' font-size='38' font-weight='900' fill='%23C9352B' opacity='.32' text-anchor='middle'>客</text></svg>") no-repeat 14px 80px / 56px 56px,
+    /* 2. 右上角"至"小印章 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><rect x='3' y='3' width='54' height='54' fill='none' stroke='%23C9352B' stroke-width='3' opacity='.28'/><text x='30' y='44' font-family='STKaiti,KaiTi,serif' font-size='38' font-weight='900' fill='%23C9352B' opacity='.32' text-anchor='middle'>至</text></svg>") no-repeat right 14px 80px / 56px 56px,
+    /* 3. 左侧竖排对联 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 400'><g fill='%23C9352B' opacity='.5'><rect x='6' y='0' width='38' height='400' rx='2'/></g><g fill='%23F5EBD8' font-family='STKaiti,KaiTi,serif' font-weight='900' text-anchor='middle'><text x='25' y='40' font-size='18'>烹</text><text x='25' y='68' font-size='18'>小</text><text x='25' y='96' font-size='18'>鲜</text><text x='25' y='124' font-size='18'>如</text><text x='25' y='152' font-size='18'>调</text><text x='25' y='180' font-size='18'>玉</text><text x='25' y='208' font-size='18'>脍</text><text x='25' y='236' font-size='18'>味</text><text x='25' y='264' font-size='18'>香</text><text x='25' y='292' font-size='18'>自</text><text x='25' y='320' font-size='18'>天</text><text x='25' y='348' font-size='18'>成</text></g></svg>") no-repeat 8px 130px / 46px 380px,
+    /* 4. 右侧竖排对联 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 400'><g fill='%23C9352B' opacity='.5'><rect x='6' y='0' width='38' height='400' rx='2'/></g><g fill='%23F5EBD8' font-family='STKaiti,KaiTi,serif' font-weight='900' text-anchor='middle'><text x='25' y='40' font-size='18'>客</text><text x='25' y='68' font-size='18'>来</text><text x='25' y='96' font-size='18'>皆</text><text x='25' y='124' font-size='18'>是</text><text x='25' y='152' font-size='18'>家</text><text x='25' y='180' font-size='18'>中</text><text x='25' y='208' font-size='18'>人</text><text x='25' y='236' font-size='18'>心</text><text x='25' y='264' font-size='18'>暖</text><text x='25' y='292' font-size='18'>茶</text><text x='25' y='320' font-size='18'>香</text><text x='25' y='348' font-size='18'>满</text></g></svg>") no-repeat right 8px 130px / 46px 380px,
+    /* 5. 底部居中大幅水墨山水 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 360' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.55'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.06'/></linearGradient></defs><g fill='url(%23mt)'><path d='M0 160 Q40 110 80 138 Q120 100 160 130 Q200 90 240 124 Q290 88 330 126 Q380 96 420 130 Q460 108 480 124 L480 360 L0 360 Z'/><path d='M0 210 Q60 178 110 200 Q160 175 210 202 Q260 178 310 205 Q360 180 410 208 Q450 192 480 200 L480 360 L0 360 Z' opacity='.7'/><path d='M0 256 Q80 235 160 252 Q240 235 320 252 Q400 235 480 252 L480 360 L0 360 Z' opacity='.55'/></g><g stroke='%236E5B43' stroke-width='.7' fill='none' opacity='.45'><path d='M0 285 Q60 282 120 285 T240 285 T360 285 T480 285'/><path d='M0 305 Q80 302 160 305 T320 305 T480 305'/><path d='M0 325 Q100 322 200 325 T400 325 T480 325'/><path d='M0 345 Q120 342 240 345 T480 345'/></g><g fill='%231a1a1a' opacity='.55'><path d='M220 240 L260 240 L252 236 L266 232 L252 228 L260 224 L220 224 Z'/><line x1='240' y1='224' x2='250' y2='200' stroke='%231a1a1a' stroke-width='1' opacity='.6'/><path d='M250 200 L268 218 L250 220 Z'/><circle cx='246' cy='218' r='1.2' fill='%23F5EBD8'/></g><g fill='%231a1a1a' opacity='.4'><path d='M340 250 L356 250 L352 247 L362 244 L352 241 L356 238 L340 238 Z'/><line x1='348' y1='238' x2='352' y2='225' stroke='%231a1a1a' stroke-width='.7'/></g><g stroke='%23432' stroke-width='1' fill='none' opacity='.45'><path d='M120 230 Q114 210 116 190 Q118 170 110 156'/><path d='M116 200 Q98 196 84 200'/><path d='M118 175 Q102 170 90 172'/><path d='M112 165 Q130 162 146 168'/></g><g fill='%235B7A6A' opacity='.6'><ellipse cx='84' cy='200' rx='9' ry='3.5' transform='rotate(-12 84 200)'/><ellipse cx='90' cy='172' rx='9' ry='3.5' transform='rotate(12 90 172)'/><ellipse cx='146' cy='168' rx='9' ry='3.5' transform='rotate(-10 146 168)'/></g><g fill='%231a1a1a' opacity='.42'><path d='M380 200 Q388 192 396 200 Q388 196 380 200 Z'/><path d='M410 188 Q418 180 426 188 Q418 184 410 188 Z'/><path d='M440 196 Q448 188 456 196 Q448 192 440 196 Z'/></g></svg>") no-repeat bottom center / 100% 360px,
+    /* 6. 底部右侧"囍"印章 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect x='4' y='4' width='72' height='72' fill='none' stroke='%23C9352B' stroke-width='5' opacity='.32'/><text x='40' y='62' font-family='STKaiti,KaiTi,serif' font-size='58' font-weight='900' fill='%23C9352B' opacity='.38' text-anchor='middle'>囍</text></svg>") no-repeat right 60px 80px / 72px 72px;
 }
 /* 【我的】青松 + 祥云 */
 #page-me .page-scroll {
@@ -524,11 +537,19 @@ body, .cn {
 .banner-slide { min-width: 100%; height: 100%; position: relative; display: flex; align-items: flex-end; }
 .banner-slide-img {
   position: absolute; inset: 0; background-size: cover; background-position: center;
-  filter: brightness(.55);
+  /* 暖色调滤镜：让任何原色图片都偏向中国风米色 */
+  filter: brightness(.5) sepia(.35) hue-rotate(345deg) saturate(.85);
+}
+/* 整张 banner 顶部叠一层淡米色透明遮罩，让 banner 与下方中国风米色背景融为一体 */
+.banner-wrap::before {
+  content: ''; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg, rgba(245,235,216,.55) 0%, rgba(232,213,179,.7) 100%);
+  pointer-events: none;
 }
 .banner-slide-info {
-  position: relative; z-index: 1; padding: 16px 20px; color: #FFFCF4; width: 100%;
-  background: linear-gradient(transparent, rgba(28,20,16,.7));
+  position: relative; z-index: 2; padding: 16px 20px; color: #FFFCF4; width: 100%;
+  background: linear-gradient(transparent, rgba(28,20,16,.55));
+  text-shadow: 0 1px 3px rgba(0,0,0,.5);
 }
 .banner-slide-tag {
   display: inline-block; padding: 2px 9px; border-radius: 2px; font-size: 11px;
@@ -601,6 +622,16 @@ body, .cn {
 }
 .section-title::after {
   content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(201,53,43,.35), transparent);
+}
+/* 中国风小印章：朱红方块+米色「荐」字（替换 🔥 emoji） */
+.cn-stamp {
+  display: inline-grid; place-items: center;
+  width: 22px; height: 22px; line-height: 1;
+  background: #C9352B; color: #F5EBD8;
+  font-family: "STKaiti", "KaiTi", "STSong", serif; font-size: 14px; font-weight: 900;
+  border-radius: 3px; margin-right: 2px;
+  box-shadow: 0 0 0 1px #C9352B;
+  letter-spacing: 0; flex: none;
 }
 
 /* 热销推荐网格 */
@@ -704,10 +735,50 @@ body, .cn {
 .order-card-foot { display: flex; align-items: center; margin-top: 10px; font-size: 11px; color: #6E5B43; }
 .order-card-total { margin-left: auto; font-weight: 700; color: #C9352B; }
 
-.empty-hint { text-align: center; padding: 40px 20px; }
+.empty-hint { text-align: center; padding: 40px 20px; position: relative; }
 .empty-hint .icon { font-size: 48px; opacity: .35; margin-bottom: 10px; }
 .empty-hint .txt { font-size: 13px; color: #6E5B43; }
 .empty-hint .action { margin-top: 14px; display: inline-block; padding: 9px 24px; background: #C9352B; color: #F5EBD8; border-radius: 4px; font-size: 13px; font-weight: 700; font-family: "STKaiti", "KaiTi", serif; letter-spacing: 2px; }
+
+/* 订单页空状态：中国风卷轴 + 印章"暂" */
+.empty-hint-scroll {
+  position: relative; margin: 60px auto 30px; max-width: 280px;
+  background: rgba(255, 252, 247, 0.92);
+  border: 1px solid rgba(184, 149, 106, .3);
+  border-radius: 6px;
+  padding: 36px 20px 28px;
+  text-align: center;
+  backdrop-filter: blur(3px);
+  box-shadow: 0 6px 18px rgba(110, 91, 67, .12);
+}
+.empty-hint-scroll::before, .empty-hint-scroll::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 14px;
+  background: linear-gradient(180deg, #8B6F47 0%, #6E5B43 50%, #8B6F47 100%);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0,0,0,.2);
+}
+.empty-hint-scroll::before { top: -8px; }
+.empty-hint-scroll::after { bottom: -8px; }
+/* 印章"暂" */
+.empty-hint-stamp {
+  position: absolute; top: -8px; right: -8px;
+  width: 44px; height: 44px;
+  background: #C9352B; color: #F5EBD8;
+  font-family: "STKaiti", "KaiTi", "STSong", serif; font-size: 26px; font-weight: 900;
+  border-radius: 4px;
+  display: grid; place-items: center;
+  transform: rotate(8deg);
+  box-shadow: 0 0 0 1px #C9352B, 0 2px 6px rgba(201,53,43,.3);
+  letter-spacing: 0;
+}
+.empty-hint-title {
+  font-family: "STKaiti", "KaiTi", "STSong", serif; font-size: 18px; font-weight: 700;
+  color: #1a1a1a; letter-spacing: 4px; margin-bottom: 6px;
+}
+.empty-hint-sub {
+  font-family: "STKaiti", "KaiTi", "STSong", serif; font-size: 12px; color: #6E5B43;
+  letter-spacing: 2px; margin-bottom: 18px; line-height: 1.6;
+}
 
 /* 立即支付按钮：朱红印章风 + 双栏 */
 .cn-pay-btn {
@@ -790,7 +861,7 @@ body, .cn {
       </div>
 
       <!-- 热销推荐 -->
-      <div class="section-title">🔥 热销推荐</div>
+      <div class="section-title"><span class="cn-stamp">荐</span>热销推荐</div>
       <div class="hot-grid" id="hotGrid"></div>
 
       <!-- 店铺信息 -->
@@ -1621,7 +1692,7 @@ function renderBanner() {
     var desc = p.desc && p.desc !== '点击编辑描述' ? p.desc : '';
     return '<div class="banner-slide" onclick="switchTab(\'order\');scrollToProduct(\'' + p.id + '\')" style="cursor:pointer">'
       + (p.img ? '<div class="banner-slide-img" style="background-image:url(\'' + p.img + '\')"></div>' : '')
-      + '<div class="banner-slide-info" style="' + (p.img ? '' : 'background:linear-gradient(135deg,' + p.color + ',' + p.color.replace('FF','E8') + ');color:#3A2A1A') + '">'
+      + '<div class="banner-slide-info" style="' + (p.img ? '' : 'background:linear-gradient(135deg,%23E8D4A8,%23D4B886);color:%233A2A1A') + '">'
       + '<div class="banner-slide-tag new">' + esc(tagLabel) + '</div>'
       + '<div class="banner-slide-name">' + esc(p.name) + '</div>'
       + (desc ? '<div class="banner-slide-desc">' + esc(desc) + '</div>' : '')
@@ -2205,8 +2276,14 @@ function renderOrdersPage() {
     if (searchTerm) {
       html = '<div class="empty-hint"><div class="icon">🔍</div><div class="txt">没有找到匹配「' + esc(searchTerm) + '」的订单</div></div>';
     } else {
-      var emptyMsg = { all: '还没有订单', active: '没有进行中的订单', done: '没有已完成的订单', canceled: '没有已取消的订单' };
-      html = '<div class="empty-hint"><div class="icon">📦</div><div class="txt">' + (emptyMsg[orderFilter] || '暂无订单') + '</div><div class="action" onclick="switchTab(\'order\')">去点餐</div></div>';
+      var titleByFilter = { all: '尚 无 订 单', active: '暂 无 进 行 中', done: '尚 未 完 成', canceled: '无 已 取 消' };
+      var subByFilter = { all: '客官莫急，招牌菜已备好，去点餐吧～', active: '暂无进行中的订单', done: '还没有已完成的订单', canceled: '暂无已取消的订单' };
+      html = '<div class="empty-hint-scroll">'
+        + '<div class="empty-hint-stamp">暂</div>'
+        + '<div class="empty-hint-title">' + (titleByFilter[orderFilter] || '尚 无 订 单') + '</div>'
+        + '<div class="empty-hint-sub">' + (subByFilter[orderFilter] || '客官莫急，招牌菜已备好～') + '</div>'
+        + '<div class="action" onclick="switchTab(\'order\')">去 点 餐</div>'
+        + '</div>';
     }
   }
 
