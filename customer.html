@@ -28,7 +28,6 @@ body { background: #E8D9B5; overflow-x: hidden; max-width: 100%; }
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.43 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.08 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"),
     /* 宣纸主底色 */
     linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 50%, #E8D9B5 100%);
-  background-attachment: scroll, scroll, scroll, scroll, scroll, scroll, scroll;
   box-shadow: 0 0 60px rgba(80,60,50,.12);
 }
 
@@ -460,8 +459,15 @@ body, .cn {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image: var(--page-bg, none);
   background-repeat: no-repeat;
+  background-position: bottom center;
+  background-size: 100% 380px;
   opacity: 1;
-  background-attachment: fixed;
+  /* GPU 合成层：消除移动端 fixed 元素滚动时的抖动/重绘 */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform;
 }
 
 /* 内容必须浮在背景层之上 */
@@ -470,7 +476,6 @@ body, .cn {
   background-repeat: no-repeat;
   background-position: bottom center;
   background-size: 100% auto;
-  background-attachment: fixed;
 }
 
 .page-scroll > * { position: relative; z-index: 1; }
