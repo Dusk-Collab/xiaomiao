@@ -182,6 +182,8 @@ body, .cn {
   display: grid; place-items: center; position: relative; flex: none;
   margin-top: -14px; box-shadow: 0 2px 8px rgba(201,53,43,.35);
   border: 2px solid #F5EBD8;
+  padding: 0;       /* 覆盖全局 .empty 的 padding:50px 20px（HTML class="cart-icon empty" 会同时命中两个规则） */
+  text-align: left; /* 覆盖全局 .empty 的 text-align:center */
 }
 .cart-icon svg { width: 26px; height: 26px; stroke: #F5EBD8; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s; }
 .cart-icon.bump svg { animation: cartBump .4s; }
