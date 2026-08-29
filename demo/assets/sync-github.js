@@ -67,10 +67,27 @@
     return btoa(unescape(encodeURIComponent(str)));
   }
 
+  // 统一带超时的 fetch：默认 10 秒超时自动 abort，防止弱网请求永久挂起
+  // （修复"初始化 pull 卡住则轮询永不启动 / 失败后无兜底"问题）
+  function fetchT(url, opts, ms) {
+    var t = ms || 10000;
+    if (typeof AbortController !== 'undefined') {
+      var ac = new AbortController();
+      var timer = setTimeout(function () { try { ac.abort(); } catch (e) {} }, t);
+      opts = opts || {};
+      opts.signal = ac.signal;
+      return fetch(url, opts).then(
+        function (res) { clearTimeout(timer); return res; },
+        function (err) { clearTimeout(timer); throw err; }
+      );
+    }
+    return fetch(url, opts);
+  }
+
   function pull() {
     if (!ENABLED) return Promise.resolve(null);
     var url = RAW_BASE + '/' + cfg.repo + '/' + cfg.branch + '/' + cfg.dataPath + '?t=' + Date.now();
-    return fetch(url, { cache: 'no-store' })
+    return fetchT(url, { cache: 'no-store' })
       .then(function (res) {
         if (!res.ok) return null;
         return res.json();
@@ -80,7 +97,7 @@
         if (j && j.shop) return j;
         // raw.githubusercontent 被墙/DNS 污染时兜底：直接读本站同目录下的
         // data.json（站点本身能打开就一定能读到，最多滞后 Pages CDN ~10 分钟）。
-        return fetch('assets/' + (cfg.dataPath || '').split('/').pop() + '?t=' + Date.now(), { cache: 'no-store' })
+        return fetchT('assets/' + (cfg.dataPath || '').split('/').pop() + '?t=' + Date.now(), { cache: 'no-store' })
           .then(function (res) { return res.ok ? res.json() : null; })
           .catch(function () { return null; });
       });
@@ -95,7 +112,7 @@
         branch: cfg.branch
       };
       if (sha) body.sha = sha;
-      return fetch(apiUrlFor(), {
+      return fetchT(apiUrlFor(), {
         method: 'PUT',
         headers: reqHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(body)
@@ -108,31 +125,51 @@
   }
 
   function getSha() {
-    return fetch(shaUrlFor(), { headers: reqHeaders() })
+    return fetchT(shaUrlFor(), { headers: reqHeaders() })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (j) { return j && j.sha ? j.sha : null; })
       .catch(function () { return null; });
   }
 
-  // 409：说明别人先提交了。拉最新 -> 用最新做底，覆盖式再推一次（last-write-wins）。
+  // 409 冲突合并：以 _ts 较新的一方为基础（last-write-wins），
+  // 订单/商品按 id 去重合并（两边都保留），其余整体配置字段跟随基础方。
+  // 修复原实现"只合并订单、商品/店铺设置并发时被覆盖丢失"的问题。
+  function mergeForRetry(remote, local) {
+    var base = (remote._ts || 0) >= (local._ts || 0) ? remote : local;
+    var out = Object.assign({}, base);
+    // 订单：按 id 去重，两边都保留（冲突以 base 为准）
+    if (Array.isArray(remote.orders) || Array.isArray(local.orders)) {
+      var oMap = {};
+      (base.orders || []).forEach(function (o) { if (o && o.id) oMap[o.id] = o; });
+      var oOther = base === remote ? (local.orders || []) : (remote.orders || []);
+      oOther.forEach(function (o) { if (o && o.id && !oMap[o.id]) oMap[o.id] = o; });
+      out.orders = Object.keys(oMap).map(function (k) { return oMap[k]; });
+    }
+    // 商品：按 id 去重，base 优先，另一方新增的保留（不再整体覆盖丢失）
+    if (Array.isArray(remote.products) || Array.isArray(local.products)) {
+      var pMap = {};
+      (base.products || []).forEach(function (p) { if (p && p.id) pMap[p.id] = p; });
+      var pOther = base === remote ? (local.products || []) : (remote.products || []);
+      pOther.forEach(function (p) { if (p && p.id && !pMap[p.id]) pMap[p.id] = p; });
+      out.products = Object.keys(pMap).map(function (k) { return pMap[k]; });
+    }
+    out._ts = Math.max(remote._ts || 0, local._ts || 0);
+    return out;
+  }
+
+  // 409：说明别人先提交了。拉最新 -> 合并 -> 再推一次。
   function retryWithLatest(data) {
     return pull().then(function (latest) {
-      if (!latest) return push(data); // 拉不到就原样再试
-      // 合并订单（按 id 去重），其余字段以本地（data）为准，但 _ts 取较新
-      if (Array.isArray(latest.orders) && Array.isArray(data.orders)) {
-        var byId = {};
-        latest.orders.concat(data.orders).forEach(function (o) { byId[o.id] = o; });
-        data.orders = Object.keys(byId).map(function (k) { return byId[k]; });
-      }
-      data._ts = Math.max(data._ts || 0, latest._ts || 0);
+      if (!latest || !latest.shop) return push(data); // 拉不到就原样再试
+      var merged = mergeForRetry(latest, data);
       return getSha().then(function (sha) {
         var body = {
           message: 'sync: merge store data (cloud)',
-          content: toBase64(JSON.stringify(data, null, 2)),
+          content: toBase64(JSON.stringify(merged, null, 2)),
           branch: cfg.branch
         };
         if (sha) body.sha = sha;
-        return fetch(apiUrlFor(), {
+        return fetchT(apiUrlFor(), {
           method: 'PUT',
           headers: reqHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(body)

@@ -24,15 +24,17 @@
     } catch (e) { console.warn('CloudCore.init fail', e); readyFlag = false; return false; }
   }
 
-  // 简单 SHA-256 加盐哈希（Web Crypto）
+  // 简单 SHA-256 加盐哈希（Web Crypto），格式 sha256:<hex>，与 admin.html 登录页同盐同格式。
+  // 安全红线：无 Web Crypto 时返回 null（宁可拒绝登录/改密），绝不降级返回 'plain:' 明文，
+  // 防止明文密码被写进云数据库或 localStorage。
   async function hashPwd(pwd) {
-    if (!global.crypto || !global.crypto.subtle) return 'plain:' + pwd;   // 极端降级
+    if (!global.crypto || !global.crypto.subtle) return null;
     try {
       var data = new TextEncoder().encode(SALT + '|' + pwd);
       var buf = await global.crypto.subtle.digest('SHA-256', data);
       var arr = Array.from(new Uint8Array(buf));
-      return arr.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
-    } catch (e) { return 'plain:' + pwd; }
+      return 'sha256:' + arr.map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    } catch (e) { return null; }
   }
 
   function getConfigDoc() {
@@ -57,6 +59,7 @@
 
   async function setAdminPwd(pwd) {
     var h = await hashPwd(pwd);
+    if (!h) return null;   // 哈希不可用：拒绝写入，防止明文/坏值入库
     if (readyFlag && db) {
       // config 文档只放 adminPwd，绝不动 store/main，避免改菜单时把密码冲掉
       await db.collection('store').doc('config').set({ adminPwd: h }).catch(function (e) { console.warn('setAdminPwd cloud fail', e); });
