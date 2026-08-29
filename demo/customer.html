@@ -497,12 +497,17 @@ body, .cn {
   --page-bg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 380' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt2' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.40'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.05'/></linearGradient></defs><g fill='url(%23mt2)' opacity='.6'><path d='M0 165 Q40 130 80 152 Q130 118 180 148 Q230 112 280 145 Q330 118 380 148 Q430 128 480 145 L480 380 L0 380 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.40'><path d='M0 292 Q60 289 120 293 T240 292 T360 293 T480 292'/><path d='M0 310 Q80 306 160 310 T320 310 T480 310'/><path d='M0 330 Q100 326 200 330 T400 330 T480 330'/></g><g stroke='%23432' stroke-width='3.2' fill='none' opacity='.5'><path d='M62 380 L52 250 Q48 210 54 170'/><path d='M96 380 L90 268 Q88 232 94 196'/><path d='M132 380 L128 290 Q126 258 132 228'/></g><g stroke='%23432' stroke-width='2' fill='none' opacity='.45'><path d='M54 210 Q84 196 116 204'/><path d='M52 262 Q82 248 114 256'/><path d='M92 232 Q122 218 152 226'/><path d='M90 288 Q118 274 146 282'/><path d='M130 268 Q156 256 182 262'/></g><g fill='%235B7A6A' opacity='.55'><path d='M116 204 Q130 190 150 194 Q132 204 116 204 Z'/><path d='M114 256 Q128 242 148 246 Q130 256 114 256 Z'/><path d='M152 226 Q168 212 188 217 Q168 227 152 226 Z'/><path d='M146 282 Q160 268 180 272 Q162 282 146 282 Z'/><path d='M182 262 Q196 250 214 254 Q196 263 182 262 Z'/><path d='M84 196 Q96 184 112 188 Q98 197 84 196 Z'/></g><g fill='%236E5B43' opacity='.42'><path d='M330 300 Q352 286 380 300 Q400 312 420 302 L424 320 L326 320 Z'/><path d='M400 312 Q418 302 436 314 Q448 322 458 316 L460 330 L396 330 Z' opacity='.7'/></g></svg>");
 }
 #page-order .main { position: relative; }
-#page-order .main::before {
-  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+
+/* 点餐页背景：放在 .page 上（绝对覆盖整个页面，不受 .goods 内部滚动影响） */
+#page-order::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0;
   background-image: var(--page-bg, none);
-  background-repeat: no-repeat; background-position: bottom center; background-size: 100% 380px;
+  background-repeat: no-repeat; background-position: top center; background-size: 100% 100%;
+  transform: translateZ(0); -webkit-transform: translateZ(0);
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
 }
-#page-order .cats, #page-order .goods { position: relative; z-index: 1; }
+#page-order > * { position: relative; z-index: 1; }   /* .hero 和 .main 浮在背景上 */
+
 /* 【订单列表】居中大幅水墨山水 + 左右对联 + 灯笼 + 多个印章 + 寒梅 */
 /* 订单页背景改用 ::before 直接 hardcode（var() 含多层 url() 会被 Chrome 拒绝） */
 /* 【我的】青松 + 祥云 */
