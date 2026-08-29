@@ -373,18 +373,16 @@ body, .cn {
 #orderPage.show { display: block; animation: slideUp .3s; }
 .op-hero {
   color: #1a1a1a; padding: 22px 18px 64px; text-align: center; position: relative;
-  background:
-    linear-gradient(180deg, rgba(245,235,216,.0) 0%, rgba(232,213,179,.6) 100%),
-    radial-gradient(ellipse 70% 50% at 50% 95%, rgba(110,91,67,.1), transparent 70%),
-    linear-gradient(180deg, #F5EBD8 0%, #ECDFC1 100%);
+  background: transparent;
 }
 .op-back { position: absolute; left: 14px; top: 18px; font-size: 20px; opacity: .9; color: #1a1a1a; }
 .op-hero > div:nth-child(2) { font-family: "STKaiti", "KaiTi", serif; letter-spacing: 4px; font-size: 18px; font-weight: 700; }
 .code-card {
-  background: #FFFCF4; border-radius: 8px; margin: -52px 18px 0; padding: 24px 18px;
+  background: rgba(255, 252, 247, 0.92); border-radius: 8px; margin: -52px 18px 0; padding: 24px 18px;
   box-shadow: 0 6px 22px rgba(110,91,67,.12);
   text-align: center; position: relative; z-index: 1;
   border: 1px solid rgba(184,149,106,.25);
+  backdrop-filter: blur(3px);
 }
 /* 印章边框：四角小朱红方块 */
 .code-card::before, .code-card::after {
@@ -410,7 +408,7 @@ body, .cn {
 .sp-done    { background: rgba(110,91,67,.12); color: #6E5B43; border-color: rgba(110,91,67,.25); }
 .blink { animation: pulse 1.4s infinite; }
 
-.steps { display: flex; margin: 18px 18px 0; background: #FFFCF4; border-radius: 8px; padding: 18px 10px; box-shadow: 0 1px 3px rgba(110,91,67,.08); border: 1px solid rgba(184,149,106,.2); }
+.steps { display: flex; margin: 18px 18px 0; background: rgba(255, 252, 247, 0.9); border-radius: 8px; padding: 18px 10px; box-shadow: 0 1px 3px rgba(110,91,67,.08); border: 1px solid rgba(184,149,106,.2); backdrop-filter: blur(2px); }
 .step { flex: 1; text-align: center; position: relative; }
 .step-dot {
   width: 28px; height: 28px; border-radius: 50%; background: rgba(184,149,106,.18); color: #6E5B43;
@@ -426,7 +424,7 @@ body, .cn {
 }
 .step.on:not(:last-child)::after { background: #C9352B; }
 
-.op-card { background: #FFFCF4; border-radius: 8px; margin: 12px 18px; padding: 15px; box-shadow: 0 1px 3px rgba(110,91,67,.06); border: 1px solid rgba(184,149,106,.2); }
+.op-card { background: rgba(255, 252, 247, 0.9); border-radius: 8px; margin: 12px 18px; padding: 15px; box-shadow: 0 1px 3px rgba(110,91,67,.06); border: 1px solid rgba(184,149,106,.2); backdrop-filter: blur(2px); }
 .op-card h4 { margin: 0 0 11px; font-size: 14px; font-weight: 700; font-family: "STKaiti", "KaiTi", serif; letter-spacing: 1px; color: #1a1a1a; }
 
 /* 打烊遮罩 */
