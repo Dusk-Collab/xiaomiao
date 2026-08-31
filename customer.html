@@ -15,7 +15,15 @@ body { background: #F5EBD8; overflow-x: hidden; max-width: 100%; }
 #app {
   max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow-x: hidden;
   display: flex; flex-direction: column;
-  background: linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 60%, #F2E6CB 100%);
+  background:
+    /* 中段右下：朱红"福"印章 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect x='6' y='6' width='68' height='68' fill='none' stroke='%23C9352B' stroke-width='4' opacity='.20'/><text x='40' y='58' font-family='STKaiti,KaiTi,serif' font-size='52' font-weight='900' fill='%23C9352B' opacity='.25' text-anchor='middle'>福</text></svg>") no-repeat right 380px / 64px 64px,
+    /* 顶部屋檐+远日 */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 80' preserveAspectRatio='xMidYMin slice'><defs><radialGradient id='s' cx='0.5' cy='1' r='0.5'><stop offset='0' stop-color='%23C9352B' stop-opacity='.14'/><stop offset='1' stop-color='%23C9352B' stop-opacity='0'/></radialGradient></defs><circle cx='380' cy='10' r='55' fill='url(%23s)'/><g fill='%236E5B43' opacity='.18'><path d='M0 60 L40 60 L48 65 L120 65 L128 60 L260 60 L268 65 L340 65 L348 60 L480 60 L480 80 L0 80 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.28'><path d='M30 60 Q60 50 90 60 Q120 50 150 60 Q180 50 210 60 Q240 50 270 60 Q300 50 330 60 Q360 50 390 60'/><path d='M0 72 Q60 68 120 72 T240 72 T360 72 T480 72'/></g></svg>") no-repeat top center / 100% 80px,
+    /* 宣纸纹理（噪点） */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.43 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.08 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"),
+    /* 宣纸主底色 */
+    linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 60%, #F2E6CB 100%);
   box-shadow: 0 0 60px rgba(80,60,50,.12);
 }
 
@@ -440,6 +448,7 @@ body, .cn {
 /* Tab 导航：宣纸色 + 选中态朱红 */
 .page { display: none; flex-direction: column; flex: 1; min-height: 0; transform: translateZ(0); -webkit-transform: translateZ(0); }
 .page.active { display: flex; }
+.page.active#page-orders { background-color: #F5EBD8; }
 .page-scroll { flex: 1; overflow-y: auto; padding-bottom: 90px; position: relative; transform: translateZ(0); -webkit-transform: translateZ(0); }
 
 /* ===== 每个页面独立的水墨背景层 =====
