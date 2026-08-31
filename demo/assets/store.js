@@ -157,12 +157,36 @@
     return out;
   }
 
+  /* 【数据安全】标记本次 read() 是否刚"凭空生成"了种子数据（此前本地没有数据）。
+     新设备/清缓存/测试环境都会走到这里，此时数据里的 _ts 是"现在"，比云端还新，
+     若照常 last-write-wins 回推，就会用演示种子数据覆盖商家的真实数据（2026-08-29 事故）。*/
+  var _freshSeed = false;
+
+  /* 判断一份数据是不是"演示种子数据"（store.js seed() 生成的样板，不是商家真实数据）。
+     种子特征：店铺名含「晨光早餐」且商品 id 全是 p1~p12 这种短 id。
+     真实数据里商品 id 是 p + 13 位时间戳（如 p1787801798446），两者很好区分。
+     命中种子 → 无论 _ts 多新都绝不回推，一律采用云端真实数据。 */
+  function isSeedData(d) {
+    try {
+      if (!d || !d.shop || !d.products) return false;
+      var nm = String(d.shop.name || '');
+      if (nm.indexOf('晨光早餐') < 0) return false;
+      var ps = d.products || [];
+      if (!ps.length) return false;
+      for (var i = 0; i < ps.length; i++) {
+        if (!/^p\d{1,2}$/.test(String(ps[i].id || ''))) return false;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
   function read() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (!raw) { var s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); return s; }
+      if (!raw) { var s = seed(); localStorage.setItem(KEY, JSON.stringify(s)); _freshSeed = true; return s; }
       var d = JSON.parse(raw);
-      if (!d.products || !d.shop) { var s2 = seed(); localStorage.setItem(KEY, JSON.stringify(s2)); return s2; }
+      if (!d.products || !d.shop) { var s2 = seed(); localStorage.setItem(KEY, JSON.stringify(s2)); _freshSeed = true; return s2; }
+      _freshSeed = false;
       var clean = sanitize(d);
       if (JSON.stringify(clean) !== raw) localStorage.setItem(KEY, JSON.stringify(clean));
       return clean;
@@ -284,6 +308,15 @@
       CloudSync.pull().then(function (cloud) {
         var local = read();
         if (cloud && cloud.shop) {
+          /* 【数据安全·核心】本地是刚生成的种子数据 或 残留的演示样板数据
+             → 无条件采用云端，绝不回推。否则演示种子会覆盖商家真实数据。*/
+          if (_freshSeed || isSeedData(local)) {
+            var c0 = stripMeta(cloud);
+            localStorage.setItem(KEY, JSON.stringify(c0));
+            _freshSeed = false;
+            emit(c0);
+            return;
+          }
           if ((cloud._ts || 0) >= (local._ts || 0)) {
             var c = stripMeta(cloud);
             localStorage.setItem(KEY, JSON.stringify(c));
