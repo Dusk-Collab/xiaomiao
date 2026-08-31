@@ -15,15 +15,8 @@ body { background: #F5EBD8; overflow-x: hidden; max-width: 100%; }
 #app {
   max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; overflow-x: hidden;
   display: flex; flex-direction: column;
-  background:
-    /* 中段右下：朱红"福"印章 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect x='6' y='6' width='68' height='68' fill='none' stroke='%23C9352B' stroke-width='4' opacity='.20'/><text x='40' y='58' font-family='STKaiti,KaiTi,serif' font-size='52' font-weight='900' fill='%23C9352B' opacity='.25' text-anchor='middle'>福</text></svg>") no-repeat right 380px / 64px 64px,
-    /* 顶部屋檐+远日 */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 80' preserveAspectRatio='xMidYMin slice'><defs><radialGradient id='s' cx='0.5' cy='1' r='0.5'><stop offset='0' stop-color='%23C9352B' stop-opacity='.14'/><stop offset='1' stop-color='%23C9352B' stop-opacity='0'/></radialGradient></defs><circle cx='380' cy='10' r='55' fill='url(%23s)'/><g fill='%236E5B43' opacity='.18'><path d='M0 60 L40 60 L48 65 L120 65 L128 60 L260 60 L268 65 L340 65 L348 60 L480 60 L480 80 L0 80 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.28'><path d='M30 60 Q60 50 90 60 Q120 50 150 60 Q180 50 210 60 Q240 50 270 60 Q300 50 330 60 Q360 50 390 60'/><path d='M0 72 Q60 68 120 72 T240 72 T360 72 T480 72'/></g></svg>") no-repeat top center / 100% 80px,
-    /* 宣纸纹理（噪点） */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.43 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.08 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>"),
-    /* 宣纸主底色 */
-    linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 60%, #F2E6CB 100%);
+  /* 干净宣纸底：纯渐变，不再堆 SVG 装饰（远山/孤舟/印章/对联全部移除） */
+  background: linear-gradient(180deg, #F8EFD9 0%, #F2E6CB 60%, #F2E6CB 100%);
   box-shadow: 0 0 60px rgba(80,60,50,.12);
 }
 
@@ -448,71 +441,27 @@ body, .cn {
 /* Tab 导航：宣纸色 + 选中态朱红 */
 .page { display: none; flex-direction: column; flex: 1; min-height: 0; transform: translateZ(0); -webkit-transform: translateZ(0); }
 .page.active { display: flex; }
-.page.active#page-orders { background-color: #F5EBD8; }
 .page-scroll { flex: 1; overflow-y: auto; padding-bottom: 90px; position: relative; transform: translateZ(0); -webkit-transform: translateZ(0); }
 
 /* ===== 每个页面独立的水墨背景层 =====
    关键：移动端 position:fixed 在 overflow:auto 祖先内会失效（iOS Safari / Chrome 移动版 bug），
    导致背景"福字/山水"跟着内容一起滚。这里改用 position:absolute 相对 .page 定位 → 跟内容一起滚，
    不会再有"背景上下抖动跟随"的问题；为减少视觉位移，把背景图绘制在页面顶部 380px 区域。*/
-.page-scroll::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0;
-  background-image: var(--page-bg, none);
-  background-repeat: no-repeat;
-  background-position: top center;
-  background-size: 100% 100%;
-  opacity: 1;
-  /* GPU 合成层：消除移动端重绘抖动 */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  will-change: transform;
-}
-
 /* 内容必须浮在背景层之上 */
 /* 订单页背景：移动端用 position:absolute（相对 .page），不用 fixed（避免 iOS bug） */
-#page-orders .page-scroll::before {
-  position: absolute !important;
-  top: 0; left: 0; right: 0; height: 844px;   /* 覆盖整页高度（页面内一屏能看完） */
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 844' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.55'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.06'/></linearGradient></defs><g fill='%23C9352B' opacity='.45'><rect x='4' y='60' width='40' height='700' rx='2'/><rect x='436' y='60' width='40' height='700' rx='2'/></g><g fill='%23F5EBD8' font-family='STKaiti,KaiTi,serif' font-weight='900' text-anchor='middle'><text x='24' y='100' font-size='18'>烹</text><text x='24' y='140' font-size='18'>小</text><text x='24' y='180' font-size='18'>鲜</text><text x='24' y='220' font-size='18'>如</text><text x='24' y='260' font-size='18'>调</text><text x='24' y='300' font-size='18'>玉</text><text x='24' y='340' font-size='18'>脍</text><text x='24' y='380' font-size='18'>味</text><text x='24' y='420' font-size='18'>香</text><text x='24' y='460' font-size='18'>自</text><text x='24' y='500' font-size='18'>天</text><text x='24' y='540' font-size='18'>成</text><text x='24' y='580' font-size='18'>，</text><text x='24' y='620' font-size='18'>一</text><text x='24' y='660' font-size='18'>餐</text><text x='24' y='700' font-size='18'>一</text><text x='24' y='740' font-size='18'>饭</text><text x='456' y='100' font-size='18'>客</text><text x='456' y='140' font-size='18'>来</text><text x='456' y='180' font-size='18'>皆</text><text x='456' y='220' font-size='18'>是</text><text x='456' y='260' font-size='18'>家</text><text x='456' y='300' font-size='18'>中</text><text x='456' y='340' font-size='18'>人</text><text x='456' y='380' font-size='18'>心</text><text x='456' y='420' font-size='18'>暖</text><text x='456' y='460' font-size='18'>，</text><text x='456' y='500' font-size='18'>茶</text><text x='456' y='540' font-size='18'>香</text><text x='456' y='580' font-size='18'>饭</text><text x='456' y='620' font-size='18'>熟</text><text x='456' y='660' font-size='18'>味</text><text x='456' y='700' font-size='18'>正</text><text x='456' y='740' font-size='18'>浓</text></g><!-- 「客」「味」印章跟山水重叠，已删掉，只保留右上「至」印章+对联+山水+梅花+孤舟，画面更干净 -->
-<g fill='none' stroke='%23C9352B' stroke-width='3' opacity='.38'><rect x='400' y='460' width='52' height='52'/></g><g fill='%23C9352B' font-family='STKaiti,KaiTi,serif' font-weight='900' text-anchor='middle' opacity='.4'><text x='380' y='220' font-size='34'>至</text></g><g fill='none' stroke='%23432' stroke-width='1.6' stroke-linecap='round' opacity='.45'><path d='M460 60 Q430 100 405 150 Q385 195 365 250'/><path d='M440 100 Q425 120 410 145'/><path d='M420 145 Q405 160 390 185'/><path d='M400 200 Q380 215 360 240'/></g><g fill='%23C9352B' opacity='.55'><circle cx='440' cy='100' r='3.6'/><circle cx='420' cy='145' r='3.6'/><circle cx='400' cy='200' r='3.4'/><circle cx='380' cy='240' r='2.6'/></g></svg>");
-  background-repeat: no-repeat;
-  background-position: top center;
-  background-size: 100% 100%;
-}
-
 .page-scroll > * { position: relative; z-index: 1; }
 /* 但 .page-order 的 .main 在 .page-scroll 之外，由 .main 内部的 ::before 覆盖 */
 
 /* 【首页】屋檐 + 朝阳 + 远山 + 孤舟 + 垂柳 + 飞鸟 */
-#page-home .page-scroll {
-  --page-bg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 380' preserveAspectRatio='xMidYMax slice'><defs><radialGradient id='sun' cx='0.5' cy='0.5' r='0.5'><stop offset='0' stop-color='%23C9352B' stop-opacity='.38'/><stop offset='.6' stop-color='%23E8841C' stop-opacity='.14'/><stop offset='1' stop-color='%23E8841C' stop-opacity='0'/></radialGradient><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.42'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.06'/></linearGradient></defs><circle cx='390' cy='60' r='62' fill='url(%23sun)'/><circle cx='390' cy='60' r='26' fill='%23C9352B' opacity='.28'/><g fill='url(%23mt)' opacity='.55'><path d='M0 150 Q45 100 90 130 Q135 88 185 122 Q240 78 295 118 Q345 85 395 122 Q440 98 480 118 L480 380 L0 380 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.42'><path d='M0 275 Q50 272 100 276 T200 274 T300 277 T400 274 T480 276'/><path d='M0 292 Q70 289 140 292 T280 292 T420 292 T480 292'/><path d='M0 310 Q90 307 180 310 T360 310 T480 310'/><path d='M0 330 Q100 327 200 330 T400 330 T480 330'/></g><g fill='%231a1a1a' opacity='.5'><path d='M300 258 L340 258 L332 254 L346 250 L332 246 L340 242 L300 242 Z'/><line x1='318' y1='242' x2='326' y2='222' stroke='%231a1a1a' stroke-width='1' opacity='.6'/><path d='M326 222 L338 234 L326 236 Z'/></g><g stroke='%236E5B43' stroke-width='1.6' fill='none' opacity='.5'><path d='M28 60 Q20 90 26 120 Q32 150 22 180'/><path d='M52 52 Q46 88 54 124 Q60 156 50 186'/></g><g fill='%235B7A6A' opacity='.45'><ellipse cx='22' cy='92' rx='7' ry='3.4' transform='rotate(-28 22 92)'/><ellipse cx='30' cy='122' rx='7' ry='3.4' transform='rotate(22 30 122)'/><ellipse cx='22' cy='152' rx='6' ry='3' transform='rotate(-26 22 152)'/><ellipse cx='52' cy='86' rx='7' ry='3.4' transform='rotate(-24 52 86)'/><ellipse cx='58' cy='118' rx='7' ry='3.4' transform='rotate(26 58 118)'/><ellipse cx='50' cy='150' rx='6' ry='3' transform='rotate(-22 50 150)'/></g><g fill='%231a1a1a' opacity='.38'><path d='M150 70 Q156 64 162 70 Q156 67 150 70 Z'/><path d='M176 56 Q182 50 188 56 Q182 53 176 56 Z'/><path d='M204 76 Q210 70 216 76 Q210 73 204 76 Z'/></g></svg>");
-}
 /* 【点餐】墨竹 + 远山 + 流水 + 石 */
-#page-order .page-scroll,
-#page-order .main {
-  --page-bg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 380' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt2' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.40'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.05'/></linearGradient></defs><g fill='url(%23mt2)' opacity='.6'><path d='M0 165 Q40 130 80 152 Q130 118 180 148 Q230 112 280 145 Q330 118 380 148 Q430 128 480 145 L480 380 L0 380 Z'/></g><g stroke='%236E5B43' stroke-width='0.8' fill='none' opacity='.40'><path d='M0 292 Q60 289 120 293 T240 292 T360 293 T480 292'/><path d='M0 310 Q80 306 160 310 T320 310 T480 310'/><path d='M0 330 Q100 326 200 330 T400 330 T480 330'/></g><g stroke='%23432' stroke-width='3.2' fill='none' opacity='.5'><path d='M62 380 L52 250 Q48 210 54 170'/><path d='M96 380 L90 268 Q88 232 94 196'/><path d='M132 380 L128 290 Q126 258 132 228'/></g><g stroke='%23432' stroke-width='2' fill='none' opacity='.45'><path d='M54 210 Q84 196 116 204'/><path d='M52 262 Q82 248 114 256'/><path d='M92 232 Q122 218 152 226'/><path d='M90 288 Q118 274 146 282'/><path d='M130 268 Q156 256 182 262'/></g><g fill='%235B7A6A' opacity='.55'><path d='M116 204 Q130 190 150 194 Q132 204 116 204 Z'/><path d='M114 256 Q128 242 148 246 Q130 256 114 256 Z'/><path d='M152 226 Q168 212 188 217 Q168 227 152 226 Z'/><path d='M146 282 Q160 268 180 272 Q162 282 146 282 Z'/><path d='M182 262 Q196 250 214 254 Q196 263 182 262 Z'/><path d='M84 196 Q96 184 112 188 Q98 197 84 196 Z'/></g><g fill='%236E5B43' opacity='.42'><path d='M330 300 Q352 286 380 300 Q400 312 420 302 L424 320 L326 320 Z'/><path d='M400 312 Q418 302 436 314 Q448 322 458 316 L460 330 L396 330 Z' opacity='.7'/></g></svg>");
-}
 #page-order .main { position: relative; }
 
 /* 点餐页背景：放在 .page 上（绝对覆盖整个页面，不受 .goods 内部滚动影响） */
-#page-order::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0;
-  background-image: var(--page-bg, none);
-  background-repeat: no-repeat; background-position: top center; background-size: 100% 100%;
-  transform: translateZ(0); -webkit-transform: translateZ(0);
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
-}
 #page-order > * { position: relative; z-index: 1; }   /* .hero 和 .main 浮在背景上 */
 
 /* 【订单列表】居中大幅水墨山水 + 左右对联 + 灯笼 + 多个印章 + 寒梅 */
 /* 订单页背景改用 ::before 直接 hardcode（var() 含多层 url() 会被 Chrome 拒绝） */
 /* 【我的】青松 + 祥云 */
-#page-me .page-scroll {
-  --page-bg: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 380' preserveAspectRatio='xMidYMax slice'><g stroke='%23432' stroke-width='3.4' fill='none' opacity='.5'><path d='M400 380 L388 296 Q384 258 394 222'/><path d='M388 296 Q352 276 320 284'/><path d='M394 250 Q430 232 458 244'/><path d='M390 268 Q420 252 448 258'/></g><g fill='%235B7A6A' opacity='.55'><path d='M320 284 Q300 262 268 268 Q296 282 320 284 Z'/><path d='M458 244 Q478 224 478 200 Q470 230 458 244 Z'/><path d='M448 258 Q470 240 476 216 Q462 248 448 258 Z'/><path d='M394 222 Q410 196 400 168 Q388 200 394 222 Z'/></g><g fill='none' stroke='%236E5B43' stroke-width='2.2' opacity='.38'><path d='M60 200 Q78 178 104 186 Q120 192 128 182 Q140 190 152 182 Q164 190 176 184'/><path d='M60 220 Q78 198 104 206 Q120 212 128 202 Q140 210 152 202 Q164 210 176 204'/><path d='M70 240 Q90 222 114 228 Q128 232 136 226'/></g><g fill='none' stroke='%236E5B43' stroke-width='2' opacity='.3'><path d='M240 140 Q256 124 276 130 Q290 134 296 126 Q306 132 314 126'/><path d='M240 156 Q256 140 276 146 Q290 150 296 142 Q306 148 314 142'/></g></svg>");
-}
-
 .tabbar {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px; display: flex; background: #F5EBD8;
