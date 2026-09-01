@@ -122,7 +122,11 @@ img{display:block}
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.05 0'/></filter><rect width='120' height='120' filter='url(%23b)'/></svg>");
 }
 .banner-txt{position:relative; z-index:1; padding:15px 12px 14px 16px; flex:1 1 auto; min-width:0}
-.banner-t1{font-family:var(--song); font-size:17px; font-weight:700; letter-spacing:1.6px; color:var(--ink); line-height:1.35}
+.banner-t1{
+  font-family:var(--song); font-size:15px; font-weight:700; letter-spacing:.5px;
+  color:var(--ink); line-height:1.35;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
 
 .banner-dots{
   display:flex; justify-content:center; gap:5px; padding:7px 0 0;
@@ -159,7 +163,7 @@ img{display:block}
   box-shadow:0 2px 8px rgba(168,56,47,.28);
 }
 .banner-art{
-  position:relative; z-index:1; flex:0 0 132px;
+  position:relative; z-index:1; flex:0 0 108px;
   background:
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 132 112' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='m' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%234A4A42' stop-opacity='.62'/><stop offset='1' stop-color='%234A4A42' stop-opacity='.14'/></linearGradient></defs><circle cx='96' cy='26' r='15' fill='%23D9C9A8' opacity='.55'/><path d='M0 52 Q22 32 44 48 Q66 26 92 44 Q114 32 132 42 L132 112 L0 112 Z' fill='url(%23m)'/><path d='M0 70 Q28 58 56 70 Q84 56 112 70 Q124 64 132 68 L132 112 L0 112 Z' fill='%234A4A42' opacity='.13'/><g stroke='%234A4A42' stroke-width='.7' fill='none' opacity='.34'><path d='M8 82 q12 -3 24 0 t24 0 t24 0 t24 0'/><path d='M4 92 q16 -3 32 0 t32 0 t32 0'/><path d='M10 102 q14 -2.5 28 0 t28 0 t28 0'/></g><g fill='%23231F1A' opacity='.8'><path d='M44 74 L74 74 L69 71 L79 67 L69 63 L74 60 L44 60 Z'/><path d='M74 60 L82 71 L74 72 Z'/><line x1='56' y1='60' x2='62' y2='46' stroke='%23231F1A' stroke-width='1'/></g><g fill='none' stroke='%23231F1A' stroke-width='.9' opacity='.5'><path d='M96 66 q6 -5 12 0 q-6 -2 -12 0 Z'/><path d='M106 56 q5 -4 10 0 q-5 -1.6 -10 0 Z'/></g><g stroke='%236B7F5E' stroke-width='1.6' opacity='.55'><path d='M124 112 L120 76'/></g><g fill='%236B7F5E' opacity='.5'><ellipse cx='120' cy='70' rx='11' ry='3.6' transform='rotate(-30 120 70)'/><ellipse cx='123' cy='84' rx='10' ry='3.2' transform='rotate(-22 123 84)'/><ellipse cx='116' cy='58' rx='9' ry='3' transform='rotate(-14 116 58)'/></g><g stroke='%23231F1A' stroke-width='1' opacity='.38'><path d='M8 40 q14 -10 28 0'/><path d='M14 46 q4 -6 8 -8'/></g></svg>") no-repeat center bottom / cover;
 }
@@ -475,7 +479,7 @@ img{display:block}
 
       <div class="banner">
         <div class="banner-txt">
-          <div class="banner-t1">精致中餐 · 味道江南</div>
+          <div class="banner-t1">精致中餐 · 品味江南</div>
           <div class="banner-t2">新鲜食材｜匠心烹饪｜味美价优</div>
           <button class="banner-btn">查看店铺介绍
             <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg>
