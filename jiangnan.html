@@ -1009,10 +1009,7 @@ document.getElementById('doneBack').addEventListener('click', function(){
   document.querySelector('.main').scrollTop = 0;
 });
 
-// banner 按钮
-document.querySelector('.banner-btn').addEventListener('click', function(){
-  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
-});
+// banner 按钮（已在 renderBanners 区域统一处理 banner-slide 点击）
 document.querySelector('.brand-more').addEventListener('click', function(){
   alert('更多：店铺介绍 / 联系电话 0571-8888-8888');
 });
@@ -1037,8 +1034,9 @@ function renderBanners(){
        + '</div></div>';
   });
   document.getElementById('bannerTrack').innerHTML = h;
+  // 每张 slide 单独占满 banner（1页展示1张，左右箭头+自动播放切换）
   Array.prototype.forEach.call(document.querySelectorAll('.banner-slide'), function(s){
-    s.style.flex = '0 0 ' + (100/ADS.length) + '%';
+    s.style.flex = '0 0 100%';
   });
   var dh = '';
   ADS.forEach(function(_, i){
@@ -1049,7 +1047,7 @@ function renderBanners(){
 }
 function updateBannerPos(){
   var t = document.getElementById('bannerTrack');
-  t.style.transform = 'translateX(-' + (curAd * (100/ADS.length)) + '%)';
+  t.style.transform = 'translateX(-' + (curAd * 100) + '%)';
   Array.prototype.forEach.call(document.querySelectorAll('#bannerDots .dot'), function(d, i){
     d.classList.toggle('on', i === curAd);
   });
@@ -1057,14 +1055,29 @@ function updateBannerPos(){
 function switchAd(delta){
   curAd = (curAd + delta + ADS.length) % ADS.length;
   updateBannerPos();
+  resetAuto();
 }
+/* 自动播放：每 4 秒切下一张，hover/触摸/点击手动切换时重置计时 */
+var autoTimer = null;
+function startAuto(){
+  stopAuto();
+  autoTimer = setInterval(function(){ switchAd(1); }, 4000);
+}
+function stopAuto(){ if (autoTimer){ clearInterval(autoTimer); autoTimer = null; } }
+function resetAuto(){ stopAuto(); startAuto(); }
 document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
 document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
 document.getElementById('bannerDots').addEventListener('click', function(e){
   var d = e.target.closest('.dot'); if (!d) return;
   curAd = parseInt(d.dataset.i, 10);
   updateBannerPos();
+  resetAuto();
 });
+/* hover / 触摸时暂停自动播放 */
+document.getElementById('banner').addEventListener('mouseenter', stopAuto);
+document.getElementById('banner').addEventListener('mouseleave', startAuto);
+document.getElementById('banner').addEventListener('touchstart', stopAuto, {passive:true});
+document.getElementById('banner').addEventListener('touchend', startAuto);
 document.getElementById('bannerTrack').addEventListener('click', function(e){
   var s = e.target.closest('.banner-slide'); if (!s) return;
   var slides = Array.prototype.slice.call(document.querySelectorAll('.banner-slide'));
@@ -1092,6 +1105,7 @@ function goToDish(dishId){
   }, 100);
 }
 renderBanners();
+startAuto();
 renderAll();
 </script>
 </body>
