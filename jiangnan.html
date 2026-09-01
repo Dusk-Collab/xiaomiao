@@ -113,15 +113,16 @@ img{display:block}
 /* ============ 主宣传 Banner ============ */
 .banner{
   margin:14px 16px 4px; border-radius:14px; overflow:hidden; position:relative;
-  background:var(--paper-2); border:1px solid rgba(31,28,24,.09);
+  background:#EDE6D5 url("jn_assets/banner-art.jpg") no-repeat center 30% / cover;
+  border:1px solid rgba(31,28,24,.09);
   box-shadow:0 3px 14px rgba(31,28,24,.055);
-  display:flex; align-items:stretch; min-height:112px;
+  min-height:148px;
 }
-.banner::before{ /* 宣纸纹理 */
-  content:''; position:absolute; inset:0; pointer-events:none; opacity:.5;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='b'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='1'/><feColorMatrix values='0 0 0 0 0.4 0 0 0 0 0.36 0 0 0 0 0.26 0 0 0 0.05 0'/></filter><rect width='120' height='120' filter='url(%23b)'/></svg>");
+.banner::before{ /* 米色渐变遮罩（保证左侧文字可读）+ 宣纸纹理 */
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(90deg,rgba(250,247,238,.96) 0%,rgba(250,247,238,.78) 45%,rgba(250,247,238,0) 78%);
 }
-.banner-txt{position:relative; z-index:1; padding:15px 12px 14px 16px; flex:1 1 auto; min-width:0}
+.banner-txt{position:relative; z-index:1; padding:18px 14px 16px 18px; max-width:62%}
 .banner-t1{
   font-family:var(--song); font-size:15px; font-weight:700; letter-spacing:.5px;
   color:var(--ink); line-height:1.35;
@@ -162,10 +163,7 @@ img{display:block}
   background:var(--cinnabar); border:1px solid rgba(95,21,16,.4);
   box-shadow:0 2px 8px rgba(168,56,47,.28);
 }
-.banner-art{
-  position:relative; z-index:1; flex:0 0 108px;
-  background:url("jn_assets/banner-art.jpg") no-repeat center 20% / cover;
-}
+/* .banner-art 已合并到 .banner 整体背景 */
 
 /* ============ 分类 + 菜品 ============ */
 .cd-wrap{display:flex; margin-top:12px; border-top:1px solid var(--line-2); min-height:60vh}
@@ -484,7 +482,7 @@ img{display:block}
             <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg>
           </button>
         </div>
-        <div class="banner-art"></div>
+  
       </div>
       <div class="banner-dots">
         <span class="dot on"></span>
