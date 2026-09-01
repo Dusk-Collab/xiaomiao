@@ -113,16 +113,42 @@ img{display:block}
 /* ============ 主宣传 Banner ============ */
 .banner{
   margin:14px 16px 4px; border-radius:14px; overflow:hidden; position:relative;
-  background:#EDE6D5 url("jn_assets/banner-art.jpg") no-repeat center 30% / cover;
-  border:1px solid rgba(31,28,24,.09);
+  background:#EDE6D5; border:1px solid rgba(31,28,24,.09);
   box-shadow:0 3px 14px rgba(31,28,24,.055);
   min-height:148px;
 }
-.banner::before{ /* 米色渐变遮罩（保证左侧文字可读）+ 宣纸纹理 */
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(90deg,rgba(250,247,238,.96) 0%,rgba(250,247,238,.78) 45%,rgba(250,247,238,0) 78%);
+.banner-track{
+  display:flex; height:100%;
+  transition:transform .35s cubic-bezier(.32,.72,0,1);
+  position:relative; z-index:1;
 }
-.banner-txt{position:relative; z-index:1; padding:18px 14px 16px 18px; max-width:62%}
+.banner-slide{
+  flex:0 0 100%; height:148px; position:relative; overflow:hidden;
+  background-size:cover; background-position:center;
+}
+.banner-slide::before{
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(90deg,rgba(250,247,238,.96) 0%,rgba(250,247,238,.75) 50%,rgba(250,247,238,0) 82%);
+}
+.banner-slide-txt{
+  position:absolute; left:18px; top:18px; max-width:62%; z-index:1;
+  padding:0 14px 14px 0;
+}
+.banner-arrow{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:26px; height:26px; border-radius:50%;
+  background:rgba(250,247,238,.94); color:var(--cinnabar);
+  display:grid; place-items:center;
+  box-shadow:0 2px 6px rgba(31,28,24,.18);
+  border:1px solid rgba(31,28,24,.08);
+  transition:transform .12s,background .2s;
+}
+.banner-arrow:active{transform:translateY(-50%) scale(.92)}
+.banner-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.banner-prev{left:6px}
+.banner-next{right:6px}
+/* banner::before 已拆分到 .banner-slide::before */
+/* .banner-txt -> .banner-slide-txt */
 .banner-t1{
   font-family:var(--song); font-size:15px; font-weight:700; letter-spacing:.5px;
   color:var(--ink); line-height:1.35;
@@ -195,7 +221,18 @@ img{display:block}
 }
 .cat.on .cat-seal{transform:translateY(-50%) scale(1)}
 
-.goods{flex:1; min-width:0; padding:4px 12px 20px; background:var(--paper)}
+.goods{
+  flex:1; min-width:0; padding:4px 12px 20px;
+  background-color:var(--paper);
+  position:relative;
+}
+.goods::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 600' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.22'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.04'/></linearGradient></defs><g fill='url(%23mt)'><path d='M0 380 Q40 340 80 358 Q120 326 160 354 Q200 318 240 348 Q290 320 330 350 Q380 326 420 348 Q450 336 480 346 L480 600 L0 600 Z'/></g><g stroke='%236E5B43' stroke-width='.8' fill='none' opacity='.22'><path d='M0 410 q60 38 120 0 t120 0 t120 0 t120 0'/><path d='M0 440 q80 32 160 0 t160 0 t160 0'/></g><g fill='%231a1a1a' opacity='.25'><path d='M100 430 L160 430 L154 426 L168 422 L154 418 L160 414 L100 414 Z'/></g></svg>");
+  background-repeat:no-repeat; background-position:bottom center; background-size:100% 100%;
+  opacity:.7;
+}
+.goods > *{position:relative; z-index:1}
 .sec-head{
   display:flex; align-items:center; gap:7px; padding:10px 2px 8px;
   font-family:var(--song); font-size:14px; font-weight:700; letter-spacing:1.6px; color:var(--ink);
@@ -207,6 +244,12 @@ img{display:block}
   display:flex; gap:11px; padding:11px; margin-bottom:9px;
   background:var(--paper-2); border:1px solid var(--line); border-radius:10px;
   box-shadow:var(--shadow);
+  transition:border-color .3s, box-shadow .3s, transform .3s;
+}
+.dish.dish-flash{
+  border-color:var(--cinnabar);
+  box-shadow:0 0 0 3px rgba(168,56,47,.20), 0 4px 14px rgba(168,56,47,.18);
+  transform:scale(1.01);
 }
 .dish-pic{
   flex:0 0 78px; width:78px; aspect-ratio:1/1; border-radius:8px; overflow:hidden;
@@ -474,31 +517,12 @@ img{display:block}
         </div>
       </header>
 
-      <div class="banner">
-        <div class="banner-txt">
-          <div class="banner-t1">精致中餐 · 品味江南</div>
-          <div class="banner-t2">新鲜食材｜匠心烹饪｜味美价优</div>
-          <button class="banner-btn">查看店铺介绍
-            <svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
-  
+      <div class="banner" id="banner">
+        <button class="banner-arrow banner-prev" id="bannerPrev" aria-label="上一张"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <div class="banner-track" id="bannerTrack"></div>
+        <button class="banner-arrow banner-next" id="bannerNext" aria-label="下一张"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
       </div>
-      <div class="banner-dots">
-        <span class="dot on"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </div>
-      <div class="banner-dots">
-        <span class="dot on"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </div>
-      <div class="banner-dots">
-        <span class="dot on"></span>
-        <span class="dot"></span>
-        <span class="dot"></span>
-      </div>
+      <div class="banner-dots" id="bannerDots"></div>
 
       <div id="cdHome"></div>
     </section>
@@ -805,7 +829,7 @@ function catHTML(){
   h += '<div class="sec-head">' + esc(cur ? cur.name : '') + '<span class="cnt">' + list.length + ' 道</span></div>';
   list.forEach(function(d){
     var q = state.cart[d.id] || 0;
-    h += '<div class="dish">'
+    h += '<div class="dish" data-dish="' + d.id + '">'
        +   '<div class="dish-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '" loading="lazy">'
        +     (d.tag ? '<span class="tag">' + esc(d.tag) + '</span>' : '')
        +   '</div>'
@@ -900,7 +924,82 @@ function renderAll(){ renderDishes(); renderCartBar(); renderSheet(); renderChec
 function setQty(id, delta){
   var q = (state.cart[id] || 0) + delta;
   if (q <= 0) delete state.cart[id]; else state.cart[id] = q;
-  renderAll();
+  /* ============ 商家后台可控的广告位（横向轮播） ============ */
+/* 这里直接读 ADS 数组，未来可改成 fetch('/api/admin/ads') 拉取真实商家后台配置 */
+var ADS = [
+  {id:'a1', img:'jn_assets/banner-art.jpg', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a2', img:'jn_assets/pork.jpg', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
+  {id:'a3', img:'jn_assets/chicken.jpg', t1:'滋补养生 · 虫草花炖鸡汤', t2:'汤鲜味美 暖心暖胃', btn:'立即查看', action:'dish', dishId:'d2'}
+];
+var curAd = 0;
+function renderBanners(){
+  var h = '';
+  ADS.forEach(function(a){
+    h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
+       + 'style="background-image:url(' + a.img + ')">' 
+       + '<div class="banner-slide-txt">'
+       + '<div class="banner-t1">' + a.t1 + '</div>'
+       + '<div class="banner-t2">' + a.t2 + '</div>'
+       + '<button class="banner-btn">' + a.btn + '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>'
+       + '</div></div>';
+  });
+  document.getElementById('bannerTrack').innerHTML = h;
+  Array.prototype.forEach.call(document.querySelectorAll('.banner-slide'), function(s){
+    s.style.flex = '0 0 ' + (100/ADS.length) + '%';
+  });
+  var dh = '';
+  ADS.forEach(function(_, i){
+    dh += '<span class="dot' + (i===curAd?' on':'') + '" data-i="' + i + '"></span>';
+  });
+  document.getElementById('bannerDots').innerHTML = dh;
+  updateBannerPos();
+}
+function updateBannerPos(){
+  var t = document.getElementById('bannerTrack');
+  t.style.transform = 'translateX(-' + (curAd * (100/ADS.length)) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#bannerDots .dot'), function(d, i){
+    d.classList.toggle('on', i === curAd);
+  });
+}
+function switchAd(delta){
+  curAd = (curAd + delta + ADS.length) % ADS.length;
+  updateBannerPos();
+}
+document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
+document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
+document.getElementById('bannerDots').addEventListener('click', function(e){
+  var d = e.target.closest('.dot'); if (!d) return;
+  curAd = parseInt(d.dataset.i, 10);
+  updateBannerPos();
+});
+document.getElementById('bannerTrack').addEventListener('click', function(e){
+  var s = e.target.closest('.banner-slide'); if (!s) return;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.banner-slide'));
+  var i = slides.indexOf(s);
+  var ad = ADS[i];
+  if (!ad) return;
+  if (ad.action === 'dish') goToDish(ad.dishId);
+  else if (ad.action === 'intro') showIntro();
+});
+function showIntro(){
+  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
+}
+function goToDish(dishId){
+  var d = dishOf(dishId);
+  if (!d) return;
+  state.cat = d.cat;
+  renderDishes();
+  setTimeout(function(){
+    var card = document.querySelector('#cdHome .dish[data-dish="' + dishId + '"]');
+    if (card) {
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('dish-flash');
+      setTimeout(function(){ card.classList.remove('dish-flash'); }, 1800);
+    }
+  }, 100);
+}
+renderBanners();
+renderAll();
 }
 
 document.addEventListener('click', function(e){
@@ -946,7 +1045,82 @@ function closeSheet(){ sheet.classList.remove('show'); sheetMask.classList.remov
 document.getElementById('cartIco').addEventListener('click', openSheet);
 sheetMask.addEventListener('click', closeSheet);
 document.getElementById('clearCart').addEventListener('click', function(){
-  state.cart = {}; renderAll(); closeSheet();
+  state.cart = {}; /* ============ 商家后台可控的广告位（横向轮播） ============ */
+/* 这里直接读 ADS 数组，未来可改成 fetch('/api/admin/ads') 拉取真实商家后台配置 */
+var ADS = [
+  {id:'a1', img:'jn_assets/banner-art.jpg', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a2', img:'jn_assets/pork.jpg', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
+  {id:'a3', img:'jn_assets/chicken.jpg', t1:'滋补养生 · 虫草花炖鸡汤', t2:'汤鲜味美 暖心暖胃', btn:'立即查看', action:'dish', dishId:'d2'}
+];
+var curAd = 0;
+function renderBanners(){
+  var h = '';
+  ADS.forEach(function(a){
+    h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
+       + 'style="background-image:url(' + a.img + ')">' 
+       + '<div class="banner-slide-txt">'
+       + '<div class="banner-t1">' + a.t1 + '</div>'
+       + '<div class="banner-t2">' + a.t2 + '</div>'
+       + '<button class="banner-btn">' + a.btn + '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>'
+       + '</div></div>';
+  });
+  document.getElementById('bannerTrack').innerHTML = h;
+  Array.prototype.forEach.call(document.querySelectorAll('.banner-slide'), function(s){
+    s.style.flex = '0 0 ' + (100/ADS.length) + '%';
+  });
+  var dh = '';
+  ADS.forEach(function(_, i){
+    dh += '<span class="dot' + (i===curAd?' on':'') + '" data-i="' + i + '"></span>';
+  });
+  document.getElementById('bannerDots').innerHTML = dh;
+  updateBannerPos();
+}
+function updateBannerPos(){
+  var t = document.getElementById('bannerTrack');
+  t.style.transform = 'translateX(-' + (curAd * (100/ADS.length)) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#bannerDots .dot'), function(d, i){
+    d.classList.toggle('on', i === curAd);
+  });
+}
+function switchAd(delta){
+  curAd = (curAd + delta + ADS.length) % ADS.length;
+  updateBannerPos();
+}
+document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
+document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
+document.getElementById('bannerDots').addEventListener('click', function(e){
+  var d = e.target.closest('.dot'); if (!d) return;
+  curAd = parseInt(d.dataset.i, 10);
+  updateBannerPos();
+});
+document.getElementById('bannerTrack').addEventListener('click', function(e){
+  var s = e.target.closest('.banner-slide'); if (!s) return;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.banner-slide'));
+  var i = slides.indexOf(s);
+  var ad = ADS[i];
+  if (!ad) return;
+  if (ad.action === 'dish') goToDish(ad.dishId);
+  else if (ad.action === 'intro') showIntro();
+});
+function showIntro(){
+  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
+}
+function goToDish(dishId){
+  var d = dishOf(dishId);
+  if (!d) return;
+  state.cat = d.cat;
+  renderDishes();
+  setTimeout(function(){
+    var card = document.querySelector('#cdHome .dish[data-dish="' + dishId + '"]');
+    if (card) {
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('dish-flash');
+      setTimeout(function(){ card.classList.remove('dish-flash'); }, 1800);
+    }
+  }, 100);
+}
+renderBanners();
+renderAll(); closeSheet();
 });
 
 // 结算
@@ -972,7 +1146,82 @@ document.getElementById('coSubmit').addEventListener('click', function(){
   seq++;
   document.getElementById('doneCode').textContent = 'A' + ('00' + seq).slice(-3);
   state.cart = {};
-  renderAll();
+  /* ============ 商家后台可控的广告位（横向轮播） ============ */
+/* 这里直接读 ADS 数组，未来可改成 fetch('/api/admin/ads') 拉取真实商家后台配置 */
+var ADS = [
+  {id:'a1', img:'jn_assets/banner-art.jpg', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a2', img:'jn_assets/pork.jpg', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
+  {id:'a3', img:'jn_assets/chicken.jpg', t1:'滋补养生 · 虫草花炖鸡汤', t2:'汤鲜味美 暖心暖胃', btn:'立即查看', action:'dish', dishId:'d2'}
+];
+var curAd = 0;
+function renderBanners(){
+  var h = '';
+  ADS.forEach(function(a){
+    h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
+       + 'style="background-image:url(' + a.img + ')">' 
+       + '<div class="banner-slide-txt">'
+       + '<div class="banner-t1">' + a.t1 + '</div>'
+       + '<div class="banner-t2">' + a.t2 + '</div>'
+       + '<button class="banner-btn">' + a.btn + '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>'
+       + '</div></div>';
+  });
+  document.getElementById('bannerTrack').innerHTML = h;
+  Array.prototype.forEach.call(document.querySelectorAll('.banner-slide'), function(s){
+    s.style.flex = '0 0 ' + (100/ADS.length) + '%';
+  });
+  var dh = '';
+  ADS.forEach(function(_, i){
+    dh += '<span class="dot' + (i===curAd?' on':'') + '" data-i="' + i + '"></span>';
+  });
+  document.getElementById('bannerDots').innerHTML = dh;
+  updateBannerPos();
+}
+function updateBannerPos(){
+  var t = document.getElementById('bannerTrack');
+  t.style.transform = 'translateX(-' + (curAd * (100/ADS.length)) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#bannerDots .dot'), function(d, i){
+    d.classList.toggle('on', i === curAd);
+  });
+}
+function switchAd(delta){
+  curAd = (curAd + delta + ADS.length) % ADS.length;
+  updateBannerPos();
+}
+document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
+document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
+document.getElementById('bannerDots').addEventListener('click', function(e){
+  var d = e.target.closest('.dot'); if (!d) return;
+  curAd = parseInt(d.dataset.i, 10);
+  updateBannerPos();
+});
+document.getElementById('bannerTrack').addEventListener('click', function(e){
+  var s = e.target.closest('.banner-slide'); if (!s) return;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.banner-slide'));
+  var i = slides.indexOf(s);
+  var ad = ADS[i];
+  if (!ad) return;
+  if (ad.action === 'dish') goToDish(ad.dishId);
+  else if (ad.action === 'intro') showIntro();
+});
+function showIntro(){
+  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
+}
+function goToDish(dishId){
+  var d = dishOf(dishId);
+  if (!d) return;
+  state.cat = d.cat;
+  renderDishes();
+  setTimeout(function(){
+    var card = document.querySelector('#cdHome .dish[data-dish="' + dishId + '"]');
+    if (card) {
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('dish-flash');
+      setTimeout(function(){ card.classList.remove('dish-flash'); }, 1800);
+    }
+  }, 100);
+}
+renderBanners();
+renderAll();
   co.classList.remove('show');
   document.getElementById('done').classList.add('show');
 });
@@ -987,12 +1236,87 @@ document.getElementById('doneBack').addEventListener('click', function(){
 
 // banner 按钮
 document.querySelector('.banner-btn').addEventListener('click', function(){
-  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\n庭院包厢 8 间，可提前预订');
+  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
 });
 document.querySelector('.brand-more').addEventListener('click', function(){
-  alert('更多：店铺介绍 / 包厢预订 / 联系商家');
+  alert('更多：店铺介绍 / 联系电话 0571-8888-8888');
 });
 
+/* ============ 商家后台可控的广告位（横向轮播） ============ */
+/* 这里直接读 ADS 数组，未来可改成 fetch('/api/admin/ads') 拉取真实商家后台配置 */
+var ADS = [
+  {id:'a1', img:'jn_assets/banner-art.jpg', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a2', img:'jn_assets/pork.jpg', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
+  {id:'a3', img:'jn_assets/chicken.jpg', t1:'滋补养生 · 虫草花炖鸡汤', t2:'汤鲜味美 暖心暖胃', btn:'立即查看', action:'dish', dishId:'d2'}
+];
+var curAd = 0;
+function renderBanners(){
+  var h = '';
+  ADS.forEach(function(a){
+    h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
+       + 'style="background-image:url(' + a.img + ')">' 
+       + '<div class="banner-slide-txt">'
+       + '<div class="banner-t1">' + a.t1 + '</div>'
+       + '<div class="banner-t2">' + a.t2 + '</div>'
+       + '<button class="banner-btn">' + a.btn + '<svg viewBox="0 0 24 24" style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"/></svg></button>'
+       + '</div></div>';
+  });
+  document.getElementById('bannerTrack').innerHTML = h;
+  Array.prototype.forEach.call(document.querySelectorAll('.banner-slide'), function(s){
+    s.style.flex = '0 0 ' + (100/ADS.length) + '%';
+  });
+  var dh = '';
+  ADS.forEach(function(_, i){
+    dh += '<span class="dot' + (i===curAd?' on':'') + '" data-i="' + i + '"></span>';
+  });
+  document.getElementById('bannerDots').innerHTML = dh;
+  updateBannerPos();
+}
+function updateBannerPos(){
+  var t = document.getElementById('bannerTrack');
+  t.style.transform = 'translateX(-' + (curAd * (100/ADS.length)) + '%)';
+  Array.prototype.forEach.call(document.querySelectorAll('#bannerDots .dot'), function(d, i){
+    d.classList.toggle('on', i === curAd);
+  });
+}
+function switchAd(delta){
+  curAd = (curAd + delta + ADS.length) % ADS.length;
+  updateBannerPos();
+}
+document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
+document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
+document.getElementById('bannerDots').addEventListener('click', function(e){
+  var d = e.target.closest('.dot'); if (!d) return;
+  curAd = parseInt(d.dataset.i, 10);
+  updateBannerPos();
+});
+document.getElementById('bannerTrack').addEventListener('click', function(e){
+  var s = e.target.closest('.banner-slide'); if (!s) return;
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.banner-slide'));
+  var i = slides.indexOf(s);
+  var ad = ADS[i];
+  if (!ad) return;
+  if (ad.action === 'dish') goToDish(ad.dishId);
+  else if (ad.action === 'intro') showIntro();
+});
+function showIntro(){
+  alert('江南食府 · 上城区中山中路 128 号\n营业时间 10:30 - 21:00\nWiFi 全覆盖 · 婴儿座椅可借');
+}
+function goToDish(dishId){
+  var d = dishOf(dishId);
+  if (!d) return;
+  state.cat = d.cat;
+  renderDishes();
+  setTimeout(function(){
+    var card = document.querySelector('#cdHome .dish[data-dish="' + dishId + '"]');
+    if (card) {
+      card.scrollIntoView({behavior:'smooth', block:'center'});
+      card.classList.add('dish-flash');
+      setTimeout(function(){ card.classList.remove('dish-flash'); }, 1800);
+    }
+  }, 100);
+}
+renderBanners();
 renderAll();
 </script>
 </body>
