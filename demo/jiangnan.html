@@ -45,10 +45,13 @@ img{display:block}
 #app{
   max-width:480px; margin:0 auto; min-height:100%;
   position:relative; display:flex; flex-direction:column;
-  background:var(--paper);
+  background-color:#2A2622;
+  background-image:url('jn_assets/courtyard.jpg');
+  background-repeat:no-repeat;
+  background-position:center 30%;
+  background-size:cover;
   box-shadow:0 0 40px rgba(31,28,24,.08);
-  /* 极淡宣纸纹理 */
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.28 0 0 0 0.035 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+  overflow:hidden;
 }
 
 .main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--tabbar-h) + var(--cartbar-h) + 14px)}
@@ -124,8 +127,8 @@ img{display:block}
 /* ============ 主宣传 Banner：水墨江南 + 玉兰花 ============ */
 .banner{
   margin:14px 14px 4px; border-radius:14px; overflow:hidden; position:relative;
-  background:#FCFAF4; border:1px solid rgba(35,32,27,.06);
-  box-shadow:0 2px 10px rgba(35,32,27,.06);
+  background:transparent; border:1px solid rgba(255,251,240,.18);
+  box-shadow:0 2px 14px rgba(31,28,24,.20);
   min-height:175px;
 }
 .banner-track{
@@ -191,7 +194,7 @@ img{display:block}
 /* ============ 分类 + 菜品 ============ */
 .cd-wrap{display:flex; margin-top:12px; border-top:1px solid var(--line-2); min-height:60vh}
 .cats{
-  flex:0 0 84px; background:rgba(240,234,221,.55); border-right:1px solid var(--line-2);
+  flex:0 0 84px; background:rgba(240,234,221,.50); border-right:1px solid rgba(255,251,240,.18);
   align-self:flex-start; position:sticky; top:0;
 }
 .cat{
@@ -221,7 +224,7 @@ img{display:block}
 
 .goods{
   flex:1; min-width:0; padding:4px 12px 20px;
-  background-color:var(--paper);
+  background-color:rgba(252,250,244,.30);
   position:relative;
 }
 .goods::before{
@@ -243,8 +246,8 @@ img{display:block}
 
 .dish{
   display:flex; gap:14px; padding:13px 13px; margin-bottom:13px;
-  background:var(--paper-2); border:1px solid rgba(35,32,27,.05); border-radius:11px;
-  box-shadow:0 1px 3px rgba(35,32,27,.025);
+  background:rgba(252,250,244,.92); border:1px solid rgba(255,251,240,.35); border-radius:11px;
+  box-shadow:0 2px 6px rgba(31,28,24,.10);
   transition:border-color .3s, box-shadow .3s;
 }
 .dish.dish-flash{
