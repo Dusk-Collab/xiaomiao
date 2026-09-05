@@ -4,23 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#F5F0E4">
-<title>江南食府 · 点餐</title>
+<title>江南味道 · 点餐</title>
+<link rel="stylesheet" href="jn_assets/fonts/mashan.css">
 <style>
 /* ============ 设计变量：宣纸 / 墨色 / 茶绿 / 少量朱砂 ============ */
 :root{
-  --paper:#F5F0E4;      /* 宣纸米白 */
-  --paper-2:#FAF7EE;    /* 象牙白 */
-  --paper-3:#EDE6D6;    /* 深一档米色 */
-  --ink:#1F1C18;        /* 深墨 */
-  --ink-2:#40392F;      /* 次墨 */
-  --ink-3:#7A7264;      /* 辅助文字 */
-  --tea:#6B7F5E;        /* 茶绿 */
-  --tea-2:#557052;      /* 深茶绿 */
+  --paper:#F7F3E9;      /* 宣纸米白（暖） */
+  --paper-2:#FCFAF4;    /* 暖白 */
+  --paper-3:#F0EADD;    /* 浅米 */
+  --ink:#23201B;        /* 墨黑 */
+  --ink-2:#4A443B;      /* 次墨 */
+  --ink-3:#8A8275;      /* 浅墨灰（描述） */
+  --tea:#6E7F63;        /* 茶绿（低饱和） */
+  --tea-2:#55664C;      /* 深茶绿 */
+  --gold:#B89B6A;       /* 米金（加号按钮） */
+  --brown:#7A5C3E;      /* 浅棕（价格） */
   --celadon:#8E9C9A;    /* 青灰 */
-  --cinnabar:#A8382F;   /* 朱砂（仅少量强调） */
-  --line:rgba(31,28,24,.10);
-  --line-2:rgba(31,28,24,.06);
-  --shadow:0 2px 10px rgba(31,28,24,.05);
+  --cinnabar:#9E3B32;   /* 朱砂（极少量强调） */
+  --line:rgba(35,32,27,.07);
+  --line-2:rgba(35,32,27,.045);
+  --shadow:0 1px 3px rgba(35,32,27,.035);
+  --brush:"Ma Shan Zheng","Long Cang","ZCOOL XiaoWei","STXingkai","Xingkai SC","Hannotate SC","KaiTi","STKaiti","Kaiti SC","Noto Serif SC","Songti SC",serif;
+  --kai:"ZCOOL XiaoWei","KaiTi","STKaiti","Kaiti SC","Hannotate SC","Noto Serif SC","Songti SC","STSong",serif;
   --song:"Songti SC","STSong","SimSun","Source Han Serif SC","Noto Serif CJK SC",serif;
   --ui:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
   --tabbar-h:54px;
@@ -38,84 +43,110 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 img{display:block}
 
 #app{
-  max-width:480px; margin:0 auto; min-height:100%;
+  max-width:480px; margin:0 auto; height:100%;
   position:relative; display:flex; flex-direction:column;
-  background:var(--paper);
-  box-shadow:0 0 40px rgba(31,28,24,.08);
-  /* 极淡宣纸纹理 */
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.38 0 0 0 0 0.28 0 0 0 0.035 0'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
-}
-
-.main{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--tabbar-h) + var(--cartbar-h) + 14px)}
-.view{display:none}
-.view.active{display:block}
-
-/* ============ 顶部品牌区：江南庭院 ============ */
-/* ============ 顶部品牌区：真实江南庭院图 ============ */
-.brand{
-  position:relative; padding:16px 16px 22px;
-  color:#FDFAF3; overflow:hidden;
-  /* 真实庭院图作背景，底部 60% 区域叠米白色保证文字可读 */
   background-color:#2A2622;
   background-image:url('jn_assets/courtyard.jpg');
   background-repeat:no-repeat;
-  background-position:center 65%;
+  background-position:center 30%;
   background-size:cover;
-  min-height:236px;
+  box-shadow:0 0 40px rgba(31,28,24,.08);
+  overflow:hidden;
+}
+
+.main{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--tabbar-h) + var(--cartbar-h) + 14px)}
+.view{display:none}
+.view.active{display:block}
+/* 点餐首页：头部(品牌+banner)固定，只有右侧菜品列表滚动 */
+#view-home{height:100%}
+#view-home.active{display:flex; flex-direction:column}
+#view-home > .brand,
+#view-home > .banner{flex:none}
+/* #cdHome 是 .cd-wrap 的父容器，必须也参与 flex 链并允许压缩 */
+#cdHome{flex:1; min-height:0; display:flex; flex-direction:column}
+
+/* ============ 顶部品牌区：江南庭院实景（紧凑，让菜单占 2/3） ============ */
+.brand{
+  position:relative; padding:8px 16px 10px;
+  color:#FDFAF3; overflow:hidden;
+  background-color:#2A2622;
+  background-image:url('jn_assets/courtyard.jpg');
+  background-repeat:no-repeat;
+  background-position:center 28%;
+  background-size:cover;
+  min-height:108px;
   display:flex; flex-direction:column;
 }
-.brand::after{
-  content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg,rgba(31,28,24,.28) 0%,rgba(31,28,24,.05) 28%,rgba(250,247,238,.05) 45%,rgba(250,247,238,.75) 65%,rgba(250,247,238,.95) 90%,rgba(250,247,238,.98) 100%);
-}.brand > *{position:relative; z-index:1}
-
-.brand-top{display:flex; align-items:center; gap:6px; margin-bottom:auto}
-.loc{display:flex; align-items:center; gap:3px; font-size:12px; color:rgba(251,248,240,.94); letter-spacing:.5px}
-.loc svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8}
-.brand-more{
-  margin-left:auto; width:30px; height:30px; border-radius:50%;
-  display:grid; place-items:center; background:rgba(31,28,24,.22);
-  border:1px solid rgba(251,248,240,.28); backdrop-filter:blur(2px);
+/* 仅底部一道极淡暗角让标题在亮天空区仍清晰 */
+.brand::before{
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(20,18,14,.20) 86%, rgba(20,18,14,.38) 100%);
 }
-.brand-more svg{width:15px;height:15px;stroke:#FBF8F0;fill:none;stroke-width:2;stroke-linecap:round}
+.brand > *{position:relative; z-index:1}
+/* 底部 fade-out 到米色背景，让品牌区与 banner 衔接成一张连续背景图 */
+.brand::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:55%;
+  pointer-events:none; z-index:0;
+  background:linear-gradient(180deg,
+    rgba(231,224,208,0) 0%,
+    rgba(231,224,208,0) 35%,
+    rgba(231,224,208,.55) 78%,
+    rgba(231,224,208,.92) 100%);
+}
+
+.brand-top{display:flex; align-items:center; gap:8px; margin-bottom:auto}
+.loc{display:flex; align-items:center; gap:3px; font-size:13px; color:rgba(253,250,243,.96); letter-spacing:.6px; text-shadow:0 1px 2px rgba(20,18,14,.55); font-weight:500}
+.loc svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+.loc::after{content:'›'; opacity:.7; margin-left:1px; font-weight:400; font-size:14px}
+.brand-actions{margin-left:auto; display:flex; gap:6px; align-items:center}
+.ba-btn{
+  width:32px; height:32px; border-radius:50%;
+  display:grid; place-items:center; background:rgba(252,250,244,.30);
+  border:1px solid rgba(252,250,244,.40); backdrop-filter:blur(2px);
+}
+.ba-btn svg{width:15px;height:15px;stroke:rgba(253,250,243,.96);fill:none;stroke-width:1.9;stroke-linecap:round}
 
 .brand-name{
-  display:flex; align-items:flex-end; gap:9px;
+  display:flex; align-items:flex-end; gap:6px;
+  margin-top:auto;
 }
 .brand-name-txt{
-  font-family:var(--song); font-size:32px; font-weight:700;
-  letter-spacing:8px; line-height:1.1; color:#FDFAF3;
-  text-shadow:0 2px 14px rgba(31,28,24,.55);
+  font-family:var(--brush);
+  font-size:34px; font-weight:400;
+  letter-spacing:2px; line-height:1.05; color:#FBF6EC;
+  text-shadow:0 2px 6px rgba(20,18,14,.55), 0 0 2px rgba(20,18,14,.5);
+  -webkit-font-smoothing:antialiased;
 }
 .brand-seal{
-  display:inline-block; padding:2px 6px 3px;
-  font-family:var(--song); font-size:12px; font-weight:700;
-  letter-spacing:1.5px; color:#FBF8F0;
-  border:1.5px solid #C9352B;
-  background:rgba(168,56,47,.92);
-  transform:rotate(-6deg); transform-origin:center;
-  box-shadow:0 1px 4px rgba(168,56,47,.4);
-  margin-bottom:4px;
+  display:inline-grid; place-items:center;
+  width:24px; height:24px; padding:0;
+  font-family:var(--kai); font-size:10px; font-weight:700;
+  letter-spacing:1px; color:#FFF8F2;
+  background:#C0392B; border:1.5px solid #A83223;
+  border-radius:3px;
+  transform:rotate(-3deg); transform-origin:center;
+  margin-bottom:3px; text-shadow:0 1px 1px rgba(0,0,0,.25);
+  box-shadow:0 2px 5px rgba(158,59,50,.35);
 }
 .brand-sub{
-  font-family:var(--song); font-size:12.5px; letter-spacing:3.4px;
-  color:rgba(253,250,243,.86); margin-top:7px;
+  font-family:var(--kai); font-size:11.5px; letter-spacing:2.5px;
+  color:rgba(253,250,243,.95); margin-top:4px; text-shadow:0 1px 3px rgba(20,18,14,.55);
+  font-weight:400;
 }
-.brand-sub::before,.brand-sub::after{content:'·'; margin:0 6px; opacity:.6}
-.brand-tags{display:flex; gap:6px; margin-top:11px; flex-wrap:wrap}
+.brand-tags{display:flex; gap:5px; margin-top:5px; flex-wrap:wrap}
 .btag{
-  font-size:10.5px; letter-spacing:.6px; padding:3px 8px; border-radius:2px;
-  background:rgba(251,248,240,.16); border:1px solid rgba(251,248,240,.30);
-  color:rgba(253,250,243,.92); backdrop-filter:blur(2px);
+  font-size:9px; letter-spacing:.5px; padding:2px 7px; border-radius:2px;
+  background:rgba(252,250,244,.62); border:1px solid rgba(35,32,27,.10);
+  color:var(--ink-2); backdrop-filter:blur(2px);
 }
-.btag.hot{background:rgba(168,56,47,.72); border-color:rgba(168,56,47,.9); color:#FFF6EE}
+.btag.hot{background:rgba(158,59,50,.07); border-color:rgba(158,59,50,.18); color:var(--cinnabar)}
 
-/* ============ 主宣传 Banner ============ */
+/* ============ 主宣传 Banner：水墨江南 + 玉兰花（紧贴品牌区，无上圆角） ============ */
 .banner{
-  margin:14px 16px 4px; border-radius:14px; overflow:hidden; position:relative;
-  background:#EDE6D5; border:1px solid rgba(31,28,24,.09);
-  box-shadow:0 3px 14px rgba(31,28,24,.055);
-  min-height:148px;
+  margin:0 14px 4px; border-radius:0 0 14px 14px; overflow:hidden; position:relative;
+  background:transparent; border:1px solid rgba(255,251,240,.18); border-top:0;
+  box-shadow:0 6px 16px rgba(31,28,24,.18);
+  min-height:158px;
 }
 .banner-track{
   display:flex; height:100%;
@@ -123,156 +154,161 @@ img{display:block}
   position:relative; z-index:1;
 }
 .banner-slide{
-  flex:0 0 100%; height:148px; position:relative; overflow:hidden;
-  background-size:cover; background-position:center;
+  flex:0 0 100%; height:158px; position:relative; overflow:hidden;
+  background-size:cover; background-position:center 18%;
 }
 .banner-slide::before{
   content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(90deg,rgba(250,247,238,.96) 0%,rgba(250,247,238,.75) 50%,rgba(250,247,238,0) 82%);
+  /* 顶部融入米色（接品牌区 fade-out） + 左侧米白渐变保证文字可读 */
+  background:
+    linear-gradient(180deg, rgba(231,224,208,.70) 0%, rgba(231,224,208,.30) 18%, rgba(231,224,208,0) 30%, rgba(231,224,208,0) 100%),
+    linear-gradient(90deg,
+      rgba(252,248,236,.97) 0%,
+      rgba(252,248,236,.85) 28%,
+      rgba(252,248,236,.40) 52%,
+      rgba(252,248,236,.05) 76%,
+      rgba(252,248,236,0) 100%);
 }
 .banner-slide-txt{
-  position:absolute; left:38px; bottom:14px;
-  max-width:calc(100% - 96px); /* 留 32px 给右箭头 + 12px 边距 + 14px 文字 padding */
-  z-index:1; padding-right:8px;
+  position:absolute; left:0; top:0; bottom:0; z-index:1;
+  width:64%; display:flex; flex-direction:column; justify-content:center;
+  padding:10px 6px 10px 18px;
 }
-.banner-arrow{
-  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
-  width:26px; height:26px; border-radius:50%;
-  background:rgba(250,247,238,.94); color:var(--cinnabar);
-  display:grid; place-items:center;
-  box-shadow:0 2px 6px rgba(31,28,24,.18);
-  border:1px solid rgba(31,28,24,.08);
-  transition:transform .12s,background .2s;
-}
-.banner-arrow:active{transform:translateY(-50%) scale(.92)}
-.banner-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.banner-prev{left:6px}
-.banner-next{right:6px}
-/* banner::before 已拆分到 .banner-slide::before */
-/* .banner-txt -> .banner-slide-txt */
 .banner-t1{
-  font-family:var(--song); font-size:15px; font-weight:700; letter-spacing:.5px;
-  color:var(--ink); line-height:1.35;
+  font-family:var(--kai); font-size:16px; font-weight:700; letter-spacing:2px;
+  color:var(--ink); line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 2px rgba(252,250,244,.9);
 }
-
-.banner-dots{
-  display:flex; justify-content:center; gap:5px; padding:7px 0 0;
+.banner-t2{
+  font-size:10.5px; color:var(--ink-2); letter-spacing:.4px; margin-top:4px; line-height:1.5;
+  text-shadow:0 1px 2px rgba(252,250,244,.9);
 }
-.banner-dots .dot{
-  width:5px; height:5px; border-radius:50%; background:rgba(31,28,24,.18);
-  transition:width .25s,background .25s;
-}
-.banner-dots .dot.on{width:14px; background:var(--cinnabar); border-radius:3px}
-
-.banner-dots{
-  display:flex; justify-content:center; gap:5px; padding:7px 0 0;
-}
-.banner-dots .dot{
-  width:5px; height:5px; border-radius:50%; background:rgba(31,28,24,.18);
-  transition:width .25s,background .25s;
-}
-.banner-dots .dot.on{width:14px; background:var(--cinnabar); border-radius:3px}
-
-.banner-dots{
-  display:flex; justify-content:center; gap:5px; padding:7px 0 0;
-}
-.banner-dots .dot{
-  width:5px; height:5px; border-radius:50%; background:rgba(31,28,24,.18);
-  transition:width .25s,background .25s;
-}
-.banner-dots .dot.on{width:14px; background:var(--cinnabar); border-radius:3px}
-.banner-t2{font-size:11px; color:var(--ink-3); letter-spacing:.4px; margin-top:7px}
 .banner-btn{
-  margin-top:13px; display:inline-flex; align-items:center; gap:4px;
-  font-size:12px; letter-spacing:1px; color:#FBF8F0; font-weight:600;
-  padding:7px 14px 7px 15px; border-radius:18px;
-  background:var(--cinnabar); border:1px solid rgba(95,21,16,.4);
-  box-shadow:0 2px 8px rgba(168,56,47,.28);
+  margin-top:8px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
+  font-size:11px; letter-spacing:1.2px; color:#FCF7EC; font-weight:600;
+  padding:5px 12px 5px 13px; border-radius:16px;
+  background:#7A5C3E; border:1px solid rgba(122,92,62,.85);
+  box-shadow:0 1px 3px rgba(122,92,62,.30);
+  transition:transform .12s, background .2s;
 }
-/* .banner-art 已合并到 .banner 整体背景 */
+.banner-btn:active{transform:scale(.97); background:#6A4F35}
+.banner-btn svg{width:10px;height:10px;stroke:#FCF7EC;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+/* 3 张轮播水墨江南 + 左右切换按钮 */
+.banner-arrow{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%;
+  display:grid; place-items:center;
+  background:rgba(252,248,236,.78); border:1px solid rgba(35,32,27,.10);
+  box-shadow:0 1px 3px rgba(35,32,27,.12);
+  color:var(--ink-2); z-index:3;
+  transition:background .2s, transform .12s;
+}
+.banner-arrow:active{transform:translateY(-50%) scale(.92); background:#FCFAF4; color:var(--ink)}
+.banner-prev{left:8px}
+.banner-next{right:8px}
+.banner-arrow svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.banner-dots{display:flex}
 
 /* ============ 分类 + 菜品 ============ */
-.cd-wrap{display:flex; margin-top:12px; border-top:1px solid var(--line-2); min-height:60vh}
+.cd-wrap{display:flex; margin:12px 14px 0; border-radius:14px; overflow:hidden; flex:1; min-height:0; box-shadow:0 4px 16px rgba(31,28,24,.18)}
 .cats{
-  flex:0 0 88px; background:var(--paper-3); border-right:1px solid var(--line-2);
-  align-self:flex-start; position:sticky; top:0;
+  flex:0 0 84px; background:#F5EFE3; border-right:1px solid var(--line-2);
+  align-self:stretch; position:sticky; top:0;
+  display:flex; flex-direction:column;
 }
 .cat{
-  position:relative; padding:14px 6px 14px 12px; font-size:13px; color:var(--ink-2);
-  letter-spacing:.6px; transition:background .18s,color .18s; text-align:left; width:100%;
-  display:flex; align-items:center; gap:6px;
+  position:relative; padding:15px 6px 15px 13px; font-size:12.5px; color:var(--ink-3);
+  letter-spacing:.8px; transition:background .18s,color .18s; text-align:left; width:100%;
+  display:flex; align-items:center; gap:7px;
 }
 .cat-ic{width:18px; height:18px; flex:none; opacity:.62; transition:opacity .18s,color .18s}
-.cat-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.cat-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .cat.on .cat-ic{opacity:1}
 .cat-n{flex:1; text-align:left}
 .cat + .cat{border-top:1px solid var(--line-2)}
-.cat::before{ /* 选中竖线 */
+.cat::before{ /* 选中竖线（茶绿） */
   content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
-  width:3px; height:0; background:var(--cinnabar); border-radius:0 2px 2px 0; transition:height .2s;
+  width:2px; height:0; background:var(--tea); border-radius:0 2px 2px 0; transition:height .2s;
 }
 .cat.on{background:var(--paper-2); color:var(--ink); font-weight:600}
 .cat.on::before{height:20px}
-.cat-seal{ /* 选中后右上角小印章 */
-  position:absolute; right:7px; top:50%; transform:translateY(-50%) scale(0);
-  width:16px; height:16px; border-radius:2px; border:1px solid var(--cinnabar);
-  color:var(--cinnabar); font-family:var(--song); font-size:9px; font-weight:700;
+.cat-seal{ /* 选中后右上角小印章（朱砂，克制） */
+  position:absolute; right:8px; top:50%; transform:translateY(-50%) scale(0);
+  width:15px; height:15px; border-radius:2px; border:1px solid rgba(192,57,43,.40);
+  color:#C0392B; font-family:var(--kai); font-size:9px; font-weight:700;
   display:grid; place-items:center; opacity:.85; transition:transform .2s;
+  background:rgba(192,57,43,.05);
 }
 .cat.on .cat-seal{transform:translateY(-50%) scale(1)}
+.cat:last-of-type{margin-top:auto}
 
 .goods{
-  flex:1; min-width:0; padding:4px 12px 20px;
-  background-color:var(--paper);
+  flex:1; min-width:0; min-height:0; padding:4px 12px 20px;
+  background-color:#FDFAF3;
   position:relative;
+  display:flex; flex-direction:column;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain; /* 防止滚到边界后把滑动传给外层 .main */
 }
+.dish:last-of-type{margin-top:auto}
 .goods::before{
   content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 600' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.22'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.04'/></linearGradient></defs><g fill='url(%23mt)'><path d='M0 380 Q40 340 80 358 Q120 326 160 354 Q200 318 240 348 Q290 320 330 350 Q380 326 420 348 Q450 336 480 346 L480 600 L0 600 Z'/></g><g stroke='%236E5B43' stroke-width='.8' fill='none' opacity='.22'><path d='M0 410 q60 38 120 0 t120 0 t120 0 t120 0'/><path d='M0 440 q80 32 160 0 t160 0 t160 0'/></g><g fill='%231a1a1a' opacity='.25'><path d='M100 430 L160 430 L154 426 L168 422 L154 418 L160 414 L100 414 Z'/></g></svg>");
   background-repeat:no-repeat; background-position:bottom center; background-size:100% 100%;
-  opacity:.7;
+  opacity:.38;
 }
 .goods > *{position:relative; z-index:1}
 .sec-head{
-  display:flex; align-items:center; gap:7px; padding:10px 2px 8px;
-  font-family:var(--song); font-size:14px; font-weight:700; letter-spacing:1.6px; color:var(--ink);
+  display:flex; align-items:center; gap:8px; padding:14px 2px 11px;
+  font-family:var(--song); font-size:15.5px; font-weight:700; letter-spacing:2.5px; color:var(--ink);
 }
-.sec-head::before{content:''; width:3px; height:13px; background:var(--tea); border-radius:2px}
+.sec-head::before{
+  content:''; display:inline-block; width:16px; height:16px;
+  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 9 Q5 7 7 9 Q8 6 10 8 Q12 6 13 9' stroke='%23C0392B' stroke-width='1.2' fill='none' stroke-linecap='round'/><circle cx='8' cy='11' r='.7' fill='%23C0392B'/></svg>") center/contain no-repeat;
+}
 .sec-head .cnt{margin-left:auto; font-family:var(--ui); font-size:11px; font-weight:400; color:var(--ink-3); letter-spacing:0}
 
 .dish{
-  display:flex; gap:11px; padding:11px; margin-bottom:9px;
-  background:var(--paper-2); border:1px solid var(--line); border-radius:10px;
-  box-shadow:var(--shadow);
-  transition:border-color .3s, box-shadow .3s, transform .3s;
+  display:flex; gap:12px; padding:10px 10px; margin-bottom:10px;
+  background:rgba(252,250,244,.55); border:1px solid rgba(35,32,27,.05); border-radius:11px;
+  transition:border-color .3s, box-shadow .3s;
 }
 .dish.dish-flash{
-  border-color:var(--cinnabar);
-  box-shadow:0 0 0 3px rgba(168,56,47,.20), 0 4px 14px rgba(168,56,47,.18);
-  transform:scale(1.01);
+  border-color:rgba(158,59,50,.45);
+  box-shadow:0 0 0 2px rgba(158,59,50,.10);
 }
 .dish-pic{
-  flex:0 0 78px; width:78px; aspect-ratio:1/1; border-radius:8px; overflow:hidden;
+  flex:0 0 110px; width:110px; aspect-ratio:1/1; border-radius:10px; overflow:hidden;
   background:var(--paper-3); position:relative;
 }
-.dish-pic img{width:100%; height:100%; object-fit:cover; display:block; object-position:center 85%}
+.dish-pic img{width:100%; height:100%; object-fit:cover; display:block; object-position:center 80%}
 .dish-pic .tag{
-  position:absolute; left:0; top:0; font-size:9px; letter-spacing:.5px;
-  background:var(--cinnabar); color:#FFF6EE; padding:2px 5px; border-radius:8px 0 8px 0;
+  position:absolute; left:0; top:0; font-size:10.5px; letter-spacing:1px; font-weight:700;
+  background:var(--cinnabar); color:#FFF8F2; padding:3px 8px 3px 9px;
+  border-radius:10px 0 10px 0;
+  box-shadow:0 1px 3px rgba(158,59,50,.30);
 }
-.dish-info{flex:1; min-width:0; display:flex; flex-direction:column}
+.dish-info{flex:1; min-width:0; display:flex; flex-direction:column; padding:2px 0}
 .dish-name{
-  font-family:var(--song); font-size:15px; font-weight:700; color:var(--ink);
-  letter-spacing:.5px; line-height:1.3;
+  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+}
+.dish-name .n{
+  font-family:var(--kai); font-size:17px; font-weight:700; color:var(--ink);
+  letter-spacing:1.2px; line-height:1.3; white-space:nowrap;
+}
+.dish-name .badge{
+  display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.5px;
+  background:var(--cinnabar); color:#FFF8F2;
+  padding:2px 5px 2px 6px; border-radius:2px; align-self:center;
+  font-family:var(--ui);
 }
 .dish-desc{
-  font-size:11.5px; color:var(--ink-3); margin-top:4px; line-height:1.45;
-  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  font-size:11px; color:var(--ink-3); margin-top:5px; line-height:1.55;
+  letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.dish-sold{font-size:10.5px; color:var(--celadon); margin-top:4px; letter-spacing:.3px}
-.dish-bot{margin-top:auto; padding-top:7px; display:flex; align-items:flex-end; gap:8px}
-.price{font-family:var(--song); color:var(--ink); font-weight:700; letter-spacing:.3px; line-height:1}
+.dish-bot{margin-top:auto; padding-top:9px; display:flex; align-items:flex-end; gap:8px}
+.price{font-family:var(--song); color:var(--brown); font-weight:700; letter-spacing:.3px; line-height:1}
 .price .cur{font-size:12px; margin-right:1px}
 .price .num{font-size:19px; font-variant-numeric:tabular-nums}
 .price .unit{font-size:10.5px; color:var(--ink-3); font-weight:400; margin-left:2px; letter-spacing:0}
@@ -283,9 +319,9 @@ img{display:block}
 }
 .qty-btn:active{transform:scale(.88)}
 .qty-btn svg{width:13px;height:13px;stroke-width:2.4;stroke-linecap:round;fill:none}
-.qty-plus{background:var(--tea); box-shadow:0 2px 6px rgba(107,127,94,.3)}
-.qty-plus svg{stroke:#FBF8F0}
-.qty-minus{background:transparent; border:1px solid rgba(31,28,24,.22)}
+.qty-plus{background:var(--gold); box-shadow:0 1px 3px rgba(184,155,106,.35)}
+.qty-plus svg{stroke:#FCFAF4}
+.qty-minus{background:transparent; border:1px solid rgba(35,32,27,.18)}
 .qty-minus svg{stroke:var(--ink-2)}
 .qty-num{
   font-size:14px; font-weight:700; color:var(--ink); min-width:12px; text-align:center;
@@ -297,55 +333,56 @@ img{display:block}
 .cartbar{
   position:fixed; bottom:var(--tabbar-h); left:50%; transform:translateX(-50%);
   width:100%; max-width:480px; height:var(--cartbar-h); z-index:40;
-  display:flex; align-items:center; gap:12px; padding:0 12px 0 16px;
-  background:rgba(250,247,238,.97); backdrop-filter:blur(10px);
-  border-top:1px solid var(--line); box-shadow:0 -3px 14px rgba(31,28,24,.06);
+  display:flex; align-items:center; gap:12px; padding:0 14px 0 18px;
+  background:rgba(252,250,244,.97); backdrop-filter:blur(10px);
+  border-top:1px solid var(--line-2); box-shadow:0 -1px 6px rgba(35,32,27,.04);
 }
 .cart-ico{
-  position:relative; width:44px; height:44px; border-radius:50%; flex:none;
-  background:var(--tea); display:grid; place-items:center;
-  box-shadow:0 3px 10px rgba(107,127,94,.28); transition:transform .15s;
+  position:relative; width:50px; height:50px; flex:none;
+  display:grid; place-items:center;
+  transition:transform .15s;
 }
 .cart-ico:active{transform:scale(.94)}
-.cart-ico svg{width:28px;height:28px;display:block;margin:0 auto}
+.cart-ico svg{width:100%;height:100%;display:block}
 .cart-badge{
-  position:absolute; top:-3px; right:-3px; min-width:17px; height:17px; padding:0 4px;
-  border-radius:9px; background:var(--cinnabar); color:#FFF6EE;
-  font-size:10.5px; font-weight:700; display:grid; place-items:center;
+  position:absolute; top:0; right:0; min-width:16px; height:16px; padding:0 4px;
+  border-radius:8px; background:var(--cinnabar); color:#FFF8F2;
+  font-size:10px; font-weight:700; display:grid; place-items:center;
   border:1.5px solid var(--paper-2); transform:scale(0); transition:transform .2s;
 }
 .cart-badge.show{transform:scale(1)}
 .cart-mid{flex:1; min-width:0}
-.cart-total{font-family:var(--song); font-size:19px; font-weight:700; color:var(--ink); line-height:1.15; font-variant-numeric:tabular-nums}
-.cart-total .cur{font-size:12px}
-.cart-fee{font-size:10.5px; color:var(--ink-3); margin-top:2px; letter-spacing:.2px}
+.cart-total{font-family:var(--song); font-size:20px; font-weight:700; color:var(--ink); line-height:1.15; font-variant-numeric:tabular-nums}
+.cart-total .cur{font-size:13px}
+.cart-fee{font-size:10.5px; color:var(--ink-3); margin-top:3px; letter-spacing:.2px}
 .cart-go{
-  flex:none; padding:11px 22px; border-radius:22px; font-size:14px; letter-spacing:1.4px;
-  font-weight:600; background:var(--cinnabar); color:#FBF8F0;
-  box-shadow:0 3px 10px rgba(168,56,47,.30); transition:opacity .2s,transform .12s;
+  flex:none; padding:11px 24px; border-radius:22px; font-size:13.5px; letter-spacing:1.8px;
+  font-weight:600; background:var(--brown); color:#FCF7EC;
+  box-shadow:0 2px 6px rgba(122,92,62,.28); transition:opacity .2s,transform .12s,background .2s;
 }
+.cart-go:active{transform:scale(.97); background:#6A4F35}
 .cart-go:active{transform:scale(.97)}
-.cart-go.dis{background:var(--celadon); box-shadow:none; opacity:.55; pointer-events:none}
+.cart-go.dis{background:#A89178; box-shadow:none; opacity:.80; pointer-events:none}
 
 /* ============ 底部导航 ============ */
 .tabbar{
   position:fixed; bottom:0; left:50%; transform:translateX(-50%);
   width:100%; max-width:480px; height:var(--tabbar-h); z-index:50;
-  display:flex; background:rgba(250,247,238,.98); backdrop-filter:blur(10px);
-  border-top:1px solid var(--line);
+  display:flex; background:rgba(252,250,244,.98); backdrop-filter:blur(10px);
+  border-top:1px solid var(--line-2);
   padding-bottom:env(safe-area-inset-bottom);
 }
 .tab{
-  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
   color:var(--ink-3); transition:color .18s; position:relative;
 }
-.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.tab span{font-size:10px; letter-spacing:.5px}
-.tab.on{color:var(--cinnabar)}
-.tab.on svg{stroke-width:1.9}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.tab span{font-size:10px; letter-spacing:.8px}
+.tab.on{color:var(--brown)}
+.tab.on svg{stroke-width:1.6}
 .tab .dot{
-  position:absolute; top:6px; right:calc(50% - 15px); min-width:15px; height:15px; padding:0 4px;
-  border-radius:8px; background:var(--cinnabar); color:#FFF6EE; font-size:9.5px; font-weight:700;
+  position:absolute; top:6px; right:calc(50% - 15px); min-width:14px; height:14px; padding:0 4px;
+  border-radius:7px; background:var(--cinnabar); color:#FFF8F2; font-size:9px; font-weight:700;
   display:grid; place-items:center; transform:scale(0); transition:transform .2s;
 }
 .tab .dot.show{transform:scale(1)}
@@ -380,6 +417,51 @@ img{display:block}
 .ci-name{font-family:var(--song); font-size:14px; font-weight:700; letter-spacing:.4px}
 .ci-sub{font-size:11px; color:var(--ink-3); margin-top:3px; font-variant-numeric:tabular-nums}
 .ci-right{margin-left:auto; display:flex; align-items:center; gap:8px}
+
+/* 菜品详情弹层 */
+.dd{
+  position:fixed; left:50%; transform:translateX(-50%) translateY(100%);
+  bottom:0; width:100%; max-width:480px; z-index:61;
+  background:var(--paper-2); border-radius:16px 16px 0 0;
+  transition:transform .3s cubic-bezier(.32,.72,0,1);
+  max-height:82vh; display:flex; flex-direction:column;
+}
+.dd.show{transform:translateX(-50%) translateY(0)}
+.dd-close{
+  position:absolute; top:10px; right:10px; z-index:2;
+  width:30px; height:30px; border-radius:50%;
+  background:rgba(31,28,24,.38); backdrop-filter:blur(2px);
+  display:grid; place-items:center;
+}
+.dd-close svg{width:14px;height:14px;stroke:#FDFAF3;stroke-width:2.2;stroke-linecap:round;fill:none}
+.dd-body{flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch}
+.dd-pic{width:100%; aspect-ratio:16/10; overflow:hidden; background:var(--paper-3)}
+.dd-pic img{width:100%; height:100%; object-fit:cover; display:block}
+.dd-info{padding:14px 16px 6px}
+.dd-name{font-family:var(--song); font-size:19px; font-weight:700; letter-spacing:.6px; display:flex; align-items:center; gap:8px}
+.dd-tag{
+  font-family:var(--ui); font-size:10px; font-weight:600; letter-spacing:1px;
+  color:#B14A3E; background:rgba(177,74,62,.10); border:1px solid rgba(177,74,62,.28);
+  padding:1.5px 7px; border-radius:3px;
+}
+.dd-desc{margin-top:8px; font-size:12.5px; color:var(--ink-3); line-height:1.7}
+.dd-unit{margin-top:9px; font-size:11px; color:var(--ink-3); letter-spacing:.6px}
+.dd-foot{
+  flex:none; display:flex; align-items:center; gap:12px;
+  padding:12px 16px calc(var(--tabbar-h) + 10px);
+  border-top:1px solid var(--line-2);
+}
+.dd-price{font-family:var(--song); color:var(--cinnabar); font-weight:700; letter-spacing:.3px; line-height:1}
+.dd-price .cur{font-size:13px; margin-right:1px}
+.dd-price .num{font-size:22px; font-variant-numeric:tabular-nums}
+.dd-price .unit{font-size:10.5px; color:var(--ink-3); font-weight:400; margin-left:2px}
+.dd-add{
+  margin-left:auto; min-width:118px; height:38px; border-radius:19px;
+  background:linear-gradient(135deg,#B14A3E,#9E3B32); color:#FFF8F2;
+  font-size:13px; font-weight:700; letter-spacing:2px;
+  box-shadow:0 3px 10px rgba(158,59,50,.35);
+}
+.dd-add:active{transform:scale(.96)}
 
 /* 结算页 */
 .co{
@@ -500,11 +582,16 @@ img{display:block}
         <div class="brand-top">
           <div class="loc">
             <svg viewBox="0 0 24 24"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-            杭州 · 上城区
+            杭州市 · 西湖区
           </div>
-          <button class="brand-more" aria-label="更多">
-            <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
-          </button>
+          <div class="brand-actions">
+            <button class="ba-btn" aria-label="更多">
+              <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg>
+            </button>
+            <button class="ba-btn" aria-label="扫描">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="none"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/></svg>
+            </button>
+          </div>
         </div>
         <div class="brand-name">
           <span class="brand-name-txt">江南味道</span>
@@ -512,7 +599,7 @@ img{display:block}
         </div>
         <div class="brand-sub">传承经典 · 匠心中餐</div>
         <div class="brand-tags">
-          <span class="btag hot">营业中 10:30-21:00</span>
+          <span class="btag hot">营业至 21:00</span>
           <span class="btag">江南园林庭院</span>
           
         </div>
@@ -585,7 +672,27 @@ img{display:block}
   <!-- ========== 底部购物车条 ========== -->
   <div class="cartbar">
     <button class="cart-ico" id="cartIco" aria-label="购物车">
-      <svg viewBox="0 0 32 32"><path d="M5 14 Q5 12 7 12 H25 Q27 12 27 14 L26 24 Q26 26 24 26 H8 Q6 26 6 24 Z" fill="#A8382F" stroke="#FBF8F0" stroke-width="1.4"/><path d="M11 9 Q11 6 16 6 Q21 6 21 9 V12" fill="none" stroke="#FBF8F0" stroke-width="1.6" stroke-linecap="round"/><path d="M7 16 H25" fill="none" stroke="#FBF8F0" stroke-width="1.2"/><path d="M9 19 Q9 21 11 21 H21 Q23 21 23 19" fill="none" stroke="#FBF8F0" stroke-width="1.2"/></svg>
+      <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+        <!-- 提手（弧形） -->
+        <path d="M14 15 Q14 5 25 5 Q36 5 36 15" fill="none" stroke="#7A5C3E" stroke-width="2" stroke-linecap="round"/>
+        <!-- 篮筐口沿 -->
+        <ellipse cx="25" cy="16" rx="17" ry="2.5" fill="#D4B98A" stroke="#7A5C3E" stroke-width="1.5"/>
+        <!-- 篮身 -->
+        <path d="M8 16 L11 39 Q12 44 17 44 H33 Q38 44 39 39 L42 16 Z" fill="#C9A878" stroke="#7A5C3E" stroke-width="1.8" stroke-linejoin="round"/>
+        <!-- 篮筐竖向竹条 -->
+        <path d="M15 18 L16 43" stroke="#7A5C3E" stroke-width="1" fill="none" opacity=".5"/>
+        <path d="M20 18 L21 43" stroke="#7A5C3E" stroke-width="1" fill="none" opacity=".5"/>
+        <path d="M25 18 L25 43" stroke="#7A5C3E" stroke-width="1" fill="none" opacity=".5"/>
+        <path d="M30 18 L29 43" stroke="#7A5C3E" stroke-width="1" fill="none" opacity=".5"/>
+        <path d="M35 18 L34 43" stroke="#7A5C3E" stroke-width="1" fill="none" opacity=".5"/>
+        <!-- 横向竹篾 -->
+        <path d="M9 24 H41" stroke="#7A5C3E" stroke-width=".9" fill="none" opacity=".45"/>
+        <path d="M10 33 H40" stroke="#7A5C3E" stroke-width=".9" fill="none" opacity=".45"/>
+        <!-- 装着的小吃（白色小点 = 包子/饭团） -->
+        <circle cx="18" cy="20" r="2.3" fill="#FBF6EC" stroke="#7A5C3E" stroke-width=".9"/>
+        <circle cx="25" cy="19" r="2.6" fill="#FBF6EC" stroke="#7A5C3E" stroke-width=".9"/>
+        <circle cx="32" cy="20" r="2.2" fill="#FBF6EC" stroke="#7A5C3E" stroke-width=".9"/>
+      </svg>
       <span class="cart-badge" id="cartBadge">0</span>
     </button>
     <div class="cart-mid">
@@ -610,7 +717,7 @@ img{display:block}
       <span>订单</span>
     </button>
     <button class="tab" data-view="cart">
-      <svg viewBox="0 0 32 32"><path d="M5 14 Q5 12 7 12 H25 Q27 12 27 14 L26 24 Q26 26 24 26 H8 Q6 26 6 24 Z" fill="#A8382F" stroke="#FBF8F0" stroke-width="1.4"/><path d="M11 9 Q11 6 16 6 Q21 6 21 9 V12" fill="none" stroke="#FBF8F0" stroke-width="1.6" stroke-linecap="round"/><path d="M7 16 H25" fill="none" stroke="#FBF8F0" stroke-width="1.2"/><path d="M9 19 Q9 21 11 21 H21 Q23 21 23 19" fill="none" stroke="#FBF8F0" stroke-width="1.2"/></svg>
+      <svg viewBox="0 0 32 32"><path d="M5 14 Q5 12 7 12 H25 Q27 12 27 14 L26 24 Q26 26 24 26 H8 Q6 26 6 24 Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M11 9 Q11 6 16 6 Q21 6 21 9 V12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M7 16 H25" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M9 19 Q9 21 11 21 H21 Q23 21 23 19" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
       <span>购物车</span>
       <em class="dot" id="tabDot">0</em>
     </button>
@@ -632,6 +739,16 @@ img{display:block}
       </button>
     </div>
     <div class="sheet-body" id="sheetBody"></div>
+  </div>
+
+  <!-- ========== 菜品详情弹层 ========== -->
+  <div class="mask" id="ddMask"></div>
+  <div class="dd" id="ddetail">
+    <button class="dd-close" id="ddClose" aria-label="关闭">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="dd-body" id="ddBody"></div>
+    <div class="dd-foot" id="ddFoot"></div>
   </div>
 
   <!-- ========== 结算页 ========== -->
@@ -719,35 +836,35 @@ var CATS = [
 
 var DISHES = [
   // 推荐菜
-  {id:'d1', cat:'rec', name:'东坡红烧肉', desc:'精选五花肉，肥而不腻，入口即化', price:38, unit:'份', sold:1286, img:'jn_assets/pork.jpg', tag:'招牌'},
-  {id:'d2', cat:'rec', name:'虫草花炖鸡汤', desc:'滋补养生，汤鲜味美', price:28, unit:'份', sold:964, img:'jn_assets/chicken.jpg'},
-  {id:'d3', cat:'rec', name:'清蒸鲈鱼', desc:'鲜嫩爽滑，清淡健康', price:48, unit:'份', sold:733, img:'jn_assets/bass.jpg', tag:'热卖'},
-  {id:'d4', cat:'rec', name:'清炒时蔬', desc:'时令蔬菜，清爽可口', price:18, unit:'份', sold:512, img:'jn_assets/greens.jpg'},
+  {id:'d1', cat:'rec', name:'东坡红烧肉', desc:'精选五花肉，肥而不腻，入口即化', price:38, unit:'份', badge:'店内招牌', img:'jn_assets/pork.jpg', tag:'招牌'},
+  {id:'d2', cat:'rec', name:'虫草花炖鸡汤', desc:'滋补养生，汤鲜味美', price:28, unit:'份', badge:'今日推荐', img:'jn_assets/chicken.jpg'},
+  {id:'d3', cat:'rec', name:'清蒸鲈鱼', desc:'鲜嫩爽滑，清淡健康', price:48, unit:'份', badge:'人气菜品', img:'jn_assets/bass.jpg'},
+  {id:'d4', cat:'rec', name:'清炒时蔬', desc:'时令蔬菜，清爽可口', price:18, unit:'份', badge:'时令鲜蔬', img:'jn_assets/greens.jpg'},
   // 热菜
-  {id:'h1', cat:'hot', name:'龙井虾仁', desc:'明前龙井配河虾仁，清香弹嫩', price:68, unit:'份', sold:588, img:'', tag:'招牌'},
-  {id:'h2', cat:'hot', name:'西湖醋鱼', desc:'酸甜适口，肉质鲜嫩', price:58, unit:'份', sold:421, img:''},
-  {id:'h3', cat:'hot', name:'干锅有机花菜', desc:'香辣入味，锅气十足', price:32, unit:'份', sold:602, img:''},
-  {id:'h4', cat:'hot', name:'秘制小排', desc:'酱香浓郁，骨酥肉烂', price:52, unit:'份', sold:377, img:''},
+  {id:'h1', cat:'hot', name:'龙井虾仁', desc:'明前龙井配河虾仁，清香弹嫩', price:68, unit:'份', badge:'店内招牌', img:'', tag:'招牌'},
+  {id:'h2', cat:'hot', name:'西湖醋鱼', desc:'酸甜适口，肉质鲜嫩', price:58, unit:'份', badge:'人气菜品', img:''},
+  {id:'h3', cat:'hot', name:'干锅有机花菜', desc:'香辣入味，锅气十足', price:32, unit:'份', badge:'今日推荐', img:''},
+  {id:'h4', cat:'hot', name:'秘制小排', desc:'酱香浓郁，骨酥肉烂', price:52, unit:'份', badge:'招牌推荐', img:''},
   // 凉菜
-  {id:'c1', cat:'cold', name:'桂花糯米藕', desc:'软糯清甜，桂香四溢', price:22, unit:'份', sold:845, img:''},
-  {id:'c2', cat:'cold', name:'绍兴醉鸡', desc:'酒香醇厚，皮爽肉嫩', price:36, unit:'份', sold:392, img:''},
-  {id:'c3', cat:'cold', name:'老醋拌木耳', desc:'酸爽脆嫩，开胃解腻', price:16, unit:'份', sold:511, img:''},
+  {id:'c1', cat:'cold', name:'桂花糯米藕', desc:'软糯清甜，桂香四溢', price:22, unit:'份', badge:'开胃凉菜', img:''},
+  {id:'c2', cat:'cold', name:'绍兴醉鸡', desc:'酒香醇厚，皮爽肉嫩', price:36, unit:'份', badge:'经典凉菜', img:''},
+  {id:'c3', cat:'cold', name:'老醋拌木耳', desc:'酸爽脆嫩，开胃解腻', price:16, unit:'份', badge:'开胃小食', img:''},
   // 汤羹
-  {id:'s1', cat:'soup', name:'虫草花炖鸡汤', desc:'滋补养生，汤鲜味美', price:28, unit:'份', sold:704, img:''},
-  {id:'s2', cat:'soup', name:'西湖牛肉羹', desc:'浓稠鲜香，暖胃舒心', price:26, unit:'份', sold:466, img:''},
-  {id:'s3', cat:'soup', name:'菌菇豆腐汤', desc:'清淡鲜美，营养丰富', price:22, unit:'份', sold:288, img:''},
+  {id:'s1', cat:'soup', name:'虫草花炖鸡汤', desc:'滋补养生，汤鲜味美', price:28, unit:'份', badge:'滋补汤品', img:''},
+  {id:'s2', cat:'soup', name:'西湖牛肉羹', desc:'浓稠鲜香，暖胃舒心', price:26, unit:'份', badge:'今日推荐', img:''},
+  {id:'s3', cat:'soup', name:'菌菇豆腐汤', desc:'清淡鲜美，营养丰富', price:22, unit:'份', badge:'清淡养生', img:''},
   // 主食
-  {id:'m1', cat:'staple', name:'扬州炒饭', desc:'粒粒分明，配料丰富', price:24, unit:'份', sold:1102, img:''},
-  {id:'m2', cat:'staple', name:'葱油拌面', desc:'葱香扑鼻，劲道爽滑', price:18, unit:'份', sold:893, img:''},
-  {id:'m3', cat:'staple', name:'手工小笼包', desc:'皮薄汁多，鲜香四溢', price:20, unit:'份', sold:1340, img:'', tag:'热卖'},
+  {id:'m1', cat:'staple', name:'扬州炒饭', desc:'粒粒分明，配料丰富', price:24, unit:'份', badge:'人气主食', img:''},
+  {id:'m2', cat:'staple', name:'葱油拌面', desc:'葱香扑鼻，劲道爽滑', price:18, unit:'份', badge:'店内招牌', img:''},
+  {id:'m3', cat:'staple', name:'手工小笼包', desc:'皮薄汁多，鲜香四溢', price:20, unit:'份', badge:'今日推荐', img:'', tag:'热卖'},
   // 小吃
-  {id:'k1', cat:'snack', name:'蟹粉小笼', desc:'汤汁浓郁，蟹香扑鼻', price:32, unit:'笼', sold:655, img:''},
-  {id:'k2', cat:'snack', name:'芝麻汤圆', desc:'软糯香甜，团圆美满', price:14, unit:'份', sold:344, img:''},
-  {id:'k3', cat:'snack', name:'桂花糕', desc:'细腻清甜，回味悠长', price:12, unit:'份', sold:521, img:''},
+  {id:'k1', cat:'snack', name:'蟹粉小笼', desc:'汤汁浓郁，蟹香扑鼻', price:32, unit:'笼', badge:'精致小点', img:''},
+  {id:'k2', cat:'snack', name:'芝麻汤圆', desc:'软糯香甜，团圆美满', price:14, unit:'份', badge:'甜品推荐', img:''},
+  {id:'k3', cat:'snack', name:'桂花糕', desc:'细腻清甜，回味悠长', price:12, unit:'份', badge:'江南糕点', img:''},
   // 饮品
-  {id:'b1', cat:'drink', name:'明前龙井', desc:'清香回甘，茶汤澄澈', price:18, unit:'杯', sold:977, img:''},
-  {id:'b2', cat:'drink', name:'桂花酒酿', desc:'温润香甜，暖身养胃', price:16, unit:'杯', sold:412, img:''},
-  {id:'b3', cat:'drink', name:'鲜榨甘蔗汁', desc:'清甜爽口，天然解腻', price:15, unit:'杯', sold:263, img:''}
+  {id:'b1', cat:'drink', name:'明前龙井', desc:'清香回甘，茶汤澄澈', price:18, unit:'杯', badge:'明前新茶', img:''},
+  {id:'b2', cat:'drink', name:'桂花酒酿', desc:'温润香甜，暖身养胃', price:16, unit:'杯', badge:'温润热饮', img:''},
+  {id:'b3', cat:'drink', name:'鲜榨甘蔗汁', desc:'清甜爽口，天然解腻', price:15, unit:'杯', badge:'鲜榨果汁', img:''}
 ];
 
 var DELIVERY_FEE = 3;
@@ -831,13 +948,12 @@ function catHTML(){
   list.forEach(function(d){
     var q = state.cart[d.id] || 0;
     h += '<div class="dish" data-dish="' + d.id + '">'
-       +   '<div class="dish-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '" loading="lazy">'
-       +     (d.tag ? '<span class="tag">' + esc(d.tag) + '</span>' : '')
-       +   '</div>'
+       +   '<div class="dish-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '" loading="lazy"></div>'
        +   '<div class="dish-info">'
-       +     '<div class="dish-name">' + esc(d.name) + '</div>'
+       +     '<div class="dish-name"><span class="n">' + esc(d.name) + '</span>'
+       +       (d.tag ? '<span class="badge">' + esc(d.tag) + '</span>' : '')
+       +     '</div>'
        +     '<div class="dish-desc">' + esc(d.desc) + '</div>'
-       +     '<div class="dish-sold">月售 ' + d.sold + '</div>'
        +     '<div class="dish-bot">'
        +       '<div class="price"><span class="cur">¥</span><span class="num">' + fmt(d.price) + '</span>'
        +         '<span class="unit">/' + esc(d.unit) + '</span></div>'
@@ -925,7 +1041,9 @@ function renderAll(){ renderDishes(); renderCartBar(); renderSheet(); renderChec
 function setQty(id, delta){
   var q = (state.cart[id] || 0) + delta;
   if (q <= 0) delete state.cart[id]; else state.cart[id] = q;
-  
+  renderAll();
+  var ddEl = document.getElementById('ddetail');
+  if (ddEl && ddEl.classList.contains('show')) renderDDFoot(id);
 }
 
 document.addEventListener('click', function(e){
@@ -944,6 +1062,12 @@ document.addEventListener('click', function(e){
   if (qbtn){
     e.stopPropagation();
     setQty(qbtn.dataset.id, qbtn.dataset.act === 'plus' ? 1 : -1);
+    return;
+  }
+  // 菜品卡片 → 详情弹层
+  var dishEl = e.target.closest('.dish');
+  if (dishEl && !e.target.closest('.qty')){
+    openDetail(dishEl.dataset.dish);
     return;
   }
 });
@@ -970,6 +1094,47 @@ function openSheet(){ renderSheet(); sheet.classList.add('show'); sheetMask.clas
 function closeSheet(){ sheet.classList.remove('show'); sheetMask.classList.remove('show'); }
 document.getElementById('cartIco').addEventListener('click', openSheet);
 sheetMask.addEventListener('click', closeSheet);
+
+/* 菜品详情弹层 */
+var dd = document.getElementById('ddetail'), ddMask = document.getElementById('ddMask');
+function dishOf(id){
+  for (var i = 0; i < DISHES.length; i++) if (DISHES[i].id === id) return DISHES[i];
+  return null;
+}
+function openDetail(id){
+  var d = dishOf(id); if (!d) return;
+  document.getElementById('ddBody').innerHTML =
+      '<div class="dd-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '"></div>'
+    + '<div class="dd-info">'
+    +   '<div class="dd-name"><span>' + esc(d.name) + '</span>'
+    +     (d.tag ? '<span class="dd-tag">' + esc(d.tag) + '</span>' : '')
+    +   '</div>'
+    +   '<div class="dd-desc">' + esc(d.desc) + '。</div>'
+    +   '<div class="dd-unit">' + esc(d.badge || '江南味道') + ' · ' + esc(d.unit) + '</div>'
+    + '</div>';
+  renderDDFoot(id);
+  dd.classList.add('show'); ddMask.classList.add('show');
+}
+function renderDDFoot(id){
+  var d = dishOf(id); if (!d) return;
+  var q = state.cart[id] || 0;
+  document.getElementById('ddFoot').innerHTML =
+      '<div class="dd-price"><span class="cur">¥</span><span class="num">' + fmt(d.price) + '</span>'
+    +   '<span class="unit">/' + esc(d.unit) + '</span></div>'
+    + '<div class="qty" data-zero="' + (q > 0 ? '0' : '1') + '">'
+    +   '<button class="qty-btn qty-minus" data-act="minus" data-id="' + id + '">' + MINUS + '</button>'
+    +   '<span class="qty-num">' + q + '</span>'
+    +   '<button class="qty-btn qty-plus" data-act="plus" data-id="' + id + '">' + PLUS + '</button>'
+    + '</div>'
+    + '<button class="dd-add" data-id="' + id + '">加入购物车</button>';
+}
+function closeDetail(){ dd.classList.remove('show'); ddMask.classList.remove('show'); }
+document.getElementById('ddClose').addEventListener('click', closeDetail);
+ddMask.addEventListener('click', closeDetail);
+document.getElementById('ddFoot').addEventListener('click', function(e){
+  var add = e.target.closest('.dd-add');
+  if (add) setQty(add.dataset.id, 1);
+});
 document.getElementById('clearCart').addEventListener('click', function(){
   state.cart = {};  closeSheet();
 });
@@ -1010,24 +1175,26 @@ document.getElementById('doneBack').addEventListener('click', function(){
   document.querySelector('.main').scrollTop = 0;
 });
 
-// banner 按钮（已在 renderBanners 区域统一处理 banner-slide 点击）
-document.querySelector('.brand-more').addEventListener('click', function(){
-  alert('更多：店铺介绍 / 联系电话 0571-8888-8888');
+// 顶部按钮
+document.addEventListener('click', function(e){
+  var ba = e.target.closest('.ba-btn');
+  if (!ba) return;
+  if (ba.getAttribute('aria-label') === '更多') alert('更多：店铺介绍 / 联系电话 0571-8888-8888');
+  else if (ba.getAttribute('aria-label') === '搜索') alert('搜索菜品 / 分类');
 });
 
-/* ============ 商家后台可控的广告位（横向轮播） ============ */
-/* 这里直接读 ADS 数组，未来可改成 fetch('/api/admin/ads') 拉取真实商家后台配置 */
+/* ============ 商家后台可控的广告位（单张水墨江南） ============ */
 var ADS = [
-  {id:'a1', img:'jn_assets/banner-art.jpg', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
-  {id:'a2', img:'jn_assets/pork.jpg', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
-  {id:'a3', img:'jn_assets/chicken.jpg', t1:'滋补养生 · 虫草花炖鸡汤', t2:'汤鲜味美 暖心暖胃', btn:'立即查看', action:'dish', dishId:'d2'}
+  {id:'a1', img:'jn_assets/banner-art.jpg', pos:'center 18%', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a2', img:'jn_assets/pork.jpg', pos:'center 55%', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
+  {id:'a3', img:'jn_assets/bass.jpg', pos:'right 25%', t1:'时令招牌 · 清蒸鲈鱼', t2:'鲜嫩爽滑 清淡健康', btn:'立即查看', action:'dish', dishId:'d3'}
 ];
 var curAd = 0;
 function renderBanners(){
   var h = '';
   ADS.forEach(function(a){
     h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
-       + 'style="background-image:url(' + a.img + ')">' 
+       + 'style="background-image:url(' + a.img + ');background-position:' + (a.pos||'center') + ';background-size:' + (a.size||'cover') + '">' 
        + '<div class="banner-slide-txt">'
        + '<div class="banner-t1">' + a.t1 + '</div>'
        + '<div class="banner-t2">' + a.t2 + '</div>'
