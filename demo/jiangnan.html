@@ -74,7 +74,7 @@ img{display:block}
   background-repeat:no-repeat;
   background-position:center 28%;
   background-size:cover;
-  min-height:175px;
+  min-height:240px;
   display:flex; flex-direction:column;
 }
 /* 顶部一道暗角让标题在亮天空区仍清晰 */
@@ -85,7 +85,7 @@ img{display:block}
 .brand > *{position:relative; z-index:1}
 
 .brand-top{display:flex; align-items:center; gap:8px; margin-bottom:6px}
-.loc{display:flex; align-items:center; gap:3px; font-size:12px; color:rgba(253,250,243,.96); letter-spacing:.6px; text-shadow:0 1px 2px rgba(20,18,14,.55); font-weight:500}
+.loc{display:flex; align-items:center; gap:3px; font-size:12px; color:rgba(36,31,27,.92); letter-spacing:.6px; text-shadow:0 1px 3px rgba(253,250,243,.9); font-weight:500}
 .loc svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8}
 .loc::after{content:'›'; opacity:.7; margin-left:1px; font-weight:400; font-size:13px}
 .brand-actions{margin-left:auto; display:flex; gap:7px; align-items:center}
@@ -94,7 +94,7 @@ img{display:block}
   display:grid; place-items:center; background:rgba(252,250,244,.30);
   border:1px solid rgba(252,250,244,.40); backdrop-filter:blur(2px);
 }
-.ba-btn svg{width:13px;height:13px;stroke:rgba(253,250,243,.96);fill:none;stroke-width:1.9;stroke-linecap:round}
+.ba-btn svg{width:13px;height:13px;stroke:rgba(36,31,27,.85);fill:none;stroke-width:1.9;stroke-linecap:round}
 
 .brand-name{
   display:flex; align-items:flex-end; gap:7px;
@@ -102,9 +102,12 @@ img{display:block}
 }
 .brand-name-txt{
   font-family:var(--brush);
-  font-size:42px; font-weight:400;
-  letter-spacing:2px; line-height:1; color:#FBF6EC;
-  text-shadow:0 2px 8px rgba(20,18,14,.55), 0 0 2px rgba(20,18,14,.5);
+  font-size:64px; font-weight:400;
+  letter-spacing:3px; line-height:1; color:#1A1410;
+  text-shadow:
+    0 0 4px rgba(253,250,243,.95),
+    0 0 18px rgba(253,250,243,.85),
+    0 2px 14px rgba(253,250,243,.7);
   -webkit-font-smoothing:antialiased;
 }
 .brand-seal{
@@ -119,9 +122,12 @@ img{display:block}
   box-shadow:0 2px 5px rgba(158,59,50,.35);
 }
 .brand-sub{
-  font-family:var(--kai); font-size:12px; letter-spacing:3.5px;
-  color:rgba(253,250,243,.95); margin-top:5px; text-shadow:0 1px 3px rgba(20,18,14,.55);
-  font-weight:400;
+  font-family:var(--kai); font-size:16px; letter-spacing:4px;
+  color:#1F1A14; margin-top:8px; font-weight:500;
+  text-shadow:
+    0 1px 0 rgba(253,250,243,.95),
+    0 0 8px rgba(253,250,243,.85),
+    0 2px 12px rgba(253,250,243,.7);
 }
 .brand-tags{display:flex; gap:6px; margin-top:5px; flex-wrap:wrap}
 .btag{
@@ -131,12 +137,12 @@ img{display:block}
 }
 .btag.hot{background:rgba(158,59,50,.10); border-color:rgba(158,59,50,.22); color:var(--cinnabar)}
 
-/* ============ 主宣传 Banner：大尺寸水墨江南卡片 ============ */
+/* ============ 主宣传 Banner：米色独立卡片（参考图一） ============ */
 .banner{
-  margin:10px 16px 0; border-radius:14px; overflow:hidden; position:relative;
-  background:transparent; border:1px solid rgba(255,251,240,.30);
-  box-shadow:0 4px 18px rgba(31,28,24,.16);
-  min-height:152px;
+  margin:10px 16px 12px; padding:0; border-radius:16px; overflow:hidden; position:relative;
+  background:#FCFAF4; border:1px solid rgba(35,32,27,.06);
+  box-shadow:0 6px 20px rgba(31,28,24,.14);
+  min-height:170px;
 }
 .banner-track{
   display:flex; height:100%;
@@ -144,32 +150,36 @@ img{display:block}
   position:relative; z-index:1;
 }
 .banner-slide{
-  flex:0 0 100%; height:152px; position:relative; overflow:hidden;
-  background-size:cover; background-position:center 18%;
+  flex:0 0 100%; height:170px; position:relative; overflow:hidden;
+  /* 右侧图片只占 55%，左侧 45% 是米色背景（透出 .banner 容器米色） */
+  background-size:55% auto;
+  background-position:right center;
+  background-repeat:no-repeat;
+  opacity:1;
+  background-color:transparent;
 }
+/* 左侧 0-50% 米色实色，50-65% 过渡，65%+ 透明（让右侧图片清晰） */
 .banner-slide::before{
   content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg,
-    rgba(231,224,208,.55) 0%,
-    rgba(231,224,208,.30) 14%,
-    rgba(231,224,208,.10) 30%,
-    rgba(231,224,208,0) 50%,
-    rgba(231,224,208,0) 100%);
+  background:linear-gradient(90deg,
+    #FCFAF4 0%,
+    #FCFAF4 45%,
+    rgba(252,250,244,0) 62%,
+    rgba(252,250,244,0) 100%);
 }
 .banner-slide-txt{
-  position:absolute; left:0; top:0; bottom:0; z-index:1;
-  width:60%; display:flex; flex-direction:column; justify-content:center;
-  padding:10px 6px 10px 18px;
+  position:absolute; left:0; top:0; bottom:0; z-index:2;
+  width:55%; display:flex; flex-direction:column; justify-content:center;
+  padding:10px 6px 10px 20px;
 }
 .banner-t1{
   font-family:var(--kai); font-size:17px; font-weight:700; letter-spacing:1.4px;
   color:var(--ink); line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  text-shadow:0 1px 2px rgba(252,250,244,.9);
+}
 }
 .banner-t2{
   font-size:10.5px; color:var(--ink-2); letter-spacing:.5px; margin-top:4px; line-height:1.5;
-  text-shadow:0 1px 2px rgba(252,250,244,.9);
 }
 .banner-btn{
   margin-top:7px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
@@ -197,49 +207,42 @@ img{display:block}
 .banner-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .banner-dots{display:flex}
 
-/* ============ 左侧分类 + 右侧菜品（图一核心两栏结构） ============ */
-/* cd-wrap 背景 = 庭院图（跟品牌区一致），内部左右分区 */
+/* ============ 左侧分类 + 右侧菜品（米色独立卡片） ============ */
 .cd-wrap{
-  margin:14px 16px 0; padding:0; flex:1; min-height:0;
+  margin:0 16px 0; padding:0; flex:1; min-height:0;
   display:flex; flex-direction:row;
-  background-color:#2A2622;
-  background-image:url('jn_assets/courtyard.jpg');
-  background-repeat:no-repeat;
-  background-position:center 30%;
-  background-size:cover;
+  background:#FCFAF4;
   border-radius:16px;
-  box-shadow:0 6px 22px rgba(31,28,24,.18);
+  box-shadow:0 6px 22px rgba(31,28,24,.14);
   overflow:hidden;
 }
-/* 左侧分类：透明（让庭院图从 cd-wrap 透出） */
+/* 左侧分类：米色实色（不再透明，不再透庭院图） */
 .cats{
   flex:0 0 100px; width:100px;
-  background:transparent;
-  border-right:1px solid rgba(35,32,27,.12);
+  background:#F5EFE3;
+  border-right:1px solid rgba(35,32,27,.06);
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   flex:none;
 }
 .cats::-webkit-scrollbar{display:none}
 .cat{
-  position:relative; padding:15px 7px 15px 13px; font-size:14.5px;
-  color:var(--ink-2); letter-spacing:1px;
+  position:relative; padding:15px 7px 15px 14px; font-size:14.5px;
+  color:var(--ink-3); letter-spacing:1px;
   transition:background .18s,color .18s; text-align:left; width:100%;
   display:flex; align-items:center; gap:8px;
-  background:rgba(252,250,244,.45); /* 半透米色让庭院图轻透，文字可读 */
-  margin:1px 6px 1px 0; border-radius:0 8px 8px 0;
-  width:calc(100% - 6px);
+  background:transparent;
 }
-.cat-ic{width:18px; height:18px; flex:none; opacity:.58; transition:opacity .18s}
+.cat-ic{width:19px; height:19px; flex:none; opacity:.55; transition:opacity .18s}
 .cat-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .cat.on .cat-ic{opacity:1}
 .cat-n{flex:1; text-align:left}
-.cat + .cat{border-top:1px solid rgba(35,32,27,.06)}
+.cat + .cat{border-top:1px solid rgba(35,32,27,.05)}
 .cat::before{ /* 选中竖线（朱砂） */
   content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
   width:3px; height:0; background:var(--cinnabar); border-radius:0 3px 3px 0; transition:height .2s;
 }
-.cat.on{background:rgba(252,250,244,.92); color:var(--cinnabar); font-weight:700}
+.cat.on{background:#FCFAF4; color:var(--cinnabar); font-weight:700}
 .cat.on::before{height:26px}
 
 .goods{
@@ -252,7 +255,13 @@ img{display:block}
 }
 .sec-head{
   display:flex; align-items:baseline; gap:8px; padding:18px 2px 12px;
-  font-family:var(--kai); font-size:19px; font-weight:700; letter-spacing:3px; color:var(--ink);
+  font-family:var(--kai); font-size:20px; font-weight:700; letter-spacing:3px; color:var(--ink);
+}
+.sec-head::before{
+  content:''; display:inline-block; width:14px; height:14px; flex:none; align-self:center;
+  background:var(--cinnabar); border-radius:2px;
+  transform:rotate(45deg);
+  box-shadow:0 1px 3px rgba(158,59,50,.35);
 }
 .sec-head .cnt{margin-left:auto; font-family:var(--ui); font-size:12px; font-weight:400; color:var(--ink-3); letter-spacing:0}
 
@@ -269,9 +278,9 @@ img{display:block}
   box-shadow:0 0 0 2px rgba(158,59,50,.10);
 }
 .dish-pic{
-  flex:0 0 120px; width:120px; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+  flex:0 0 120px; width:120px; aspect-ratio:1/1; border-radius:16px; overflow:hidden;
   background:var(--paper-3); position:relative;
-  box-shadow:0 2px 6px rgba(31,28,24,.10);
+  box-shadow:0 3px 10px rgba(31,28,24,.14);
 }
 .dish-pic img{width:100%; height:100%; object-fit:cover; display:block; object-position:center 80%}
 .dish-pic .tag{
@@ -831,9 +840,6 @@ var DISHES = [
   {id:'d2', cat:'rec', name:'虫草花炖鸡汤', desc:'滋补养生，汤鲜味美', price:28, unit:'份', badge:'今日推荐', img:'jn_assets/chicken.jpg'},
   {id:'d3', cat:'rec', name:'清蒸鲈鱼', desc:'鲜嫩爽滑，清淡健康', price:48, unit:'份', badge:'人气菜品', img:'jn_assets/bass.jpg'},
   {id:'d4', cat:'rec', name:'清炒时蔬', desc:'时令蔬菜，清爽可口', price:18, unit:'份', badge:'时令鲜蔬', img:'jn_assets/greens.jpg'},
-  {id:'d5', cat:'rec', name:'蒜蓉粉丝蒸扇贝', desc:'蒜香浓郁，粉丝爽滑', price:42, unit:'份', badge:'人气菜品'},
-  {id:'d6', cat:'rec', name:'杭式酱鸭', desc:'酱香入味，咸香适口', price:36, unit:'份', badge:'店内招牌'},
-  {id:'d7', cat:'rec', name:'西湖莼菜羹', desc:'滑嫩清香，江南一绝', price:24, unit:'份', badge:'清淡养生'},
   // 热菜
   {id:'h1', cat:'hot', name:'龙井虾仁', desc:'明前龙井配河虾仁，清香弹嫩', price:68, unit:'份', badge:'店内招牌', img:'', tag:'招牌'},
   {id:'h2', cat:'hot', name:'西湖醋鱼', desc:'酸甜适口，肉质鲜嫩', price:58, unit:'份', badge:'人气菜品', img:''},
@@ -1224,7 +1230,7 @@ var ADS = [
   {id:'a2', img:'jn_assets/pork.jpg', pos:'center 55%', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
   {id:'a3', img:'jn_assets/bass.jpg', pos:'right 25%', t1:'时令招牌 · 清蒸鲈鱼', t2:'鲜嫩爽滑 清淡健康', btn:'立即查看', action:'dish', dishId:'d3'}
 ];
-var curAd = 0;
+var curAd = 0; /* 参考图一：默认"精致中餐 · 品味江南"水墨画 */
 function renderBanners(){
   var h = '';
   ADS.forEach(function(a){
