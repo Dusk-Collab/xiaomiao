@@ -74,7 +74,7 @@ img{display:block}
   background-repeat:no-repeat;
   background-position:center 28%;
   background-size:cover;
-  min-height:240px;
+  min-height:230px;
   display:flex; flex-direction:column;
 }
 /* 顶部一道暗角让标题在亮天空区仍清晰 */
@@ -102,8 +102,8 @@ img{display:block}
 }
 .brand-name-txt{
   font-family:var(--brush);
-  font-size:64px; font-weight:400;
-  letter-spacing:3px; line-height:1; color:#1A1410;
+  font-size:78px; font-weight:400;
+  letter-spacing:4px; line-height:1; color:#1A1410;
   text-shadow:
     0 0 4px rgba(253,250,243,.95),
     0 0 18px rgba(253,250,243,.85),
@@ -112,13 +112,13 @@ img{display:block}
 }
 .brand-seal{
   display:inline-grid; place-items:center;
-  width:26px; height:26px; padding:0;
-  font-family:var(--kai); font-size:10.5px; font-weight:700;
+  width:32px; height:32px; padding:0;
+  font-family:var(--kai); font-size:12.5px; font-weight:700;
   letter-spacing:1px; color:#FFF8F2;
   background:#C0392B; border:1.5px solid #A83223;
   border-radius:3px;
-  transform:rotate(-3deg); transform-origin:center;
-  margin-bottom:3px; text-shadow:0 1px 1px rgba(0,0,0,.25);
+  transform:rotate(-2deg); transform-origin:center;
+  margin-bottom:5px; text-shadow:0 1px 1px rgba(0,0,0,.25);
   box-shadow:0 2px 5px rgba(158,59,50,.35);
 }
 .brand-sub{
@@ -129,15 +129,7 @@ img{display:block}
     0 0 8px rgba(253,250,243,.85),
     0 2px 12px rgba(253,250,243,.7);
 }
-.brand-tags{display:flex; gap:6px; margin-top:5px; flex-wrap:wrap}
-.btag{
-  font-size:10px; letter-spacing:.4px; padding:2.5px 9px; border-radius:2px;
-  background:rgba(252,250,244,.78); border:1px solid rgba(35,32,27,.10);
-  color:var(--ink-2); backdrop-filter:blur(2px); font-weight:500;
-}
-.btag.hot{background:rgba(158,59,50,.10); border-color:rgba(158,59,50,.22); color:var(--cinnabar)}
-
-/* ============ 主宣传 Banner：米色独立卡片（参考图一） ============ */
+/* ============ 主宣传 Banner：米色独立卡片 + 内部水墨画（参考图 496e0437） ============ */
 .banner{
   margin:10px 16px 12px; padding:0; border-radius:16px; overflow:hidden; position:relative;
   background:#FCFAF4; border:1px solid rgba(35,32,27,.06);
@@ -151,40 +143,41 @@ img{display:block}
 }
 .banner-slide{
   flex:0 0 100%; height:170px; position:relative; overflow:hidden;
-  /* 右侧图片只占 55%，左侧 45% 是米色背景（透出 .banner 容器米色） */
-  background-size:55% auto;
-  background-position:right center;
-  background-repeat:no-repeat;
+  background-size:50% auto; background-position:right center; background-repeat:no-repeat;
   opacity:1;
-  background-color:transparent;
 }
-/* 左侧 0-50% 米色实色，50-65% 过渡，65%+ 透明（让右侧图片清晰） */
+/* 左侧浅色渐变（透出图）保证文字可读，参考图 496e0437 用这种效果 */
 .banner-slide::before{
   content:''; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(90deg,
-    #FCFAF4 0%,
-    #FCFAF4 45%,
-    rgba(252,250,244,0) 62%,
+    rgba(252,250,244,.78) 0%,
+    rgba(252,250,244,.50) 40%,
+    rgba(252,250,244,.10) 70%,
     rgba(252,250,244,0) 100%);
 }
 .banner-slide-txt{
   position:absolute; left:0; top:0; bottom:0; z-index:2;
-  width:55%; display:flex; flex-direction:column; justify-content:center;
-  padding:10px 6px 10px 20px;
+  width:62%; display:flex; flex-direction:column; justify-content:center;
+  padding:14px 6px 14px 24px;
 }
 .banner-t1{
-  font-family:var(--kai); font-size:17px; font-weight:700; letter-spacing:1.4px;
-  color:var(--ink); line-height:1.2;
+  font-family:var(--kai); font-size:24px; font-weight:700; letter-spacing:1.8px;
+  color:#1F1A14; line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  text-shadow:0 1px 2px rgba(253,250,244,.9);
 }
+.banner-t2{
+  font-size:12.5px; color:#3A322A; letter-spacing:.5px; margin-top:6px; line-height:1.55;
+  text-shadow:0 1px 2px rgba(253,250,244,.9);
 }
 .banner-t2{
   font-size:10.5px; color:var(--ink-2); letter-spacing:.5px; margin-top:4px; line-height:1.5;
+  text-shadow:0 1px 2px rgba(252,250,244,.9);
 }
 .banner-btn{
-  margin-top:7px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
-  font-size:11px; letter-spacing:1.2px; color:#FCF7EC; font-weight:600;
-  padding:4.5px 13px 4.5px 14px; border-radius:16px;
+  margin-top:10px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
+  font-size:12.5px; letter-spacing:1.4px; color:#FCF7EC; font-weight:600;
+  padding:6px 16px 6px 18px; border-radius:18px;
   background:#7A5C3E; border:1px solid rgba(122,92,62,.85);
   box-shadow:0 1px 4px rgba(122,92,62,.30);
   transition:transform .12s, background .2s;
@@ -205,21 +198,40 @@ img{display:block}
 .banner-prev{left:10px}
 .banner-next{right:10px}
 .banner-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.banner-dots{display:flex}
+.banner-dots{
+  position:absolute; left:0; right:0; bottom:8px; z-index:4;
+  display:flex; justify-content:center; align-items:center; gap:5px;
+  pointer-events:none;
+}
+.banner-dots .dot{
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(122,92,62,.30); transition:background .25s, width .25s, border-radius .25s;
+  pointer-events:auto;
+}
+.banner-dots .dot.on{
+  background:#7A5C3E; width:20px; border-radius:4px;
+}
 
-/* ============ 左侧分类 + 右侧菜品（米色独立卡片） ============ */
+/* ============ 左侧分类 + 右侧菜品 ============ */
+/* cd-wrap 容器 = 江南味道庭院背景；内部卡片缩进 10px，四周露出庭院图 */
 .cd-wrap{
-  margin:0 16px 0; padding:0; flex:1; min-height:0;
+  margin:0 16px 0; padding:10px; flex:1; min-height:0;
   display:flex; flex-direction:row;
-  background:#FCFAF4;
+  background-color:#2A2622;
+  background-image:url('jn_assets/courtyard.jpg');
+  background-repeat:no-repeat;
+  background-position:center 30%;
+  background-size:cover;
   border-radius:16px;
-  box-shadow:0 6px 22px rgba(31,28,24,.14);
+  box-shadow:0 6px 22px rgba(31,28,24,.18);
   overflow:hidden;
 }
-/* 左侧分类：米色实色（不再透明，不再透庭院图） */
+/* 左侧分类：米色实色（内部卡片，左侧圆角） */
 .cats{
   flex:0 0 100px; width:100px;
   background:#F5EFE3;
+  border-radius:12px 0 0 12px;
+  overflow:hidden;
   border-right:1px solid rgba(35,32,27,.06);
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -242,12 +254,13 @@ img{display:block}
   content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
   width:3px; height:0; background:var(--cinnabar); border-radius:0 3px 3px 0; transition:height .2s;
 }
-.cat.on{background:#FCFAF4; color:var(--cinnabar); font-weight:700}
+.cat.on{background:rgba(252,250,244,.88); color:var(--cinnabar); font-weight:700}
 .cat.on::before{height:26px}
 
 .goods{
   flex:1; min-width:0; min-height:0; padding:6px 16px 18px;
-  background-color:#FCFAF4;
+  background-color:#FCFAF4; /* 推荐菜：米色单独背景 */
+  border-radius:0 12px 12px 0;
   position:relative;
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -262,6 +275,12 @@ img{display:block}
   background:var(--cinnabar); border-radius:2px;
   transform:rotate(45deg);
   box-shadow:0 1px 3px rgba(158,59,50,.35);
+}
+.sec-head .sub{
+  font-family:var(--ui); font-size:11.5px; font-weight:600; letter-spacing:.5px;
+  color:var(--cinnabar); background:rgba(192,57,43,.10);
+  border:1px solid rgba(192,57,43,.28);
+  padding:1.5px 7px; border-radius:3px;
 }
 .sec-head .cnt{margin-left:auto; font-family:var(--ui); font-size:12px; font-weight:400; color:var(--ink-3); letter-spacing:0}
 
@@ -598,19 +617,14 @@ img{display:block}
           <span class="brand-seal">精品</span>
         </div>
         <div class="brand-sub">传承经典 · 匠心中餐</div>
-        <div class="brand-tags">
-          <span class="btag hot">营业至 21:00</span>
-          <span class="btag">江南园林庭院</span>
-          
-        </div>
       </header>
 
       <div class="banner" id="banner">
         <button class="banner-arrow banner-prev" id="bannerPrev" aria-label="上一张"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
         <div class="banner-track" id="bannerTrack"></div>
         <button class="banner-arrow banner-next" id="bannerNext" aria-label="下一张"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        <div class="banner-dots" id="bannerDots"></div>
       </div>
-      <div class="banner-dots" id="bannerDots"></div>
 
       <div id="cdHome"></div>
     </section>
@@ -946,7 +960,9 @@ function catHTML(){
     var list = DISHES.filter(function(d){ return d.cat === c.id; });
     if (!list.length) return;
     h += '<div class="dsec" data-sec="' + c.id + '">';
-    h += '<div class="sec-head">' + esc(c.name) + '<span class="cnt">' + list.length + ' 道</span></div>';
+    h += '<div class="sec-head"><span class="n">' + esc(c.name) + '</span>'
+       + (c.id === 'rec' ? '<span class="sub">热卖</span>' : '')
+       + '<span class="cnt">' + list.length + ' 道</span></div>';
     list.forEach(function(d){
       var q = state.cart[d.id] || 0;
       h += '<div class="dish" data-dish="' + d.id + '">'
@@ -1225,17 +1241,19 @@ document.addEventListener('click', function(e){
 });
 
 /* ============ 商家后台可控的广告位（单张水墨江南） ============ */
+// 参考图 496e0437：精致中餐·品味江南 = 水墨画，其他是菜品图
 var ADS = [
-  {id:'a1', img:'jn_assets/banner-art.jpg', pos:'center 18%', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a1', img:'jn_assets/banner-art.jpg', pos:'center 30%', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
   {id:'a2', img:'jn_assets/pork.jpg', pos:'center 55%', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
   {id:'a3', img:'jn_assets/bass.jpg', pos:'right 25%', t1:'时令招牌 · 清蒸鲈鱼', t2:'鲜嫩爽滑 清淡健康', btn:'立即查看', action:'dish', dishId:'d3'}
 ];
-var curAd = 0; /* 参考图一：默认"精致中餐 · 品味江南"水墨画 */
+var curAd = 0; /* 精致中餐·品味江南（参考图 496e0437 的招牌广告文案） */
 function renderBanners(){
   var h = '';
   ADS.forEach(function(a){
     h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
-       + 'style="background-image:url(' + a.img + ');background-position:' + (a.pos||'center') + ';background-size:' + (a.size||'cover') + '">' 
+       + (a.img ? ('style="background-image:url(' + a.img + ');background-position:' + (a.pos||'right center') + ';background-size:50% auto;background-repeat:no-repeat;"') : '')
+       + '>' 
        + '<div class="banner-slide-txt">'
        + '<div class="banner-t1">' + a.t1 + '</div>'
        + '<div class="banner-t2">' + a.t2 + '</div>'
