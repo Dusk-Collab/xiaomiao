@@ -1281,14 +1281,17 @@ function switchAd(delta){
   updateBannerPos();
   resetAuto();
 }
-/* 自动播放：每 4 秒切下一张，hover/触摸/点击手动切换时重置计时 */
+/* 自动播放：每 5 秒切下一张，hover/触摸/点击手动切换时重置计时；首屏停留 8 秒 */
 var autoTimer = null;
+var firstHold = true;
 function startAuto(){
   stopAuto();
-  autoTimer = setInterval(function(){ switchAd(1); }, 4000);
+  var delay = firstHold ? 8000 : 5000;
+  firstHold = false;
+  autoTimer = setInterval(function(){ switchAd(1); }, delay);
 }
 function stopAuto(){ if (autoTimer){ clearInterval(autoTimer); autoTimer = null; } }
-function resetAuto(){ stopAuto(); startAuto(); }
+function resetAuto(){ firstHold = false; stopAuto(); startAuto(); }
 document.getElementById('bannerPrev').addEventListener('click', function(){ switchAd(-1); });
 document.getElementById('bannerNext').addEventListener('click', function(){ switchAd(1); });
 document.getElementById('bannerDots').addEventListener('click', function(e){
