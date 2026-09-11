@@ -43,110 +43,98 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 img{display:block}
 
 #app{
-  max-width:480px; margin:0 auto; height:100%;
+  width:100%; max-width:none; margin:0; height:100%;
   position:relative; display:flex; flex-direction:column;
   background-color:#2A2622;
   background-image:url('jn_assets/courtyard.jpg');
   background-repeat:no-repeat;
   background-position:center 30%;
   background-size:cover;
-  box-shadow:0 0 40px rgba(31,28,24,.08);
+  box-shadow:none;
   overflow:hidden;
 }
 
-.main{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(var(--tabbar-h) + var(--cartbar-h) + 14px)}
+/* .main 不再整体滚动——只有右侧 .goods 独立滚动 */
+.main{flex:1; min-height:0; overflow:hidden; -webkit-overflow-scrolling:touch}
 .view{display:none}
 .view.active{display:block}
-/* 点餐首页：头部(品牌+banner)固定，只有右侧菜品列表滚动 */
+/* 点餐首页：头部(品牌+banner)固定，只有右侧菜品区独立滚动 */
 #view-home{height:100%}
 #view-home.active{display:flex; flex-direction:column}
 #view-home > .brand,
 #view-home > .banner{flex:none}
-/* #cdHome 是 .cd-wrap 的父容器，必须也参与 flex 链并允许压缩 */
 #cdHome{flex:1; min-height:0; display:flex; flex-direction:column}
 
-/* ============ 顶部品牌区：江南庭院实景（紧凑，让菜单占 2/3） ============ */
+/* ============ 顶部品牌区：江南庭院沉浸式主视觉 ============ */
 .brand{
-  position:relative; padding:8px 16px 10px;
+  position:relative; padding:12px 18px 14px;
   color:#FDFAF3; overflow:hidden;
   background-color:#2A2622;
   background-image:url('jn_assets/courtyard.jpg');
   background-repeat:no-repeat;
   background-position:center 28%;
   background-size:cover;
-  min-height:108px;
+  min-height:230px;
   display:flex; flex-direction:column;
 }
-/* 仅底部一道极淡暗角让标题在亮天空区仍清晰 */
+/* 顶部一道暗角让标题在亮天空区仍清晰 */
 .brand::before{
   content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
-  background:linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(20,18,14,.20) 86%, rgba(20,18,14,.38) 100%);
+  background:linear-gradient(180deg, rgba(20,18,14,.18) 0%, rgba(20,18,14,0) 30%, rgba(20,18,14,0) 70%, rgba(20,18,14,.28) 100%);
 }
 .brand > *{position:relative; z-index:1}
-/* 底部 fade-out 到米色背景，让品牌区与 banner 衔接成一张连续背景图 */
-.brand::after{
-  content:''; position:absolute; left:0; right:0; bottom:0; height:55%;
-  pointer-events:none; z-index:0;
-  background:linear-gradient(180deg,
-    rgba(231,224,208,0) 0%,
-    rgba(231,224,208,0) 35%,
-    rgba(231,224,208,.55) 78%,
-    rgba(231,224,208,.92) 100%);
-}
 
-.brand-top{display:flex; align-items:center; gap:8px; margin-bottom:auto}
-.loc{display:flex; align-items:center; gap:3px; font-size:13px; color:rgba(253,250,243,.96); letter-spacing:.6px; text-shadow:0 1px 2px rgba(20,18,14,.55); font-weight:500}
-.loc svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
-.loc::after{content:'›'; opacity:.7; margin-left:1px; font-weight:400; font-size:14px}
-.brand-actions{margin-left:auto; display:flex; gap:6px; align-items:center}
+.brand-top{display:flex; align-items:center; gap:8px; margin-bottom:6px}
+.loc{display:flex; align-items:center; gap:3px; font-size:12px; color:rgba(36,31,27,.92); letter-spacing:.6px; text-shadow:0 1px 3px rgba(253,250,243,.9); font-weight:500}
+.loc svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:1.8}
+.loc::after{content:'›'; opacity:.7; margin-left:1px; font-weight:400; font-size:13px}
+.brand-actions{margin-left:auto; display:flex; gap:7px; align-items:center}
 .ba-btn{
-  width:32px; height:32px; border-radius:50%;
+  width:28px; height:28px; border-radius:50%;
   display:grid; place-items:center; background:rgba(252,250,244,.30);
   border:1px solid rgba(252,250,244,.40); backdrop-filter:blur(2px);
 }
-.ba-btn svg{width:15px;height:15px;stroke:rgba(253,250,243,.96);fill:none;stroke-width:1.9;stroke-linecap:round}
+.ba-btn svg{width:13px;height:13px;stroke:rgba(36,31,27,.85);fill:none;stroke-width:1.9;stroke-linecap:round}
 
 .brand-name{
-  display:flex; align-items:flex-end; gap:6px;
+  display:flex; align-items:flex-end; gap:7px;
   margin-top:auto;
 }
 .brand-name-txt{
   font-family:var(--brush);
-  font-size:34px; font-weight:400;
-  letter-spacing:2px; line-height:1.05; color:#FBF6EC;
-  text-shadow:0 2px 6px rgba(20,18,14,.55), 0 0 2px rgba(20,18,14,.5);
+  font-size:78px; font-weight:400;
+  letter-spacing:4px; line-height:1; color:#1A1410;
+  text-shadow:
+    0 0 4px rgba(253,250,243,.95),
+    0 0 18px rgba(253,250,243,.85),
+    0 2px 14px rgba(253,250,243,.7);
   -webkit-font-smoothing:antialiased;
 }
 .brand-seal{
   display:inline-grid; place-items:center;
-  width:24px; height:24px; padding:0;
-  font-family:var(--kai); font-size:10px; font-weight:700;
+  width:32px; height:32px; padding:0;
+  font-family:var(--kai); font-size:12.5px; font-weight:700;
   letter-spacing:1px; color:#FFF8F2;
   background:#C0392B; border:1.5px solid #A83223;
   border-radius:3px;
-  transform:rotate(-3deg); transform-origin:center;
-  margin-bottom:3px; text-shadow:0 1px 1px rgba(0,0,0,.25);
+  transform:rotate(-2deg); transform-origin:center;
+  margin-bottom:5px; text-shadow:0 1px 1px rgba(0,0,0,.25);
   box-shadow:0 2px 5px rgba(158,59,50,.35);
 }
 .brand-sub{
-  font-family:var(--kai); font-size:11.5px; letter-spacing:2.5px;
-  color:rgba(253,250,243,.95); margin-top:4px; text-shadow:0 1px 3px rgba(20,18,14,.55);
-  font-weight:400;
+  font-family:var(--kai); font-size:16px; letter-spacing:4px;
+  color:#1F1A14; margin-top:8px; font-weight:500;
+  text-shadow:
+    0 1px 0 rgba(253,250,243,.95),
+    0 0 8px rgba(253,250,243,.85),
+    0 2px 12px rgba(253,250,243,.7);
 }
-.brand-tags{display:flex; gap:5px; margin-top:5px; flex-wrap:wrap}
-.btag{
-  font-size:9px; letter-spacing:.5px; padding:2px 7px; border-radius:2px;
-  background:rgba(252,250,244,.62); border:1px solid rgba(35,32,27,.10);
-  color:var(--ink-2); backdrop-filter:blur(2px);
-}
-.btag.hot{background:rgba(158,59,50,.07); border-color:rgba(158,59,50,.18); color:var(--cinnabar)}
-
-/* ============ 主宣传 Banner：水墨江南 + 玉兰花（紧贴品牌区，无上圆角） ============ */
+/* ============ 主宣传 Banner：米色独立卡片 + 内部水墨画（参考图 496e0437） ============ */
 .banner{
-  margin:0 14px 4px; border-radius:0 0 14px 14px; overflow:hidden; position:relative;
-  background:transparent; border:1px solid rgba(255,251,240,.18); border-top:0;
-  box-shadow:0 6px 16px rgba(31,28,24,.18);
-  min-height:158px;
+  margin:10px 16px 12px; padding:0; border-radius:16px; overflow:hidden; position:relative;
+  background:#FCFAF4; border:1px solid rgba(35,32,27,.06);
+  box-shadow:0 6px 20px rgba(31,28,24,.14);
+  min-height:170px;
 }
 .banner-track{
   display:flex; height:100%;
@@ -154,177 +142,208 @@ img{display:block}
   position:relative; z-index:1;
 }
 .banner-slide{
-  flex:0 0 100%; height:158px; position:relative; overflow:hidden;
-  background-size:cover; background-position:center 18%;
+  flex:0 0 100%; height:170px; position:relative; overflow:hidden;
+  background-size:50% auto; background-position:right center; background-repeat:no-repeat;
+  opacity:1;
 }
+/* 左侧浅色渐变（透出图）保证文字可读，参考图 496e0437 用这种效果 */
 .banner-slide::before{
   content:''; position:absolute; inset:0; pointer-events:none;
-  /* 顶部融入米色（接品牌区 fade-out） + 左侧米白渐变保证文字可读 */
-  background:
-    linear-gradient(180deg, rgba(231,224,208,.70) 0%, rgba(231,224,208,.30) 18%, rgba(231,224,208,0) 30%, rgba(231,224,208,0) 100%),
-    linear-gradient(90deg,
-      rgba(252,248,236,.97) 0%,
-      rgba(252,248,236,.85) 28%,
-      rgba(252,248,236,.40) 52%,
-      rgba(252,248,236,.05) 76%,
-      rgba(252,248,236,0) 100%);
+  background:linear-gradient(90deg,
+    rgba(252,250,244,.78) 0%,
+    rgba(252,250,244,.50) 40%,
+    rgba(252,250,244,.10) 70%,
+    rgba(252,250,244,0) 100%);
 }
 .banner-slide-txt{
-  position:absolute; left:0; top:0; bottom:0; z-index:1;
-  width:64%; display:flex; flex-direction:column; justify-content:center;
-  padding:10px 6px 10px 18px;
+  position:absolute; left:0; top:0; bottom:0; z-index:2;
+  width:62%; display:flex; flex-direction:column; justify-content:center;
+  padding:14px 6px 14px 24px;
 }
 .banner-t1{
-  font-family:var(--kai); font-size:16px; font-weight:700; letter-spacing:2px;
-  color:var(--ink); line-height:1.2;
+  font-family:var(--kai); font-size:24px; font-weight:700; letter-spacing:1.8px;
+  color:#1F1A14; line-height:1.2;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-  text-shadow:0 1px 2px rgba(252,250,244,.9);
+  text-shadow:0 1px 2px rgba(253,250,244,.9);
 }
 .banner-t2{
-  font-size:10.5px; color:var(--ink-2); letter-spacing:.4px; margin-top:4px; line-height:1.5;
+  font-size:12.5px; color:#3A322A; letter-spacing:.5px; margin-top:6px; line-height:1.55;
+  text-shadow:0 1px 2px rgba(253,250,244,.9);
+}
+.banner-t2{
+  font-size:10.5px; color:var(--ink-2); letter-spacing:.5px; margin-top:4px; line-height:1.5;
   text-shadow:0 1px 2px rgba(252,250,244,.9);
 }
 .banner-btn{
-  margin-top:8px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
-  font-size:11px; letter-spacing:1.2px; color:#FCF7EC; font-weight:600;
-  padding:5px 12px 5px 13px; border-radius:16px;
+  margin-top:10px; align-self:flex-start; display:inline-flex; align-items:center; gap:4px;
+  font-size:12.5px; letter-spacing:1.4px; color:#FCF7EC; font-weight:600;
+  padding:6px 16px 6px 18px; border-radius:18px;
   background:#7A5C3E; border:1px solid rgba(122,92,62,.85);
-  box-shadow:0 1px 3px rgba(122,92,62,.30);
+  box-shadow:0 1px 4px rgba(122,92,62,.30);
   transition:transform .12s, background .2s;
 }
 .banner-btn:active{transform:scale(.97); background:#6A4F35}
 .banner-btn svg{width:10px;height:10px;stroke:#FCF7EC;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-/* 3 张轮播水墨江南 + 左右切换按钮 */
+/* 左右切换按钮 */
 .banner-arrow{
   position:absolute; top:50%; transform:translateY(-50%);
-  width:26px; height:26px; border-radius:50%;
+  width:30px; height:30px; border-radius:50%;
   display:grid; place-items:center;
-  background:rgba(252,248,236,.78); border:1px solid rgba(35,32,27,.10);
-  box-shadow:0 1px 3px rgba(35,32,27,.12);
+  background:rgba(252,248,236,.82); border:1px solid rgba(35,32,27,.10);
+  box-shadow:0 2px 5px rgba(35,32,27,.12);
   color:var(--ink-2); z-index:3;
   transition:background .2s, transform .12s;
 }
 .banner-arrow:active{transform:translateY(-50%) scale(.92); background:#FCFAF4; color:var(--ink)}
-.banner-prev{left:8px}
-.banner-next{right:8px}
-.banner-arrow svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.banner-dots{display:flex}
+.banner-prev{left:10px}
+.banner-next{right:10px}
+.banner-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.banner-dots{
+  position:absolute; left:0; right:0; bottom:8px; z-index:4;
+  display:flex; justify-content:center; align-items:center; gap:5px;
+  pointer-events:none;
+}
+.banner-dots .dot{
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(122,92,62,.30); transition:background .25s, width .25s, border-radius .25s;
+  pointer-events:auto;
+}
+.banner-dots .dot.on{
+  background:#7A5C3E; width:20px; border-radius:4px;
+}
 
-/* ============ 分类 + 菜品 ============ */
-.cd-wrap{display:flex; margin:12px 14px 0; border-radius:14px; overflow:hidden; flex:1; min-height:0; box-shadow:0 4px 16px rgba(31,28,24,.18)}
+/* ============ 左侧分类 + 右侧菜品 ============ */
+/* cd-wrap 容器 = 江南味道庭院背景；内部卡片缩进 10px，四周露出庭院图 */
+.cd-wrap{
+  margin:0 16px 0; padding:10px; flex:1; min-height:0;
+  display:flex; flex-direction:row;
+  background-color:#2A2622;
+  background-image:url('jn_assets/courtyard.jpg');
+  background-repeat:no-repeat;
+  background-position:center 30%;
+  background-size:cover;
+  border-radius:16px;
+  box-shadow:0 6px 22px rgba(31,28,24,.18);
+  overflow:hidden;
+}
+/* 左侧分类：米色实色（内部卡片，左侧圆角） */
 .cats{
-  flex:0 0 84px; background:#F5EFE3; border-right:1px solid var(--line-2);
-  align-self:stretch; position:sticky; top:0;
+  flex:0 0 100px; width:100px;
+  background:#F5EFE3;
+  border-radius:12px 0 0 12px;
+  overflow:hidden;
+  border-right:1px solid rgba(35,32,27,.06);
   display:flex; flex-direction:column;
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  flex:none;
 }
+.cats::-webkit-scrollbar{display:none}
 .cat{
-  position:relative; padding:15px 6px 15px 13px; font-size:12.5px; color:var(--ink-3);
-  letter-spacing:.8px; transition:background .18s,color .18s; text-align:left; width:100%;
-  display:flex; align-items:center; gap:7px;
+  position:relative; padding:15px 7px 15px 14px; font-size:14.5px;
+  color:var(--ink-3); letter-spacing:1px;
+  transition:background .18s,color .18s; text-align:left; width:100%;
+  display:flex; align-items:center; gap:8px;
+  background:transparent;
 }
-.cat-ic{width:18px; height:18px; flex:none; opacity:.62; transition:opacity .18s,color .18s}
+.cat-ic{width:19px; height:19px; flex:none; opacity:.55; transition:opacity .18s}
 .cat-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .cat.on .cat-ic{opacity:1}
 .cat-n{flex:1; text-align:left}
-.cat + .cat{border-top:1px solid var(--line-2)}
-.cat::before{ /* 选中竖线（茶绿） */
+.cat + .cat{border-top:1px solid rgba(35,32,27,.05)}
+.cat::before{ /* 选中竖线（朱砂） */
   content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
-  width:2px; height:0; background:var(--tea); border-radius:0 2px 2px 0; transition:height .2s;
+  width:3px; height:0; background:var(--cinnabar); border-radius:0 3px 3px 0; transition:height .2s;
 }
-.cat.on{background:var(--paper-2); color:var(--ink); font-weight:600}
-.cat.on::before{height:20px}
-.cat-seal{ /* 选中后右上角小印章（朱砂，克制） */
-  position:absolute; right:8px; top:50%; transform:translateY(-50%) scale(0);
-  width:15px; height:15px; border-radius:2px; border:1px solid rgba(192,57,43,.40);
-  color:#C0392B; font-family:var(--kai); font-size:9px; font-weight:700;
-  display:grid; place-items:center; opacity:.85; transition:transform .2s;
-  background:rgba(192,57,43,.05);
-}
-.cat.on .cat-seal{transform:translateY(-50%) scale(1)}
-.cat:last-of-type{margin-top:auto}
+.cat.on{background:rgba(252,250,244,.88); color:var(--cinnabar); font-weight:700}
+.cat.on::before{height:26px}
 
 .goods{
-  flex:1; min-width:0; min-height:0; padding:4px 12px 20px;
-  background-color:#FDFAF3;
+  flex:1; min-width:0; min-height:0; padding:6px 16px 18px;
+  background-color:#FCFAF4; /* 推荐菜：米色单独背景 */
+  border-radius:0 12px 12px 0;
   position:relative;
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain; /* 防止滚到边界后把滑动传给外层 .main */
+  overscroll-behavior:contain;
 }
-.dish:last-of-type{margin-top:auto}
-.goods::before{
-  content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 600' preserveAspectRatio='xMidYMax slice'><defs><linearGradient id='mt' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='%236E5B43' stop-opacity='.22'/><stop offset='1' stop-color='%236E5B43' stop-opacity='.04'/></linearGradient></defs><g fill='url(%23mt)'><path d='M0 380 Q40 340 80 358 Q120 326 160 354 Q200 318 240 348 Q290 320 330 350 Q380 326 420 348 Q450 336 480 346 L480 600 L0 600 Z'/></g><g stroke='%236E5B43' stroke-width='.8' fill='none' opacity='.22'><path d='M0 410 q60 38 120 0 t120 0 t120 0 t120 0'/><path d='M0 440 q80 32 160 0 t160 0 t160 0'/></g><g fill='%231a1a1a' opacity='.25'><path d='M100 430 L160 430 L154 426 L168 422 L154 418 L160 414 L100 414 Z'/></g></svg>");
-  background-repeat:no-repeat; background-position:bottom center; background-size:100% 100%;
-  opacity:.38;
-}
-.goods > *{position:relative; z-index:1}
 .sec-head{
-  display:flex; align-items:center; gap:8px; padding:14px 2px 11px;
-  font-family:var(--song); font-size:15.5px; font-weight:700; letter-spacing:2.5px; color:var(--ink);
+  display:flex; align-items:baseline; gap:8px; padding:18px 2px 12px;
+  font-family:var(--kai); font-size:20px; font-weight:700; letter-spacing:3px; color:var(--ink);
 }
 .sec-head::before{
-  content:''; display:inline-block; width:16px; height:16px;
-  background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 9 Q5 7 7 9 Q8 6 10 8 Q12 6 13 9' stroke='%23C0392B' stroke-width='1.2' fill='none' stroke-linecap='round'/><circle cx='8' cy='11' r='.7' fill='%23C0392B'/></svg>") center/contain no-repeat;
+  content:''; display:inline-block; width:14px; height:14px; flex:none; align-self:center;
+  background:var(--cinnabar); border-radius:2px;
+  transform:rotate(45deg);
+  box-shadow:0 1px 3px rgba(158,59,50,.35);
 }
-.sec-head .cnt{margin-left:auto; font-family:var(--ui); font-size:11px; font-weight:400; color:var(--ink-3); letter-spacing:0}
+.sec-head .sub{
+  font-family:var(--ui); font-size:11.5px; font-weight:600; letter-spacing:.5px;
+  color:var(--cinnabar); background:rgba(192,57,43,.10);
+  border:1px solid rgba(192,57,43,.28);
+  padding:1.5px 7px; border-radius:3px;
+}
+.sec-head .cnt{margin-left:auto; font-family:var(--ui); font-size:12px; font-weight:400; color:var(--ink-3); letter-spacing:0}
 
+/* ============ 大尺寸菜品卡（参考图一：宽松、大图、有质感） ============ */
 .dish{
-  display:flex; gap:12px; padding:10px 10px; margin-bottom:10px;
-  background:rgba(252,250,244,.55); border:1px solid rgba(35,32,27,.05); border-radius:11px;
-  transition:border-color .3s, box-shadow .3s;
+  display:flex; gap:14px; padding:14px 12px; margin-bottom:12px;
+  background:#FDFAF3; border:1px solid rgba(35,32,27,.06); border-radius:14px;
+  transition:border-color .3s, box-shadow .3s, transform .18s;
+  box-shadow:0 2px 8px rgba(31,28,24,.04);
 }
+.dish:active{transform:scale(.99)}
 .dish.dish-flash{
   border-color:rgba(158,59,50,.45);
   box-shadow:0 0 0 2px rgba(158,59,50,.10);
 }
 .dish-pic{
-  flex:0 0 110px; width:110px; aspect-ratio:1/1; border-radius:10px; overflow:hidden;
+  flex:0 0 120px; width:120px; aspect-ratio:1/1; border-radius:16px; overflow:hidden;
   background:var(--paper-3); position:relative;
+  box-shadow:0 3px 10px rgba(31,28,24,.14);
 }
 .dish-pic img{width:100%; height:100%; object-fit:cover; display:block; object-position:center 80%}
 .dish-pic .tag{
-  position:absolute; left:0; top:0; font-size:10.5px; letter-spacing:1px; font-weight:700;
-  background:var(--cinnabar); color:#FFF8F2; padding:3px 8px 3px 9px;
-  border-radius:10px 0 10px 0;
-  box-shadow:0 1px 3px rgba(158,59,50,.30);
+  position:absolute; left:0; top:0; font-size:11px; letter-spacing:.8px; font-weight:700;
+  background:var(--cinnabar); color:#FFF8F2; padding:3.5px 10px 3.5px 11px;
+  border-radius:12px 0 12px 0;
+  box-shadow:0 2px 5px rgba(158,59,50,.35);
 }
-.dish-info{flex:1; min-width:0; display:flex; flex-direction:column; padding:2px 0}
+.dish-info{flex:1; min-width:0; display:flex; flex-direction:column; padding:2px 0; justify-content:center; gap:6px}
 .dish-name{
-  display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
 }
 .dish-name .n{
-  font-family:var(--kai); font-size:17px; font-weight:700; color:var(--ink);
-  letter-spacing:1.2px; line-height:1.3; white-space:nowrap;
+  font-family:var(--kai); font-size:22px; font-weight:700; color:var(--ink);
+  letter-spacing:1.2px; line-height:1.2; white-space:nowrap;
 }
 .dish-name .badge{
-  display:inline-block; font-size:9.5px; font-weight:700; letter-spacing:.5px;
+  display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.5px;
   background:var(--cinnabar); color:#FFF8F2;
-  padding:2px 5px 2px 6px; border-radius:2px; align-self:center;
+  padding:2.5px 7px; border-radius:3px; align-self:center;
   font-family:var(--ui);
 }
 .dish-desc{
-  font-size:11px; color:var(--ink-3); margin-top:5px; line-height:1.55;
-  letter-spacing:.1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  font-size:13px; color:var(--ink-3); line-height:1.55;
+  letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.dish-bot{margin-top:auto; padding-top:9px; display:flex; align-items:flex-end; gap:8px}
+.dish-bot{margin-top:4px; display:flex; align-items:flex-end; gap:8px}
 .price{font-family:var(--song); color:var(--brown); font-weight:700; letter-spacing:.3px; line-height:1}
-.price .cur{font-size:12px; margin-right:1px}
-.price .num{font-size:19px; font-variant-numeric:tabular-nums}
-.price .unit{font-size:10.5px; color:var(--ink-3); font-weight:400; margin-left:2px; letter-spacing:0}
-.qty{margin-left:auto; display:flex; align-items:center; gap:9px; min-height:26px}
+.price .cur{font-size:13.5px; margin-right:1px}
+.price .num{font-size:26px; font-variant-numeric:tabular-nums}
+.price .unit{font-size:12px; color:var(--ink-3); font-weight:400; margin-left:3px; letter-spacing:0}
+.qty{margin-left:auto; display:flex; align-items:center; gap:10px; min-height:32px}
 .qty-btn{
-  width:24px; height:24px; border-radius:50%; display:grid; place-items:center;
+  width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
   transition:transform .12s;
 }
 .qty-btn:active{transform:scale(.88)}
-.qty-btn svg{width:13px;height:13px;stroke-width:2.4;stroke-linecap:round;fill:none}
-.qty-plus{background:var(--gold); box-shadow:0 1px 3px rgba(184,155,106,.35)}
+.qty-btn svg{width:15px;height:15px;stroke-width:2.4;stroke-linecap:round;fill:none}
+.qty-plus{background:var(--gold); box-shadow:0 2px 5px rgba(184,155,106,.40)}
 .qty-plus svg{stroke:#FCFAF4}
-.qty-minus{background:transparent; border:1px solid rgba(35,32,27,.18)}
+.qty-minus{background:transparent; border:1px solid rgba(35,32,27,.20)}
 .qty-minus svg{stroke:var(--ink-2)}
 .qty-num{
-  font-size:14px; font-weight:700; color:var(--ink); min-width:12px; text-align:center;
+  font-size:16px; font-weight:700; color:var(--ink); min-width:14px; text-align:center;
   font-variant-numeric:tabular-nums;
 }
 .qty[data-zero="1"] .qty-minus,.qty[data-zero="1"] .qty-num{display:none}
@@ -598,19 +617,14 @@ img{display:block}
           <span class="brand-seal">精品</span>
         </div>
         <div class="brand-sub">传承经典 · 匠心中餐</div>
-        <div class="brand-tags">
-          <span class="btag hot">营业至 21:00</span>
-          <span class="btag">江南园林庭院</span>
-          
-        </div>
       </header>
 
       <div class="banner" id="banner">
         <button class="banner-arrow banner-prev" id="bannerPrev" aria-label="上一张"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
         <div class="banner-track" id="bannerTrack"></div>
         <button class="banner-arrow banner-next" id="bannerNext" aria-label="下一张"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        <div class="banner-dots" id="bannerDots"></div>
       </div>
-      <div class="banner-dots" id="bannerDots"></div>
 
       <div id="cdHome"></div>
     </section>
@@ -938,33 +952,39 @@ function catHTML(){
     h += '<button class="cat' + (c.id === state.cat ? ' on' : '') + '" data-cat="' + c.id + '">'
        + '<span class="cat-ic">' + c.icon + '</span>'
        + '<span class="cat-n">' + esc(c.name) + '</span>'
-       + (c.id === state.cat ? '<span class="cat-seal">' + esc(c.seal) + '</span>' : '')
        + '</button>';
   });
   h += '</div><div class="goods">';
-  var cur = CATS.filter(function(c){ return c.id === state.cat; })[0];
-  var list = DISHES.filter(function(d){ return d.cat === state.cat; });
-  h += '<div class="sec-head">' + esc(cur ? cur.name : '') + '<span class="cnt">' + list.length + ' 道</span></div>';
-  list.forEach(function(d){
-    var q = state.cart[d.id] || 0;
-    h += '<div class="dish" data-dish="' + d.id + '">'
-       +   '<div class="dish-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '" loading="lazy"></div>'
-       +   '<div class="dish-info">'
-       +     '<div class="dish-name"><span class="n">' + esc(d.name) + '</span>'
-       +       (d.tag ? '<span class="badge">' + esc(d.tag) + '</span>' : '')
-       +     '</div>'
-       +     '<div class="dish-desc">' + esc(d.desc) + '</div>'
-       +     '<div class="dish-bot">'
-       +       '<div class="price"><span class="cur">¥</span><span class="num">' + fmt(d.price) + '</span>'
-       +         '<span class="unit">/' + esc(d.unit) + '</span></div>'
-       +       '<div class="qty" data-zero="' + (q > 0 ? '0' : '1') + '">'
-       +         '<button class="qty-btn qty-minus" data-act="minus" data-id="' + d.id + '">' + MINUS + '</button>'
-       +         '<span class="qty-num">' + q + '</span>'
-       +         '<button class="qty-btn qty-plus" data-act="plus" data-id="' + d.id + '">' + PLUS + '</button>'
-       +       '</div>'
-       +     '</div>'
-       +   '</div>'
-       + '</div>';
+  // 右侧：所有分类的菜品按顺序渲染成连续滚动流，点左侧分类滚到对应 section
+  CATS.forEach(function(c){
+    var list = DISHES.filter(function(d){ return d.cat === c.id; });
+    if (!list.length) return;
+    h += '<div class="dsec" data-sec="' + c.id + '">';
+    h += '<div class="sec-head"><span class="n">' + esc(c.name) + '</span>'
+       + (c.id === 'rec' ? '<span class="sub">热卖</span>' : '')
+       + '<span class="cnt">' + list.length + ' 道</span></div>';
+    list.forEach(function(d){
+      var q = state.cart[d.id] || 0;
+      h += '<div class="dish" data-dish="' + d.id + '">'
+         +   '<div class="dish-pic"><img src="' + d._src + '" alt="' + esc(d.name) + '" loading="lazy"></div>'
+         +   '<div class="dish-info">'
+         +     '<div class="dish-name"><span class="n">' + esc(d.name) + '</span>'
+         +       (d.tag ? '<span class="badge">' + esc(d.tag) + '</span>' : '')
+         +     '</div>'
+         +     '<div class="dish-desc">' + esc(d.desc) + '</div>'
+         +     '<div class="dish-bot">'
+         +       '<div class="price"><span class="cur">¥</span><span class="num">' + fmt(d.price) + '</span>'
+         +         '<span class="unit">/' + esc(d.unit) + '</span></div>'
+         +       '<div class="qty" data-zero="' + (q > 0 ? '0' : '1') + '">'
+         +         '<button class="qty-btn qty-minus" data-act="minus" data-id="' + d.id + '">' + MINUS + '</button>'
+         +         '<span class="qty-num">' + q + '</span>'
+         +         '<button class="qty-btn qty-plus" data-act="plus" data-id="' + d.id + '">' + PLUS + '</button>'
+         +       '</div>'
+         +     '</div>'
+         +   '</div>'
+         + '</div>';
+    });
+    h += '</div>';
   });
   h += '</div></div>';
   return h;
@@ -973,6 +993,32 @@ function catHTML(){
 function renderDishes(){
   document.getElementById('cdHome').innerHTML = catHTML();
   document.getElementById('cdOrder').innerHTML = catHTML();
+  bindGoodsSpy();
+}
+
+/* 右侧菜品区滚动 → 左侧分类自动高亮（scroll spy） */
+function bindGoodsSpy(){
+  var wraps = document.querySelectorAll('.cd-wrap');
+  for (var i=0;i<wraps.length;i++){ (function(wrap){
+    var goods = wrap.querySelector('.goods');
+    if (!goods || goods._spy) return;
+    goods._spy = true;
+    goods.addEventListener('scroll', function(){
+      var secs = wrap.querySelectorAll('.dsec');
+      var top = goods.scrollTop + 12;
+      var curId = null;
+      for (var j=0;j<secs.length;j++){
+        if (secs[j].offsetTop <= top) curId = secs[j].dataset.sec;
+      }
+      if (!curId && secs.length) curId = secs[0].dataset.sec;
+      if (!curId || curId === state.cat) return;
+      state.cat = curId;
+      var btns = wrap.querySelectorAll('.cat');
+      for (var k=0;k<btns.length;k++){
+        btns[k].classList.toggle('on', btns[k].dataset.cat === curId);
+      }
+    }, {passive:true});
+  })(wraps[i]); }
 }
 
 function renderCartBar(){
@@ -1047,14 +1093,25 @@ function setQty(id, delta){
 }
 
 document.addEventListener('click', function(e){
-  // 分类
+  // 分类：点左侧分类 → 右侧菜品区滚到对应 section（不重渲染，保持滚动位置连续）
   var cat = e.target.closest('.cat');
   if (cat){
-    state.cat = cat.dataset.cat;
-    renderDishes();
-    var wrap = cat.closest('.cd-wrap');
-    var goods = wrap ? wrap.querySelector('.goods') : null;
-    if (goods) goods.scrollIntoView({block:'nearest'});
+    var cid = cat.dataset.cat;
+    state.cat = cid;
+    var wrap0 = cat.closest('.cd-wrap');
+    if (wrap0){
+      // 左侧高亮切换
+      var btns = wrap0.querySelectorAll('.cat');
+      for (var i=0;i<btns.length;i++){
+        btns[i].classList.toggle('on', btns[i].dataset.cat === cid);
+      }
+      // 右侧滚到对应分类 section
+      var goods = wrap0.querySelector('.goods');
+      var sec = wrap0.querySelector('.dsec[data-sec="' + cid + '"]');
+      if (goods && sec){
+        goods.scrollTo({ top: Math.max(0, sec.offsetTop - 4), behavior:'smooth' });
+      }
+    }
     return;
   }
   // 加减
@@ -1184,17 +1241,19 @@ document.addEventListener('click', function(e){
 });
 
 /* ============ 商家后台可控的广告位（单张水墨江南） ============ */
+// 参考图 496e0437：精致中餐·品味江南 = 水墨画，其他是菜品图
 var ADS = [
-  {id:'a1', img:'jn_assets/banner-art.jpg', pos:'center 18%', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
+  {id:'a1', img:'jn_assets/banner-art.jpg', pos:'center 30%', t1:'精致中餐 · 品味江南', t2:'新鲜食材｜匠心烹饪｜味美价优', btn:'查看店铺介绍', action:'intro'},
   {id:'a2', img:'jn_assets/pork.jpg', pos:'center 55%', t1:'招牌推荐 · 东坡红烧肉', t2:'肥而不腻 入口即化', btn:'立即查看', action:'dish', dishId:'d1'},
   {id:'a3', img:'jn_assets/bass.jpg', pos:'right 25%', t1:'时令招牌 · 清蒸鲈鱼', t2:'鲜嫩爽滑 清淡健康', btn:'立即查看', action:'dish', dishId:'d3'}
 ];
-var curAd = 0;
+var curAd = 0; /* 精致中餐·品味江南（参考图 496e0437 的招牌广告文案） */
 function renderBanners(){
   var h = '';
   ADS.forEach(function(a){
     h += '<div class="banner-slide" data-id="' + a.id + '" data-action="' + (a.action||'') + '" data-dish="' + (a.dishId||'') + '" '
-       + 'style="background-image:url(' + a.img + ');background-position:' + (a.pos||'center') + ';background-size:' + (a.size||'cover') + '">' 
+       + (a.img ? ('style="background-image:url(' + a.img + ');background-position:' + (a.pos||'right center') + ';background-size:50% auto;background-repeat:no-repeat;"') : '')
+       + '>' 
        + '<div class="banner-slide-txt">'
        + '<div class="banner-t1">' + a.t1 + '</div>'
        + '<div class="banner-t2">' + a.t2 + '</div>'
