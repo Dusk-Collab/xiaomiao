@@ -25,6 +25,9 @@ weapp/**/package-lock.json
 cloudflared.exe
 *.exe
 
+# ===== 临时压缩包（整库源码备份等，不入库以免撑大历史） =====
+*.zip
+
 # ===== 沙箱诊断/截图/日志（前缀下划线，不入库）=====
 _*.cjs
 _*.js
