@@ -19,20 +19,35 @@
     // ===== 配色（主题色）=====
     { g: '配色', t: 'color', id: 'ink',      label: '主文字色',   v: '--ink',      def: '#23201B' },
     { g: '配色', t: 'color', id: 'tea',      label: '茶绿主题',   v: '--tea',      def: '#6E7F63' },
-    { g: '配色', t: 'color', id: 'gold',     label: '金/加号',    v: '--gold',     def: '#B89B6A' },
-    { g: '配色', t: 'color', id: 'brown',    label: '价格棕',     v: '--brown',    def: '#7A5C3E' },
-    { g: '配色', t: 'color', id: 'cinnabar', label: '朱砂强调',   v: '--cinnabar', def: '#9E3B32' },
+    { g: '配色', t: 'color', id: 'gold',     label: '金/加号',    v: '--gold',     def: '#b3a080' },
+    { g: '配色', t: 'color', id: 'brown',    label: '价格棕',     v: '--brown',    def: '#804242' },
+    { g: '配色', t: 'color', id: 'cinnabar', label: '朱砂强调',   v: '--cinnabar', def: '#802b23' },
 
-    // ===== 背景 =====
-    { g: '背景', t: 'text',  id: 'bgImg',    label: '背景图URL',  def: 'jn_assets/courtyard.jpg',
-      hint: '仓库内图填 jn_assets/xxx.jpg；外链填 https://…',
-      gen: function (v) { return '#app,.brand,.cd-wrap{background-image:url("' + cleanUrl(v) + '")!important}'; } },
-    { g: '背景', t: 'range', id: 'bgPosY',   label: '背景纵向位置', sel: '.brand', prop: 'background-position', min: 0, max: 100, step: 1, def: 30, unit: '%',
-      gen: function (v) { return '#app,.brand,.cd-wrap{background-position:center ' + v + '% !important}'; } },
-    { g: '背景', t: 'range', id: 'bgShade',  label: '背景遮罩深浅', min: 0, max: 70, step: 1, def: 22, unit: '%',
+    // ===== 背景·各区域单独换图（留空则不换） =====
+    { g: '背景', t: 'text',  id: 'appBg',    label: '整体画布背景图', def: 'jn_assets/courtyard.jpg',
+      hint: '统一底，仓库内填 jn_assets/xxx.jpg；外链填 https://…',
+      gen: function (v) { return '#app{background-image:url("' + cleanUrl(v) + '")!important}'; } },
+    { g: '背景', t: 'text',  id: 'brandBg',  label: '品牌区背景图', def: 'jn_assets/courtyard.jpg',
+      hint: '仓库内填 jn_assets/xxx.jpg；外链填 https://…',
+      gen: function (v) { return '.brand{background-image:url("' + cleanUrl(v) + '")!important}'; } },
+    { g: '背景', t: 'text',  id: 'cdBg',     label: '菜品区背景图', def: 'jn_assets/courtyard.jpg',
+      hint: '仓库内填 jn_assets/xxx.jpg；外链填 https://…',
+      gen: function (v) { return '.cd-wrap{background-image:url("' + cleanUrl(v) + '")!important}'; } },
+    { g: '背景', t: 'text',  id: 'bannerBg', label: 'Banner背景图(可选)', def: '',
+      hint: '留空=保持米色卡片；填 jn_assets/xxx.jpg 或 https://… 即换成图',
+      gen: function (v) { return v ? '.banner{background-image:url("' + cleanUrl(v) + '")!important}' : ''; } },
+    { g: '背景', t: 'range', id: 'bgPosY',   label: '背景纵向位置', min: 0, max: 100, step: 1, def: 55, unit: '%',
+      gen: function (v) { return '#app,.brand,.cd-wrap,.banner{background-position:center ' + v + '% !important}'; } },
+    { g: '背景', t: 'range', id: 'bgShade',  label: '品牌区遮罩深浅', min: 0, max: 70, step: 1, def: 0, unit: '%',
       gen: function (v) { var a = (v / 100).toFixed(3); return '.brand::before{background:linear-gradient(180deg, rgba(20,18,14,' + a + ') 0%, rgba(20,18,14,0) 35%, rgba(20,18,14,0) 65%, rgba(20,18,14,' + a + ') 100%)!important}'; } },
     { g: '背景', t: 'color', id: 'paper2',   label: '卡片宣纸底', v: '--paper-2', def: '#FCFAF4' },
     { g: '背景', t: 'color', id: 'yard',     label: '庭院底色',   sel: '#app', prop: 'background-color', def: '#2A2622' },
+
+    // ===== 间距（各模块/各图之间的空隙）=====
+    { g: '间距', t: 'range', id: 'gapV',     label: '模块垂直间距', min: 0, max: 40, step: 1, def: 8, unit: 'px',
+      gen: function (v) { return '.banner{margin-top:' + v + 'px!important;margin-bottom:' + v + 'px!important}\n.cd-wrap{margin-top:' + v + 'px!important}'; } },
+    { g: '间距', t: 'range', id: 'sidePad',  label: '左右缩进',     min: 0, max: 40, step: 1, def: 14, unit: 'px',
+      gen: function (v) { return '.banner{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}\n.cd-wrap{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}'; } },
 
     // ===== 品牌区 =====
     { g: '品牌区', t: 'range', id: 'brandH',    label: '品牌区高度',   sel: '.brand',           prop: 'min-height',   min: 120, max: 340, step: 2,  def: 180, unit: 'px' },
