@@ -55,11 +55,11 @@
     { g: '背景', t: 'color', id: 'yard',     label: '庭院底色',   sel: '#app', prop: 'background-color', def: '#2A2622' },
 
     // ===== 间距（各模块之间单独调，互不影响）=====
-    { g: '间距', t: 'range', id: 'gapBB',    label: '品牌区↔Banner间距', min: 0, max: 40, step: 1, def: 8, unit: 'px',
+    { g: '间距', t: 'range', id: 'gapBB',    label: '品牌区↔Banner间距', min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-top:' + v + 'px!important}'; } },
     { g: '间距', t: 'range', id: 'gapBC',    label: 'Banner↔菜品区间距', min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-bottom:' + v + 'px!important}'; } },
-    { g: '间距', t: 'range', id: 'sidePad',  label: '左右缩进',     min: 0, max: 40, step: 1, def: 14, unit: 'px',
+    { g: '间距', t: 'range', id: 'sidePad',  label: '左右缩进',     min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}\n.cd-wrap{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}'; } },
 
     // ===== 品牌区 =====
