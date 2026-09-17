@@ -30,12 +30,12 @@
     { g: '背景', t: 'text',  id: 'brandBg',  label: '品牌区背景图', def: 'jn_assets/courtyard.jpg',
       hint: '仓库内填 jn_assets/xxx.jpg；外链填 https://…',
       gen: function (v) { return '.brand{background-image:url("' + cleanUrl(v) + '")!important}'; } },
-    { g: '背景', t: 'text',  id: 'cdBg',     label: '菜品区背景图', def: 'jn_assets/courtyard.jpg',
-      hint: '仓库内填 jn_assets/xxx.jpg；外链填 https://…',
-      gen: function (v) { return '.cd-wrap{background-image:url("' + cleanUrl(v) + '")!important}'; } },
-    { g: '背景', t: 'text',  id: 'bannerBg', label: 'Banner背景图(可选)', def: '',
-      hint: '留空=保持米色卡片；填 jn_assets/xxx.jpg 或 https://… 即换成图',
-      gen: function (v) { return v ? '.banner{background-image:url("' + cleanUrl(v) + '")!important}' : ''; } },
+    { g: '背景', t: 'text',  id: 'cdBg',     label: '菜品区背景图(默认无)', def: '',
+      hint: '留空=透明（让整体庭院透出）；填 jn_assets/xxx.jpg 或 https://… 即加背景',
+      gen: function (v) { return v ? '.cd-wrap{background-image:url("' + cleanUrl(v) + '")!important}' : ''; } },
+    { g: '背景', t: 'text',  id: 'bannerBg', label: 'Banner背景图', def: 'jn_assets/courtyard.jpg',
+      hint: '与品牌区共用江南庭院；换图填 jn_assets/xxx.jpg 或 https://…',
+      gen: function (v) { return v ? '.banner{background-image:url("' + cleanUrl(v) + '")!important}' : '.banner{background-image:none!important}'; } },
 
     // 各区域背景位置（横/纵分别单独调）
     { g: '背景', t: 'range', id: 'brandPosX', label: '品牌区·背景横位', min: 0, max: 100, step: 1, def: 50, unit: '%',
@@ -55,11 +55,11 @@
     { g: '背景', t: 'color', id: 'yard',     label: '庭院底色',   sel: '#app', prop: 'background-color', def: '#2A2622' },
 
     // ===== 间距（各模块之间单独调，互不影响）=====
-    { g: '间距', t: 'range', id: 'gapBB',    label: '品牌区↔Banner间距', min: 0, max: 40, step: 1, def: 8, unit: 'px',
+    { g: '间距', t: 'range', id: 'gapBB',    label: '品牌区↔Banner间距', min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-top:' + v + 'px!important}'; } },
-    { g: '间距', t: 'range', id: 'gapBC',    label: 'Banner↔菜品区间距', min: 0, max: 40, step: 1, def: 10, unit: 'px',
+    { g: '间距', t: 'range', id: 'gapBC',    label: 'Banner↔菜品区间距', min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-bottom:' + v + 'px!important}'; } },
-    { g: '间距', t: 'range', id: 'sidePad',  label: '左右缩进',     min: 0, max: 40, step: 1, def: 14, unit: 'px',
+    { g: '间距', t: 'range', id: 'sidePad',  label: '左右缩进',     min: 0, max: 40, step: 1, def: 0, unit: 'px',
       gen: function (v) { return '.banner{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}\n.cd-wrap{margin-left:' + v + 'px!important;margin-right:' + v + 'px!important}'; } },
 
     // ===== 品牌区 =====
