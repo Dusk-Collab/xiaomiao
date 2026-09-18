@@ -17,10 +17,10 @@
   --ink-3:#8A8275;      /* 浅墨灰（描述） */
   --tea:#6E7F63;        /* 茶绿（低饱和） */
   --tea-2:#55664C;      /* 深茶绿 */
-  --gold:#B89B6A;       /* 米金（加号按钮） */
-  --brown:#7A5C3E;      /* 浅棕（价格） */
+  --gold:#b3a080;       /* 米金（加号按钮） */
+  --brown:#804242;      /* 浅棕（价格） */
   --celadon:#8E9C9A;    /* 青灰 */
-  --cinnabar:#9E3B32;   /* 朱砂（极少量强调） */
+  --cinnabar:#802b23;   /* 朱砂（极少量强调） */
   --line:rgba(35,32,27,.07);
   --line-2:rgba(35,32,27,.045);
   --shadow:0 1px 3px rgba(35,32,27,.035);
@@ -43,12 +43,12 @@ button{font-family:inherit;border:none;background:none;cursor:pointer;color:inhe
 img{display:block}
 
 #app{
-  width:100%; max-width:480px; margin:0 auto; height:100%;
+  width:100%; max-width:470px; margin:0 auto; height:100%;
   position:relative; display:flex; flex-direction:column;
   background-color:#2A2622;
   background-image:url('jn_assets/courtyard.jpg');
   background-repeat:no-repeat;
-  background-position:center 30%;
+  background-position:center 55%;
   background-size:cover;
   box-shadow:0 0 40px rgba(31,28,24,.25);
   overflow:hidden;
@@ -72,7 +72,7 @@ img{display:block}
   background-color:#2A2622;
   background-image:url('jn_assets/courtyard.jpg');
   background-repeat:no-repeat;
-  background-position:center 30%;
+  background-position:center 55%;
   background-size:cover;
   min-height:180px;
   display:flex; flex-direction:column;
@@ -80,7 +80,7 @@ img{display:block}
 /* 顶部一道暗角让标题在亮天空区仍清晰 */
 .brand::before{
   content:''; position:absolute; inset:0; pointer-events:none; z-index:0;
-  background:linear-gradient(180deg, rgba(20,18,14,.18) 0%, rgba(20,18,14,0) 30%, rgba(20,18,14,0) 70%, rgba(20,18,14,.28) 100%);
+  background:linear-gradient(180deg, rgba(20,18,14,0) 0%, rgba(20,18,14,0) 35%, rgba(20,18,14,0) 65%, rgba(20,18,14,0) 100%);
 }
 .brand > *{position:relative; z-index:1}
 
@@ -108,7 +108,7 @@ img{display:block}
 }
 .brand-name-txt{
   font-family:var(--brush);
-  font-size:42px; font-weight:400;
+  font-size:49px; font-weight:400;
   letter-spacing:1.5px; line-height:1; color:#1A1410;
   text-shadow:
     0 0 3px rgba(253,250,243,.95),
@@ -128,7 +128,7 @@ img{display:block}
   box-shadow:0 1px 3px rgba(158,59,50,.35);
 }
 .brand-sub{
-  font-family:var(--kai); font-size:13px; letter-spacing:2px;
+  font-family:var(--kai); font-size:19px; letter-spacing:2px;
   color:#1F1A14; margin-top:6px; font-weight:500;
   text-shadow:
     0 1px 0 rgba(253,250,243,.95),
@@ -136,19 +136,21 @@ img{display:block}
     0 1px 8px rgba(253,250,243,.7);
 }
 /* ============ 主宣传 Banner：米色独立卡片 + 内部水墨画（参考图 496e0437） ============ */
-.banner{
-  margin:8px 14px 10px; padding:0; border-radius:14px; overflow:hidden; position:relative;
-  background:#FCFAF4; border:1px solid rgba(35,32,27,.06);
-  box-shadow:0 4px 14px rgba(31,28,24,.12);
-  min-height:150px;
-}
+  .banner{
+    margin:0; padding:0; border-radius:0; overflow:hidden; position:relative;
+    background-color:transparent;
+    background-image:url('jn_assets/courtyard.jpg');
+    background-repeat:no-repeat; background-position:center 55%; background-size:cover;
+    border:1px solid rgba(35,32,27,.06);
+    min-height:108px;
+  }
 .banner-track{
   display:flex; height:100%;
   transition:transform .35s cubic-bezier(.32,.72,0,1);
   position:relative; z-index:1;
 }
 .banner-slide{
-  flex:0 0 100%; height:150px; position:relative; overflow:hidden;
+  flex:0 0 100%; height:108px; position:relative; overflow:hidden;
   background-size:50% auto; background-position:right center; background-repeat:no-repeat;
   opacity:1;
 }
@@ -163,11 +165,11 @@ img{display:block}
 }
 .banner-slide-txt{
   position:absolute; left:0; top:0; bottom:0; z-index:2;
-  width:55%; display:flex; flex-direction:column; justify-content:center;
+  width:85%; display:flex; flex-direction:column; justify-content:center;
   padding:12px 6px 12px 18px;
 }
 .banner-t1{
-  font-family:var(--kai); font-size:17px; font-weight:700; letter-spacing:1.2px;
+  font-family:var(--kai); font-size:18px; font-weight:700; letter-spacing:1.2px;
   color:#1F1A14; line-height:1.45;
   word-break:keep-all;
   text-shadow:0 1px 2px rgba(253,250,244,.9);
@@ -216,25 +218,17 @@ img{display:block}
 
 /* ============ 左侧分类 + 右侧菜品 ============ */
 /* cd-wrap 容器 = 江南味道庭院背景；内部卡片缩进 10px，四周露出庭院图 */
-.cd-wrap{
-  margin:0 14px 0; padding:8px; flex:1; min-height:0;
-  display:flex; flex-direction:row;
-  background-color:#2A2622;
-  background-image:url('jn_assets/courtyard.jpg');
-  background-repeat:no-repeat;
-  background-position:center 30%;
-  background-size:cover;
-  border-radius:14px;
-  box-shadow:0 4px 16px rgba(31,28,24,.15);
-  overflow:hidden;
-}
+  .cd-wrap{
+    margin:0; padding:0; flex:1; min-height:0;
+    display:flex; flex-direction:row;
+    background:transparent;
+    overflow:hidden;
+  }
 /* 左侧分类：米色实色（内部卡片，左侧圆角），带竹枝装饰 */
 .cats{
-  flex:0 0 86px; width:86px;
-  background:#F5EFE3;
-  border-radius:10px 0 0 10px;
+  flex:0 0 72px; width:72px;
+  background:transparent;
   overflow:hidden;
-  border-right:1px solid rgba(35,32,27,.06);
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   flex:none;
@@ -252,23 +246,22 @@ img{display:block}
   transition:background .18s,color .18s; text-align:left; width:100%;
   display:flex; align-items:center; gap:5px;
   background:transparent;
+  text-shadow:0 1px 3px rgba(253,250,243,.9);
 }
 .cat-ic{width:16px; height:16px; flex:none; opacity:.55; transition:opacity .18s}
 .cat-ic svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .cat.on .cat-ic{opacity:1}
 .cat-n{flex:1; text-align:left}
-.cat + .cat{border-top:1px solid rgba(35,32,27,.05)}
 .cat::before{ /* 选中竖线（朱砂） */
   content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
   width:3px; height:0; background:var(--cinnabar); border-radius:0 3px 3px 0; transition:height .2s;
 }
-.cat.on{background:#FCFAF4; color:var(--cinnabar); font-weight:700}
+.cat.on{background:rgba(128,43,35,.82); color:#FFF8F2; font-weight:700}
 .cat.on::before{height:22px; background:var(--cinnabar)}
 
 .goods{
   flex:1; min-width:0; min-height:0; padding:4px 12px 14px;
-  background-color:#FCFAF4; /* 推荐菜：米色单独背景 */
-  border-radius:0 10px 10px 0;
+  background-color:transparent;
   position:relative;
   display:flex; flex-direction:column;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -277,6 +270,7 @@ img{display:block}
 .sec-head{
   display:flex; align-items:baseline; gap:7px; padding:14px 2px 10px;
   font-family:var(--kai); font-size:17px; font-weight:700; letter-spacing:2px; color:var(--ink);
+  text-shadow:0 1px 2px rgba(253,250,243,.9);
 }
 .sec-head::before{
   content:''; display:inline-block; width:12px; height:12px; flex:none; align-self:center;
@@ -294,8 +288,8 @@ img{display:block}
 
 /* ============ 菜品卡（参考图一：紧凑、中图） ============ */
 .dish{
-  display:flex; gap:11px; padding:11px 10px; margin-bottom:9px;
-  background:#FDFAF3; border:1px solid rgba(35,32,27,.06); border-radius:12px;
+  display:flex; gap:11px; padding:11px 10px; margin-bottom:2px;
+  background:#FDFAF3; border:1px solid rgba(35,32,27,.06); border-radius:19px;
   transition:border-color .3s, box-shadow .3s, transform .18s;
   box-shadow:0 1px 5px rgba(31,28,24,.04);
 }
@@ -305,7 +299,7 @@ img{display:block}
   box-shadow:0 0 0 2px rgba(158,59,50,.10);
 }
 .dish-pic{
-  flex:0 0 88px; width:88px; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
+  flex:0 0 72px; width:72px; aspect-ratio:1/1; border-radius:12px; overflow:hidden;
   background:var(--paper-3); position:relative;
   box-shadow:0 2px 6px rgba(31,28,24,.12);
 }
@@ -1336,5 +1330,7 @@ renderBanners();
 startAuto();
 renderAll();
 </script>
+<!-- 在线格式调试面板：仅 ?edit=1 时激活，不影响正式访问 -->
+<script src="jn_assets/designer.js"></script>
 </body>
 </html>
